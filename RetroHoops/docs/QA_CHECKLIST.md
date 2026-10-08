@@ -326,9 +326,10 @@ Device: ______  iOS: ______  Build: ______  Date: ______
 
 ## Phase 41
 - [ ] PLAY ▸ LIVE opens the lobby straight away (no paywall, no MANAGE SUBSCRIPTION).
-- [ ] PLAY ▸ RETRO HOOPS PRO: price from the App Store, ONE TIME, the four perks, terms, TERMS OF USE, PRIVACY POLICY, RESTORE PURCHASES.
+- [ ] PLAY ▸ RETRO HOOPS PRO: price from the App Store ($3.99 in the US), ONE TIME, the five perks (FRANCHISE first), terms, TERMS OF USE, PRIVACY POLICY, RESTORE PURCHASES.
 - [ ] UNLOCK PRO (TestFlight or sandbox): the screen switches to PRO UNLOCKED; the Locker Room has the pass jerseys, shoes, banners, celebrations and the Skyline dunk.
 - [ ] Reinstall: RESTORE PURCHASES brings Pro back.
-- [ ] Rise without Pro: after season 3 the hub shows GET RETRO HOOPS PRO (opens the Pro screen); with Pro, START NEXT SEASON starts season 4 (Paper Cranes).
+- [ ] Rise without Pro: after season 1 the hub shows GET RETRO HOOPS PRO (opens the Pro screen); with Pro, START NEXT SEASON starts season 2 with a new rival crew.
+- [ ] PLAY ▸ FRANCHISE · PRO without Pro opens the Pro screen; with Pro the row reads FRANCHISE and opens the GM screen. NEXT ► FRANCHISE does the same.
 - [ ] Spanish: the Pro screen and the Rise lock message are translated.
 

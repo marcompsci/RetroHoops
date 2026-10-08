@@ -18,11 +18,15 @@ namespace CallerRetroBall.Tests
             string t = Pro.Terms("£4.99");
             Assert.IsTrue(t.Contains("£4.99") && t.Contains("one-time purchase") && t.Contains("isn't a subscription"), t);
             Assert.IsTrue(Pro.Terms(null).Contains(Pro.PriceFallback));
-            Assert.AreEqual(4, Pro.Perks.Length);
+            Assert.AreEqual(5, Pro.Perks.Length);
+            Assert.AreEqual("$3.99", Pro.PriceFallback);
+            Assert.IsTrue(t.Contains("FRANCHISE") && t.Contains("seasons 2 and up"), t);
+            Assert.IsTrue(Pro.FranchiseLocked(false));
+            Assert.IsFalse(Pro.FranchiseLocked(true));
         }
 
         [Test]
-        public void RiseSeasonsOneToThree_AreFree_FourNeedsPro()
+        public void RiseSeasonOne_IsFree_TwoNeedsPro()
         {
             var r = new RiseSaveData();
             for (int played = 0; played < Pro.FreeRiseSeasons; played++)
@@ -30,8 +34,9 @@ namespace CallerRetroBall.Tests
                 r.seasonsPlayed = played;
                 Assert.IsFalse(Pro.NextSeasonLocked(r, false), "season " + (played + 1) + " is free");
             }
-            r.seasonsPlayed = 3;
-            Assert.IsTrue(Pro.NextSeasonLocked(r, false), "season 4 needs Pro");
+            Assert.AreEqual(1, Pro.FreeRiseSeasons);
+            r.seasonsPlayed = 1;
+            Assert.IsTrue(Pro.NextSeasonLocked(r, false), "season 2 needs Pro");
             Assert.IsFalse(Pro.NextSeasonLocked(r, true));
             r.seasonsPlayed = 11;
             Assert.IsTrue(Pro.NextSeasonLocked(r, false));
@@ -60,7 +65,7 @@ namespace CallerRetroBall.Tests
             Assert.IsTrue(Pro.Apply(d, C, false), "refund");
             Assert.IsFalse(d.proOwned);
             Assert.AreEqual(count, d.ownedCosmetics.Count, "items stay");
-            Assert.IsTrue(Pro.NextSeasonLocked(new RiseSaveData { seasonsPlayed = 3 }, d.proOwned));
+            Assert.IsTrue(Pro.NextSeasonLocked(new RiseSaveData { seasonsPlayed = 1 }, d.proOwned));
             Assert.IsFalse(Pro.Apply(null, C, true));
         }
 

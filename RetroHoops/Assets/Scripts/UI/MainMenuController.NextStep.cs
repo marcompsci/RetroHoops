@@ -36,7 +36,10 @@ namespace CallerRetroBall.UI
                 case NextAction.Daily: ShowDaily(); break;
                 case NextAction.Weekly: ShowWeekly(); break;
                 case NextAction.Park: ShowPark(); break;
-                default: FranchiseScreen.Open(); break;
+                default:
+                    if (Pro.FranchiseLocked(ProStore.Owned)) ShowPro(null); // FRANCHISE comes with Retro Hoops Pro
+                    else FranchiseScreen.Open();
+                    break;
             }
         }
 

@@ -12,7 +12,7 @@ Draft metadata and answers for App Store Connect. Character counts are checked a
 | SKU | `retroball-ios-1` (any unique string) |
 | Primary category | Games ▸ Sports |
 | Secondary category | Games ▸ Arcade |
-| Price | Free. One optional in-app purchase: **Retro Hoops Pro**, a one-time $4.99 non-consumable unlock (see `LIVE.md`). |
+| Price | Free. One optional in-app purchase: **Retro Hoops Pro**, a one-time $3.99 non-consumable unlock (see `LIVE.md`). |
 | Version | 1.0.0 (build 1). Raise the build number for every upload. |
 
 ## Promotional text (170)
@@ -39,9 +39,9 @@ Draft metadata and answers for App Store Connect. Character counts are checked a
 > Play people online through Game Center, or invite a Game Center friend, and climb from Rookie to Legend. Rematch without leaving, and chase the monthly leaderboard.
 >
 > **RETRO HOOPS PRO (optional, one time)**
-> One purchase: Rise seasons 4+ and every Hoops Pass item.
+> One purchase: Franchise mode, Rise seasons 2+ and every Hoops Pass item.
 >
-> **FRANCHISE**
+> **FRANCHISE (with Retro Hoops Pro)**
 > Be the GM of a league club, season after season. Set the rotation, trade with seven other GMs (who call you with offers too), pick a training focus, re-sign your players, chase free agents under the salary cap, scout prospects, and win the draft lottery. Players age, improve, decline, and retire into the Hall of Fame. Play every game Full Court 5-on-5, or simulate.
 >
 > **LEGACY**
@@ -101,7 +101,7 @@ Add **Spanish (Mexico)** as a localization in App Store Connect and paste these.
 >
 > Retro Hoops es un juego de básquet 3v3 de media cancha en pixel art, hecho para jugar con un pulgar en el stick y otro en los botones. Mantén para tirar y suelta en verde. Encesta tres seguidos y te pones AL ROJO VIVO. Lanza el alley-oop a un compañero junto al aro.
 >
-> Modo Franquicia (traspasos, agencia libre, draft y tope salarial), Fin de Semana de las Estrellas con concurso de clavadas y de triples, Cancha completa 5 contra 5, constructor de canchas, estudio de uniformes y nueve temas chiptune originales. Modo Ascenso, Escalera Arcade con jefe secreto, Rey de la Cancha, la Caller Cup, 1 contra 1, Reto Diario y 2 jugadores en un dispositivo. Crea tu jugador y tu propio equipo, descubre códigos secretos y llena tu sala de trofeos.
+> Modo Franquicia con Retro Hoops Pro (traspasos, agencia libre, draft y tope salarial), Fin de Semana de las Estrellas con concurso de clavadas y de triples, Cancha completa 5 contra 5, constructor de canchas, estudio de uniformes y nueve temas chiptune originales. Modo Ascenso, Escalera Arcade con jefe secreto, Rey de la Cancha, la Caller Cup, 1 contra 1, Reto Diario y 2 jugadores en un dispositivo. Crea tu jugador y tu propio equipo, descubre códigos secretos y llena tu sala de trofeos.
 >
 > Controles táctiles o mando Bluetooth. Todo funciona sin conexión salvo Live. Sin cuenta, sin anuncios y sin rastreo; la única compra es Retro Hoops Pro, un desbloqueo opcional de pago único. Todo el contenido es original.
 
@@ -190,4 +190,4 @@ Only show real gameplay. Don't add device frames that show non-Apple hardware, a
 
 ## App Review notes (paste into "Notes")
 
-> No login of our own and no ads. LIVE online play is free (Game Center matchmaking; a match needs a second device with another Game Center account). One optional in-app purchase, Retro Hoops Pro (non-consumable, $4.99), unlocks Rise seasons 4 and up and every Hoops Pass cosmetic: PLAY ▸ RETRO HOOPS PRO (Restore Purchases is on that screen). Everything else is free and works offline. Optional Apple services only: Game Center (Settings ▸ Game Center) and iCloud save sync (Settings ▸ iCloud Sync). All content is original and generated procedurally. To see the main modes quickly: Main menu ▸ PLAY ▸ FRANCHISE (START FRANCHISE, then SIM GAME or PLAY GAME) and PLAY ▸ ALL-STAR CONTESTS ▸ DUNK CONTEST. Rise Mode: Main menu ▸ RISE MODE ▸ PLAY NEXT.
+> No login of our own and no ads. LIVE online play is free (Game Center matchmaking; a match needs a second device with another Game Center account). One optional in-app purchase, Retro Hoops Pro (non-consumable, $3.99), unlocks FRANCHISE mode, Rise seasons 2 and up and every Hoops Pass cosmetic: PLAY ▸ RETRO HOOPS PRO (Restore Purchases is on that screen). Everything else is free and works offline. Optional Apple services only: Game Center (Settings ▸ Game Center) and iCloud save sync (Settings ▸ iCloud Sync). All content is original and generated procedurally. To see the main modes quickly: Main menu ▸ PLAY ▸ FRANCHISE · PRO (needs the Pro purchase in the sandbox; then START FRANCHISE, then SIM GAME or PLAY GAME) and PLAY ▸ ALL-STAR CONTESTS ▸ DUNK CONTEST. Rise Mode: Main menu ▸ RISE MODE ▸ PLAY NEXT.

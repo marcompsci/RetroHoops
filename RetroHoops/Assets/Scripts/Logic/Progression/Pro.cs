@@ -7,7 +7,9 @@ namespace CallerRetroBall.Logic
     /// Phase 41 money model. RETRO HOOPS PRO is the game's only purchase: a one-time, non-consumable unlock (not a
     /// subscription). Everything else is free, including LIVE online play through Game Center matchmaking.
     /// Pro adds:
-    ///  • Rise seasons 4 and up: nine more rival crews with their stories, badges and courts (seasons 1-3 are free).
+    ///  • FRANCHISE mode (be the GM of a league club, season after season).
+    ///  • Rise seasons 2 and up: eleven more rival crews with their stories, badges and courts (season 1 is free).
+    ///  (Changed 8 Oct: $3.99, Franchise added, one free Rise season, as Omari chose.)
     ///  • Every Hoops Pass item in the locker right away (jerseys, shoes, banners, celebrations, the Skyline dunk)
     ///    instead of waiting for each one's pass season. Free players still earn them through the pass.
     /// The App Store decides whether Pro is owned; the career keeps the last answer so menus are right on launch.
@@ -18,9 +20,12 @@ namespace CallerRetroBall.Logic
         public const string ProductId = "com.phoronomicstudios.retrohoops.pro";
         public const string DisplayName = "Retro Hoops Pro";
         /// <summary>Shown only until the App Store returns the real, localised price.</summary>
-        public const string PriceFallback = "$4.99";
+        public const string PriceFallback = "$3.99";
         /// <summary>Rise seasons anyone can play; the next one needs Pro.</summary>
-        public const int FreeRiseSeasons = 3;
+        public const int FreeRiseSeasons = 1;
+
+        /// <summary>FRANCHISE needs Pro.</summary>
+        public static bool FranchiseLocked(bool owned) => !owned;
 
         /// <summary>LIVE is free in v1 (Game Center matchmaking). A paid tier can come back once there are players.</summary>
         public const bool LiveIsFree = true;
@@ -75,16 +80,17 @@ namespace CallerRetroBall.Logic
             string pr = string.IsNullOrEmpty(price) ? PriceFallback : price;
             if (Loc.Language == Loc.Spanish)
                 return DisplayName + " es una compra única de " + pr + ". No es una suscripción y nunca se renueva. " +
-                       "Desbloquea las temporadas 4 en adelante del modo Ascenso y pone todos los objetos del Hoops Pass en tu vestuario. " +
+                       "Desbloquea el modo Franquicia y las temporadas 2 en adelante del modo Ascenso, y pone todos los objetos del Hoops Pass en tu vestuario. " +
                        "El pago se carga a tu cuenta de Apple al confirmar. Usa RESTAURAR COMPRAS en otro dispositivo. Live y todos los demás modos siguen siendo gratis.";
             return DisplayName + " is a one-time purchase of " + (string.IsNullOrEmpty(price) ? PriceFallback : price) + ". It isn't a subscription and never renews. " +
-            "It unlocks Rise seasons 4 and up and puts every Hoops Pass item in your locker. Payment is charged to your Apple Account when you confirm. " +
+            "It unlocks FRANCHISE mode and Rise seasons 2 and up, and puts every Hoops Pass item in your locker. Payment is charged to your Apple Account when you confirm. " +
             "Use RESTORE PURCHASES on a new device. Live online play and every other mode stay free.";
         }
 
         public static readonly string[] Perks =
         {
-            "Rise seasons 4 and up: nine more rival crews, their stories, courts and badges",
+            "FRANCHISE: be the GM of a club, with trades, free agency and the draft",
+            "Rise seasons 2 and up: eleven more rival crews, their stories, courts and badges",
             "Every Hoops Pass item now: jerseys, shoes, banners, celebrations and the Skyline dunk",
             "One payment, yours for good, on every device with your Apple Account",
             "Supports a one-person studio. No ads, ever",

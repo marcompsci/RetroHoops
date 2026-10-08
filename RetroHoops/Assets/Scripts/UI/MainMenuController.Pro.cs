@@ -19,7 +19,7 @@ namespace CallerRetroBall.UI
             if (ProStore.Owned)
             {
                 UiKit.Size(UiKit.Label(column, Loc.T("PRO UNLOCKED"), 48f, Theme.Gold, TextAlignmentOptions.Center, true), 80f);
-                UiKit.Size(UiKit.Label(column, Loc.T("Thanks for supporting Retro Hoops! Rise seasons 4 and up are open, and every Hoops Pass item is in your locker."), 30f, Theme.Cream), 150f);
+                UiKit.Size(UiKit.Label(column, Loc.T("Thanks for supporting Retro Hoops! FRANCHISE and Rise seasons 2 and up are open, and every Hoops Pass item is in your locker."), 30f, Theme.Cream), 150f);
                 UiKit.Button(column, "RESTORE PURCHASES", () => ProStore.Restore(), ButtonStyle.Ghost, 90f, 30f);
                 UiKit.Button(footer, "BACK", back, ButtonStyle.Ghost, 130f, 44f);
                 return;

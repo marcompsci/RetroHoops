@@ -141,9 +141,9 @@ namespace CallerRetroBall.UI
             }
             else if (r.stage == RiseStage.Complete && Pro.NextSeasonLocked(r, ProStore.Owned))
             {
-                // Phase 41: seasons 1-3 are free; season 4 and up (nine more rival crews) come with Retro Hoops Pro.
+                // Season 1 is free; season 2 and up (eleven more rival crews) come with Retro Hoops Pro.
                 UiKit.Size(UiKit.Label(_content, Loc.T("Season") + " " + (r.seasonsPlayed + 1) + ": " +
-                                       Loc.T("nine more rival crews are waiting. Seasons 4 and up come with Retro Hoops Pro, a one-time unlock."),
+                                       Loc.T("eleven more rival crews are waiting. Seasons 2 and up come with Retro Hoops Pro, a one-time unlock."),
                                        30f, Theme.Cream, TextAlignmentOptions.Center), 110f);
                 UiKit.Button(_content, "GET RETRO HOOPS PRO", () => { App.OpenProOnMenu = true; SceneFlow.GoTo(SceneNames.MainMenu); }, ButtonStyle.Primary, 150f);
             }

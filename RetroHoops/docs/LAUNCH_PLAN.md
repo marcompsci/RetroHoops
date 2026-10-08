@@ -4,7 +4,7 @@ Decided on 7 Oct after the council review:
 - **Ship it, stop building.** Feature freeze until launch.
 - **Money (v1):**
   - LIVE is free.
-  - The one purchase is **Retro Hoops Pro**, a one-time $4.99 unlock for Rise seasons 4+ and every Hoops Pass item (`LIVE.md`).
+  - The one purchase is **Retro Hoops Pro**, a one-time **$3.99** unlock for FRANCHISE, Rise seasons 2+ and every Hoops Pass item (Omari's choice, 8 Oct) (`LIVE.md`).
   - A paid Live tier comes back only once there are enough players to match.
 - **Target:** submit for review by **Fri 23 Oct**, launch the week of **26 Oct**.
 
@@ -42,7 +42,7 @@ Play it like a stranger: no menus you already know, sound on, one hand, then two
 | 14–18 | **CLUTCH**: one scenario, then DAILY CLUTCH. | Is the goal of the scenario obvious? |
 | 18–22 | **FULL COURT** (5 on 5). | Frame rate, readability, camera. |
 | 22–25 | **LIVE** (free now): FIND A GAME. If a second phone is free, try a real match. | Does it explain what's happening while it searches? |
-| 25–28 | **PLAY ▸ RETRO HOOPS PRO** (build 4): unlock it. TestFlight purchases are free. | Is it clear what you get? Did the Locker Room fill up? |
+| 25–28 | **PLAY ▸ FRANCHISE · PRO** (build 4): it opens the Pro screen. Unlock it ($3.99; TestFlight purchases are free). | Is it clear what you get? Does FRANCHISE open now, and did the Locker Room fill up? |
 | 28–30 | **Settings**: text size, stick size, Spanish. | Anything cut off or untranslated? |
 
 **For every problem, write one line:**
@@ -111,7 +111,7 @@ Send Claude the list as it is. It becomes the fix list. In TestFlight you can al
 1. How many times did you open it this week?
 2. What was the most fun thing?
 3. Where were you confused or annoyed?
-4. Would you pay $4.99 once for more Rise seasons and every cosmetic? (Yes / Maybe / No — why?)
+4. Would you pay $3.99 once for Franchise, more Rise seasons and every cosmetic? (Yes / Maybe / No — why?)
 5. Would you tell a friend about it? (0–10)
 
 **Go / no-go for submitting:**
@@ -138,7 +138,8 @@ Otherwise fix the top three complaints first and run 3–4 more days.
 
 This fits your **Claude/AI content lane**. The story — *"I built a full basketball game with AI"* — works for people who don't play basketball games, and every clip ends on a reason to join the beta and, later, to download.
 
-Cadence: **3–4 posts a week** on IG Reels, TikTok and YouTube Shorts, plus one long-form YouTube video before launch.
+Cadence: **3–4 posts a week** on TikTok, IG Reels and YouTube Shorts (the same clip), the text version on **X / Threads**, plus one long-form YouTube video after launch.
+Ready-to-post hooks, captions and X/Threads text for every post below are in **`CONTENT_KIT.md`**. Clips without your phone: `tools/Record Content Clips.command`.
 
 | Date | Post | Hook (first 2 seconds) | Shots |
 |---|---|---|---|
@@ -147,7 +148,7 @@ Cadence: **3–4 posts a week** on IG Reels, TikTok and YouTube Shorts, plus one
 | Mon 12 Oct | How it was made (AI lane) | "Here's what building a game with Claude actually looks like." | Real screens: a phase plan, tests passing (802 → 807), the Build Check on the Mac, the Simulator. |
 | Wed 14 Oct | Playtest reactions | "My friends tried my game. Here's what they said." | Film a friend or crew playing (ask first). Split screen: their face and the phone. |
 | Fri 16 Oct | Rival crews | "Every season you face a new crew. This one plays mini-golf." | Rival logos one by one (Neon Static → Putt Club). |
-| Sun 18 Oct | Honest money post | "I changed how my game makes money before it even launched. Here's why." | Talk to camera: free Live, a one-time $4.99, no ads, no subscription. Great for comments. |
+| Sun 18 Oct | Honest money post | "I changed how my game makes money before it even launched. Here's why." | Talk to camera: free Live, a one-time $3.99, no ads, no subscription. Great for comments. |
 | Tue 20 Oct | Bug-fix montage | "Testers found 37 bugs. Fixing them one by one." | Before/after clips. |
 | Fri 23 Oct | Submission | "I just pressed Submit for Review. Apple decides now." | The App Store Connect button press (blur personal info). |
 | Launch day | Launch | "It's out. Retro Hoops. Free. Link in bio." | The best 15 seconds of gameplay plus the SHARE RESULT card. Pin it. |

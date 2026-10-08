@@ -25,7 +25,7 @@ This is the checklist for App Review. **Done in code** items are checked by `too
 
 1. **Agreements, Tax and Banking:** accept the Paid Apps agreement and add bank + tax info. Without it Retro Hoops Pro can't be sold or even reviewed. *(Claude can't do this.)*
 2. **Upload a build:** run `tools/Ship Retro Hoops.command` on the Mac (build 3). Then wait for it to finish processing and add it to TestFlight.
-3. **In-App Purchase:** create **Retro Hoops Pro** (Non-Consumable, `com.phoronomicstudios.retrohoops.pro`, $4.99, name/description, review screenshot of PLAY ▸ RETRO HOOPS PRO, review notes) and attach it to the first app version. Steps in `LIVE.md`.
+3. **In-App Purchase:** create **Retro Hoops Pro** (Non-Consumable, `com.phoronomicstudios.retrohoops.pro`, $3.99, name/description, review screenshot of PLAY ▸ RETRO HOOPS PRO, review notes) and attach it to the first app version. Steps in `LIVE.md`.
 4. **Game Center:** enable it on the version and create the leaderboards `retrohoops.lb.clutch`, `retrohoops.lb.gauntlet` and the recurring `retrohoops.live.monthly` (Claude will do this once you're signed in in the browser pane).
 5. **App Privacy:** **Data Not Collected** for v1 (Live server off), as in `APP_STORE.md` ► App Privacy.
 6. **Age rating:** answer as in `APP_STORE.md` ► Age rating (expected 4+).

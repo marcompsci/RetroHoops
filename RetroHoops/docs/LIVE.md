@@ -1,15 +1,16 @@
 # Making money: Retro Hoops Pro (one-time unlock) and free Live
 
 **Phase 41 (Omari's decision, 7 Oct 2026):** version 1 has **one purchase**, **Retro Hoops Pro**, a one-time
-**non-consumable** unlock for **$4.99**. **LIVE is free** (Game Center matchmaking; Apple runs the servers). A paid Live tier
+**non-consumable** unlock for **$3.99** (changed from $4.99 on 8 Oct, Omari's choice). **LIVE is free** (Game Center matchmaking; Apple runs the servers). A paid Live tier
 can come back once there are enough players to match. The old $10.99/month Live subscription is gone from the game.
 
 **What Pro unlocks** (`Logic/Progression/Pro.cs`):
-- **Rise seasons 4 and up**: nine more rival crews with their stories, courts and badges. Seasons 1 to 3 are free.
+- **FRANCHISE** mode (be the GM of a league club).
+- **Rise seasons 2 and up**: eleven more rival crews with their stories, courts and badges. Season 1 is free.
 - **Every Hoops Pass item right away** (40: jerseys, shoes, banners, celebrations, the Skyline dunk). Free players still earn them through the pass; a Pro owner gets SP where the gear would be.
-- Everything else, including LIVE, every other mode and every update, stays free. No ads.
+- Everything else, including LIVE, Quick Call, Rise season 1, CLUTCH, The Park, Legacy, the contests and every update, stays free. No ads.
 
-Where it shows: PLAY ▸ **RETRO HOOPS PRO** (purchase screen with price, terms, TERMS OF USE, PRIVACY POLICY, RESTORE PURCHASES) and the Rise hub when season 3 is done (GET RETRO HOOPS PRO).
+Where it shows: PLAY ▸ **RETRO HOOPS PRO** (purchase screen with price, terms, TERMS OF USE, PRIVACY POLICY, RESTORE PURCHASES) the Rise hub when season 1 is done (GET RETRO HOOPS PRO), and PLAY ▸ FRANCHISE · PRO, which opens the Pro screen until Pro is owned.
 
 **Status:** written and unit-tested (807 logic tests), compiled against Unity's reference assemblies. Not yet built in Xcode or tested with a sandbox purchase.
 
@@ -26,9 +27,9 @@ App Store Connect ▸ Apps ▸ Retro Hoops ▸ **Monetization ▸ In-App Purchas
 | Type | **Non-Consumable** |
 | Reference Name | Retro Hoops Pro |
 | Product ID | `com.phoronomicstudios.retrohoops.pro` (must match `Pro.ProductId` exactly) |
-| Price | $4.99 (USD, tier). Accept Apple's prices for other countries. |
+| Price | $3.99 (USD, tier). Accept Apple's prices for other countries. |
 | Display name | Retro Hoops Pro |
-| Description (≤ 55) | Rise seasons 4+ and every Hoops Pass item. One time. |
+| Description (≤ 55) | Franchise, Rise seasons 2+ and every Pass item. |
 | Review screenshot | PLAY ▸ RETRO HOOPS PRO (the purchase screen). |
 | Review notes | See below. |
 

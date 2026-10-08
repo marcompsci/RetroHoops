@@ -5,7 +5,7 @@ Questions, a bug, or a problem with a purchase? Email **rodlonbell16@gmail.com**
 ## Common questions
 
 **Is Retro Hoops free?**
-Yes. Every mode, including **LIVE** online games, is free, and everything except Live works offline. The only purchase is the optional **Retro Hoops Pro**, a one-time unlock ($4.99 in the US) for Rise seasons 4 and up and every Hoops Pass item. It isn't a subscription and never renews.
+Yes. Almost everything, including **LIVE** online games, is free, and everything except Live works offline. The only purchase is the optional **Retro Hoops Pro**, a one-time unlock ($3.99 in the US) for FRANCHISE mode, Rise seasons 2 and up and every Hoops Pass item. It isn't a subscription and never renews.
 
 **I bought Retro Hoops Pro on another device. How do I get it here?**
 Open **PLAY ▸ RETRO HOOPS PRO** and tap **RESTORE PURCHASES**, signed in with the same Apple Account.

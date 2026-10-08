@@ -446,7 +446,7 @@ namespace CallerRetroBall.UI
             ProStore.Remember(); // settle the cached Pro answer (and grant its pass items the first time)
             Mode(column, "LIVE", Loc.T("Play people online, free. Rating") + " " + (career.live?.rating ?? LiveMode.StartRating) + "  ·  " + LiveMode.Tier(career.live?.rating ?? LiveMode.StartRating), ShowLive, ButtonStyle.Secondary);
             Mode(column, "RETRO HOOPS PRO", ProStore.Owned ? Loc.T("Unlocked. Thanks for supporting Retro Hoops!")
-                : Loc.T("One-time unlock: Rise seasons 4+ and every Hoops Pass item.") + " " + ProStore.Price, () => ShowPro(ShowPlayMenu), ButtonStyle.Ghost);
+                : Loc.T("One-time unlock: FRANCHISE, Rise seasons 2+ and every Hoops Pass item.") + " " + ProStore.Price, () => ShowPro(ShowPlayMenu), ButtonStyle.Ghost);
 
             Section(column, "PLAY NOW");
             Mode(column, "QUICK CALL", "Pick a team and an opponent. One game. Score and it's still your ball.", ShowQuickCall, ButtonStyle.Primary);
@@ -466,10 +466,15 @@ namespace CallerRetroBall.UI
                 LegacyScreen.Open();
             }, ButtonStyle.Secondary);
             var fr = career.franchise;
-            Mode(column, "FRANCHISE", fr != null && fr.active
+            // 8 Oct: FRANCHISE comes with Retro Hoops Pro; without it the row opens the Pro screen.
+            bool frLocked = Pro.FranchiseLocked(ProStore.Owned);
+            Mode(column, frLocked ? "FRANCHISE  ·  PRO" : "FRANCHISE", frLocked
+                ? Loc.T("Be the GM: trades, free agency, the draft. Comes with Retro Hoops Pro.")
+                : fr != null && fr.active
                 ? "Year " + fr.year + "  ·  " + Franchise.PhaseName(fr.phase).ToLowerInvariant() + "  ·  titles " + fr.titles
                 : "Be the GM: trades, free agency, the draft, season after season.", () =>
             {
+                if (frLocked) { ShowPro(ShowPlayMenu); return; }
                 CloseOverlay();
                 FranchiseScreen.Open();
             }, ButtonStyle.Secondary);
