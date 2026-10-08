@@ -17,15 +17,15 @@ App Store Connect ▸ **Apps ▸ ＋ ▸ New App**:
 | SKU | `retroball-ios-1` |
 | User access | Full access |
 
-Also open **Business** (formerly Agreements, Tax and Banking) and finish anything marked as pending. A free app only needs the Free Apps agreement, which is accepted when you enroll. **The Retro Hoops Live subscription needs the Paid Apps Agreement plus banking and tax** (see `LIVE.md`). If you distribute in the EU, App Store Connect asks you to declare **trader status** (Digital Services Act) before the app can go live there.
+Also open **Business** (formerly Agreements, Tax and Banking) and finish anything marked as pending. A free app only needs the Free Apps agreement, which is accepted when you enroll. **The Retro Hoops Pro in-app purchase needs the Paid Apps Agreement plus banking and tax** (see `LIVE.md`). If you distribute in the EU, App Store Connect asks you to declare **trader status** (Digital Services Act) before the app can go live there.
 
 ## 2. Game Center leaderboards and achievements (once)
 
 Follow `docs/GAME_CENTER.md`. Create every ID in the tables exactly as written. This is optional for TestFlight, but required before the review if you want them live at launch.
 
-## 2b. The Live subscription (once, before the first review)
+## 2b. The Retro Hoops Pro in-app purchase (once, before the first review)
 
-Follow `docs/LIVE.md`. It covers the product ID, the price, the sandbox tester, and submitting the subscription with the version.
+Follow `docs/LIVE.md`. It covers the product ID, the price, the sandbox tester, and submitting the purchase with the version. (Phase 41: Live is free; the old Live subscription isn't sold any more.)
 
 ## 3. Upload a build (every time)
 
@@ -109,4 +109,4 @@ Review usually takes 1–2 days. If Apple rejects it, the message says why. Fix 
 | "No Account for Team" / "No signing certificate" | Xcode ▸ Settings ▸ Accounts: select your Apple ID and check that your paid team (not only "Personal Team") is listed. Then click **Manage Certificates ▸ ＋ ▸ Apple Distribution**. |
 | Missing iCloud, Game Center or In-App Purchase capability | Xcode adds them automatically with `-allowProvisioningUpdates`. If the error persists, open Certificates, Identifiers & Profiles ▸ Identifiers ▸ com.phoronomicstudios.retrohoops and tick **iCloud**, **Game Center** and **In-App Purchase**. |
 | "Error Downloading App Information" (upload step) | Xcode couldn't read the app from App Store Connect. Check that the app record's Bundle ID is `com.phoronomicstudios.retrohoops`, that Business has nothing waiting, and remove and re-add your Apple ID in Xcode ▸ Settings ▸ Accounts. Then double-click `tools/Upload Again (no rebuild).command`. |
-| Swift errors about `RetroStore.swift` in Xcode | Send me the first error. The Live subscription code is Swift (StoreKit 2) and hasn't been through Xcode yet. |
+| Swift errors about `RetroStore.swift` in Xcode | Send me the first error. The purchase code is Swift (StoreKit 2); it compiled in Xcode for the Phase 37–40 builds. |

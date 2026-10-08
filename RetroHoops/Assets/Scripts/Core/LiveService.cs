@@ -5,29 +5,27 @@ using CallerRetroBall.Logic;
 
 namespace CallerRetroBall.Core
 {
-    public enum StoreState { Loading = 0, NotSubscribed = 1, Subscribed = 2, Purchasing = 3, Failed = 4, Pending = 5 }
+    public enum StoreState { Loading = 0, NotOwned = 1, Owned = 2, Purchasing = 3, Failed = 4, Pending = 5 }
 
     /// <summary>
-    /// The Retro Hoops Live subscription (Plugins/iOS/RetroStore.swift, StoreKit 2). The App Store is the
-    /// only judge of whether it's active; the career keeps the last known end date so the menu can show
-    /// the right state straight away. In the Editor a test switch stands in for the App Store.
+    /// Retro Hoops Pro, the one-time unlock (Plugins/iOS/RetroStore.swift, StoreKit 2). The App Store is the only judge
+    /// of whether it's owned; the career keeps the last answer (<see cref="CareerSaveData.proOwned"/>) so the menus are
+    /// right straight away. In the Editor a test switch stands in for the App Store. (Before Phase 41 this was the
+    /// Retro Hoops Live subscription; LIVE is free now.)
     /// </summary>
-    public static class LiveStore
+    public static class ProStore
     {
 #if UNITY_IOS && !UNITY_EDITOR
         [DllImport("__Internal")] private static extern void RetroStore_Start(string productId);
         [DllImport("__Internal")] private static extern int RetroStore_State();
         [DllImport("__Internal")] private static extern string RetroStore_Price();
         [DllImport("__Internal")] private static extern string RetroStore_Error();
-        [DllImport("__Internal")] private static extern double RetroStore_Expires();
         [DllImport("__Internal")] private static extern void RetroStore_Buy();
         [DllImport("__Internal")] private static extern void RetroStore_Restore();
         [DllImport("__Internal")] private static extern void RetroStore_Refresh();
-        [DllImport("__Internal")] private static extern string RetroStore_OriginalTransactionId();
-        [DllImport("__Internal")] private static extern void RetroStore_SetAccountToken(string token);
 #else
-        /// <summary>Editor only: pretend the subscription is active (to try the Live screens).</summary>
-        public static bool EditorSubscribed;
+        /// <summary>Editor only: pretend Pro is owned.</summary>
+        public static bool EditorOwned;
 #endif
         private static bool _started;
 
@@ -36,7 +34,7 @@ namespace CallerRetroBall.Core
             if (_started) return;
             _started = true;
 #if UNITY_IOS && !UNITY_EDITOR
-            RetroStore_Start(LiveMode.ProductId);
+            RetroStore_Start(Pro.ProductId);
 #endif
         }
 
@@ -47,21 +45,21 @@ namespace CallerRetroBall.Core
 #if UNITY_IOS && !UNITY_EDITOR
                 return (StoreState)RetroStore_State();
 #else
-                return EditorSubscribed ? StoreState.Subscribed : StoreState.NotSubscribed;
+                return EditorOwned ? StoreState.Owned : StoreState.NotOwned;
 #endif
             }
         }
 
-        /// <summary>The localised price from the App Store ("$10.99", "£9.99"…), or the fallback while it loads.</summary>
+        /// <summary>The localised price from the App Store ("$4.99", "£4.99"…), or the fallback while it loads.</summary>
         public static string Price
         {
             get
             {
 #if UNITY_IOS && !UNITY_EDITOR
                 string p = RetroStore_Price();
-                return string.IsNullOrEmpty(p) ? LiveMode.PriceFallback : p;
+                return string.IsNullOrEmpty(p) ? Pro.PriceFallback : p;
 #else
-                return LiveMode.PriceFallback;
+                return Pro.PriceFallback;
 #endif
             }
         }
@@ -78,66 +76,26 @@ namespace CallerRetroBall.Core
             }
         }
 
-        /// <summary>Unix seconds when the current period ends (0 if unknown).</summary>
-        public static double Expires
-        {
-            get
-            {
-#if UNITY_IOS && !UNITY_EDITOR
-                return RetroStore_Expires();
-#else
-                return EditorSubscribed ? Now + 30 * 86400 : 0;
-#endif
-            }
-        }
-
-        public static double Now => (System.DateTime.UtcNow - new System.DateTime(1970, 1, 1, 0, 0, 0, System.DateTimeKind.Utc)).TotalSeconds;
-
-        /// <summary>Subscribed right now: the App Store's answer, or the cached end date while it's still loading.</summary>
-        public static bool Active
+        /// <summary>Owned: the App Store's answer, or the career's cached answer while it's still loading or offline.</summary>
+        public static bool Owned
         {
             get
             {
                 var s = State;
-                if (s == StoreState.Subscribed) return true;
-                if (s == StoreState.Loading) return LiveMode.CachedActive(App.Career?.live, Now);
-                return false;
+                if (s == StoreState.Owned) return true;
+                if (s == StoreState.NotOwned) return false;
+                return App.Career != null && App.Career.proOwned;
             }
         }
 
-        /// <summary>Copies the App Store's answer into the career (for the next launch).</summary>
+        /// <summary>Copies the App Store's settled answer into the career (and grants the pass items the first time).</summary>
         public static void Remember()
         {
-            var live = App.Career?.live;
-            if (live == null) return;
+            var d = App.Career;
+            if (d == null) return;
             var s = State;
-            double until = s == StoreState.Subscribed ? Expires : (s == StoreState.NotSubscribed ? 0 : live.subscribedUntil);
-            if (System.Math.Abs(until - live.subscribedUntil) > 1)
-            {
-                live.subscribedUntil = until;
-                App.SaveCareer();
-            }
-        }
-
-        /// <summary>The active subscription's originalTransactionId (what the Live server checks with Apple), or "".</summary>
-        public static string OriginalTransactionId
-        {
-            get
-            {
-#if UNITY_IOS && !UNITY_EDITOR
-                return RetroStore_OriginalTransactionId() ?? "";
-#else
-                return "";
-#endif
-            }
-        }
-
-        /// <summary>Tags future purchases with this player's account token (from the Live server).</summary>
-        public static void SetAccountToken(string token)
-        {
-#if UNITY_IOS && !UNITY_EDITOR
-            if (!string.IsNullOrEmpty(token)) RetroStore_SetAccountToken(token);
-#endif
+            if (s != StoreState.Owned && s != StoreState.NotOwned) return;
+            if (Pro.Apply(d, App.Catalog, s == StoreState.Owned)) App.SaveCareer();
         }
 
         public static void Buy()
@@ -145,7 +103,7 @@ namespace CallerRetroBall.Core
 #if UNITY_IOS && !UNITY_EDITOR
             RetroStore_Buy();
 #else
-            EditorSubscribed = true;
+            EditorOwned = true;
 #endif
         }
 

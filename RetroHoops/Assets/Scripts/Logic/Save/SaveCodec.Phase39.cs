@@ -32,6 +32,17 @@ namespace CallerRetroBall.Logic
             d.loginBest = Math.Max(d.loginStreak, Int(o, "best", 0));
         }
 
+        // Phase 41: Retro Hoops Pro (cached App Store answer).
+        private static object EncodePro(CareerSaveData d) =>
+            new Dictionary<string, object> { ["owned"] = d.proOwned, ["granted"] = d.proGranted };
+
+        private static void DecodePro(CareerSaveData d, Dictionary<string, object> o)
+        {
+            if (o == null) return;
+            d.proOwned = Bool(o, "owned", false);
+            d.proGranted = Bool(o, "granted", false);
+        }
+
         private static object EncodeFeel(SettingsData s)
         {
             s = s ?? new SettingsData();

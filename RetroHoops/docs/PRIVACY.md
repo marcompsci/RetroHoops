@@ -10,11 +10,11 @@ Retro Hoops is made by **Omari Bell** (contact: **rodlonbell16@gmail.com**).
 
 **Game Center (optional).** If you sign in to Game Center, Apple handles your scores, achievements and, for Retro Hoops Live, matchmaking. In a Live game, your opponent's device receives your Game Center display name, your Live rating, your chosen team and your controller input for that game. Typed text is never sent. Apple's privacy policy covers Game Center.
 
-**Retro Hoops Live server.** When Live's ratings server is switched on, Live games use the developer's server (hosted on Cloudflare) to confirm who you are and keep the official ratings. The server stores your Game Center player ID and display name, your Live rating, wins and losses, the scores of your Live games, and a link between your player ID and your subscription's App Store transaction ID. It uses these only to run Live (sign-in, subscription checks, ratings and the leaderboard). It never sells or shares them, and there's no advertising or tracking. Cloudflare processes requests (including your IP address) to deliver them. You can erase this data any time in the game with LIVE ▸ DELETE MY LIVE DATA.
+**Retro Hoops Live server.** The current version doesn't use it (Live ratings stay on each phone). If Live's ratings server is switched on in a later version, Live games use the developer's server (hosted on Cloudflare) to confirm who you are and keep the official ratings. The server stores your Game Center player ID and display name, your Live rating, wins and losses, the scores of your Live games. It uses these only to run Live (sign-in, ratings and the leaderboard). It never sells or shares them, and there's no advertising or tracking. Cloudflare processes requests (including your IP address) to deliver them. You can erase this data any time in the game with LIVE ▸ DELETE MY LIVE DATA.
 
 **Two phones nearby.** When you play 2 Player on two phones, the game connects them directly over Wi-Fi or Bluetooth (Apple's Multipeer Connectivity). Only game data and the device name you see on screen are exchanged. Nothing goes over the internet.
 
-**Purchases.** The Retro Hoops Live subscription is sold and managed by Apple. The developer receives no payment details. Manage or cancel it in Settings ▸ your name ▸ Subscriptions.
+**Purchases.** Retro Hoops Pro, a one-time purchase, is sold by Apple. The developer receives no payment details.
 
 **Children.** Retro Hoops doesn't knowingly collect personal information from anyone, including children.
 

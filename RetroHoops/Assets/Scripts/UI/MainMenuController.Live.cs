@@ -7,19 +7,12 @@ using UnityEngine.UI;
 
 namespace CallerRetroBall.UI
 {
-    /// <summary>PLAY ► LIVE: the Retro Hoops Live subscription screen, and online matchmaking once subscribed.</summary>
+    /// <summary>PLAY ► LIVE: free online matchmaking through Game Center (Phase 41: no subscription).</summary>
     public sealed partial class MainMenuController
     {
         private void ShowLive()
         {
             FirstVisit(Tours.Live);
-            LiveStore.EnsureStarted();
-            if (!LiveStore.Active)
-            {
-                ShowLivePaywall();
-                return;
-            }
-            LiveStore.Remember();
             var c = App.Catalog;
             var career = App.Career;
             var live = career.live ?? (career.live = new LiveSaveData());
@@ -66,10 +59,9 @@ namespace CallerRetroBall.UI
                                            + live.seasonGames + "/" + LiveSeason.MinGames + " GAMES TO QUALIFY", 26f, Theme.Muted, TextAlignmentOptions.Center, true), 44f);
             if (signedIn)
                 UiKit.Button(column, "FRIENDS THIS MONTH", () => App.GameCenter.ShowLeaderboard(LiveMode.MonthlyLeaderboardId, true), ButtonStyle.Secondary, 90f, 30f);
-            UiKit.Button(column, "MANAGE SUBSCRIPTION", () => Application.OpenURL(LiveMode.ManageUrl), ButtonStyle.Ghost, 80f, 28f);
             if (BackendConfig.Enabled)
                 UiKit.Button(column, "DELETE MY LIVE DATA", () => UiControls.Dialog("DELETE LIVE DATA",
-                    "Erase your Live rating, record and subscription link from the Retro Hoops server? Your subscription stays active.",
+                    "Erase your Live rating and record from the Retro Hoops server?",
                     ("DELETE", ButtonStyle.Primary, () => BackendClient.DeleteMyData(ok =>
                     {
                         if (ok) { live.rating = live.best = LiveMode.StartRating; live.wins = live.losses = live.games = 0; App.SaveCareer(); }
@@ -125,36 +117,7 @@ namespace CallerRetroBall.UI
             LiveLink.ListenForInvites();
             if (!LiveLink.TakeInvite()) return;
             _joinInvite = true;
-            ShowLive(); // the paywall shows instead if there's no subscription; the invite then lapses
-            if (!LiveStore.Active) { _joinInvite = false; LiveLink.Stop(); }
-        }
-
-        private void ShowLivePaywall()
-        {
-            var column = OpenOverlay("RETRO HOOPS LIVE", out var footer);
-            UiKit.Size(UiKit.Label(column,
-                "• Play real people online, head to head\n• A Live rating with tiers, from ROOKIE to LEGEND, and a Game Center leaderboard\n• Bring any league team; opponents are matched on the same game version\n• Everything else in Retro Hoops stays free and offline",
-                30f, Theme.Cream), 260f);
-            var price = UiKit.Label(column, LiveStore.Price + " / MONTH", 48f, Theme.Gold, TextAlignmentOptions.Center, true);
-            UiKit.Size(price, 80f);
-            var status = UiKit.Label(column, "", 28f, Theme.Muted, TextAlignmentOptions.Center);
-            UiKit.Size(status, 90f);
-            var terms = UiKit.Label(column, LiveMode.Terms(LiveStore.Price), 22f, Theme.Muted);
-            UiKit.Size(terms, 220f);
-            var links = UiKit.Row(column, 16f, "Links");
-            UiKit.Size(links, 90f);
-            UiKit.Button(links, "TERMS OF USE", () => Application.OpenURL(LiveMode.TermsOfUseUrl), ButtonStyle.Ghost, 80f, 26f);
-            UiKit.Button(links, "PRIVACY POLICY", () => Application.OpenURL(LiveMode.PrivacyPolicyUrl), ButtonStyle.Ghost, 80f, 26f);
-            UiKit.Button(column, "RESTORE PURCHASES", () => { LiveStore.Restore(); status.text = "Checking with the App Store…"; }, ButtonStyle.Ghost, 90f, 30f);
-
-            UiKit.Button(footer, "BACK", ShowPlayMenu, ButtonStyle.Ghost, 130f, 44f);
-            UiKit.Button(footer, "SUBSCRIBE", () => { LiveStore.Buy(); status.text = "Opening the App Store…"; }, ButtonStyle.Primary, 130f);
-
-            var watcher = column.gameObject.AddComponent<PaywallWatcher>();
-            watcher.Price = price;
-            watcher.Terms = terms;
-            watcher.Status = status;
-            watcher.OnSubscribed = ShowLive;
+            ShowLive();
         }
     }
 
@@ -182,7 +145,7 @@ namespace CallerRetroBall.UI
                     Find.interactable = false;
                     break;
                 case BackendState.Ready:
-                    if (!BackendClient.SubscriptionActive)
+                    if (!Pro.LiveIsFree && !BackendClient.SubscriptionActive)
                     {
                         Status.text = "<color=#FF6B6B>The Live server couldn't confirm your subscription with Apple. Try RESTORE PURCHASES, then come back.</color>";
                         Find.interactable = false;
@@ -201,11 +164,11 @@ namespace CallerRetroBall.UI
         }
     }
 
-    /// <summary>Keeps the paywall in step with the App Store (price, purchase progress) and moves on once subscribed.</summary>
-    public sealed class PaywallWatcher : MonoBehaviour
+    /// <summary>Keeps the Retro Hoops Pro screen in step with the App Store (price, purchase progress) and moves on once owned.</summary>
+    public sealed class ProWatcher : MonoBehaviour
     {
         public TextMeshProUGUI Price, Terms, Status;
-        public Action OnSubscribed;
+        public Action OnOwned;
         private string _lastPrice;
         private StoreState _last = (StoreState)(-1);
         private bool _done;
@@ -213,27 +176,30 @@ namespace CallerRetroBall.UI
         private void Update()
         {
             if (_done) return;
-            string p = LiveStore.Price;
+            string p = ProStore.Price;
             if (p != _lastPrice)
             {
                 _lastPrice = p;
-                Price.text = p + " / MONTH";
-                Terms.text = LiveMode.Terms(p);
+                Price.text = p + "  ·  " + Loc.T("ONE TIME");
+                Terms.text = Pro.Terms(p);
             }
-            var s = LiveStore.State;
+            var s = ProStore.State;
             if (s == _last) return;
             _last = s;
             switch (s)
             {
-                case StoreState.Subscribed:
+                case StoreState.Owned:
                     _done = true;
-                    LiveStore.Remember();
-                    OnSubscribed?.Invoke();
+                    ProStore.Remember();
+                    OnOwned?.Invoke();
                     break;
-                case StoreState.Purchasing: Status.text = "Waiting for the App Store…"; break;
-                case StoreState.Pending: Status.text = "Waiting for approval (Ask to Buy). Live opens as soon as it's approved."; break;
-                case StoreState.Failed: Status.text = "<color=#FF6B6B>" + (string.IsNullOrEmpty(LiveStore.Error) ? "The purchase didn't go through." : LiveStore.Error) + "</color>"; break;
-                case StoreState.NotSubscribed: if (Status.text.StartsWith("Checking", StringComparison.Ordinal)) Status.text = "No active subscription found on this Apple Account."; break;
+                case StoreState.Purchasing: Status.text = Loc.T("Waiting for the App Store…"); break;
+                case StoreState.Pending: Status.text = Loc.T("Waiting for approval (Ask to Buy). Pro unlocks as soon as it's approved."); break;
+                case StoreState.Failed: Status.text = "<color=#FF6B6B>" + (string.IsNullOrEmpty(ProStore.Error) ? Loc.T("The purchase didn't go through.") : ProStore.Error) + "</color>"; break;
+                case StoreState.NotOwned:
+                    ProStore.Remember();
+                    if (Status.text.StartsWith(Loc.T("Checking"), StringComparison.Ordinal)) Status.text = Loc.T("No Retro Hoops Pro purchase found on this Apple Account.");
+                    break;
             }
         }
     }

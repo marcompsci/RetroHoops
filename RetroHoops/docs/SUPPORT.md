@@ -5,13 +5,13 @@ Questions, a bug, or a problem with a purchase? Email **rodlonbell16@gmail.com**
 ## Common questions
 
 **Is Retro Hoops free?**
-Yes. Every mode works offline at no cost. The only purchase is the optional **Retro Hoops Live** monthly subscription for online games against other players.
+Yes. Every mode, including **LIVE** online games, is free, and everything except Live works offline. The only purchase is the optional **Retro Hoops Pro**, a one-time unlock ($4.99 in the US) for Rise seasons 4 and up and every Hoops Pass item. It isn't a subscription and never renews.
 
-**How do I cancel Retro Hoops Live?**
-On your iPhone or iPad open **Settings ▸ your name ▸ Subscriptions ▸ Retro Hoops Live** and tap Cancel Subscription. It stays active until the end of the period you paid for.
+**I bought Retro Hoops Pro on another device. How do I get it here?**
+Open **PLAY ▸ RETRO HOOPS PRO** and tap **RESTORE PURCHASES**, signed in with the same Apple Account.
 
-**I bought Live on another device. How do I get it here?**
-Open **PLAY ▸ LIVE** and tap **RESTORE PURCHASES**, signed in with the same Apple Account.
+**I want a refund.**
+Purchases are handled by Apple: go to reportaproblem.apple.com.
 
 **How do I delete my Live data?**
 In the game: **PLAY ▸ LIVE ▸ DELETE MY LIVE DATA**. This erases your Live rating, results and player link from the Live server. Your offline career on the device isn't affected.

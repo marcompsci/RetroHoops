@@ -70,7 +70,7 @@ Apple's specs below were checked against App Store Connect Help in October 2026.
 | 13–17 s | COUCH CUP bracket ▸ 2 PHONES, then the next game's tip-off card | Run a Couch Cup. |
 | 17–22 s | LIVE: rating and tier, INVITE A FRIEND, a Live game's final buzzer | Play anyone. Climb to Legend. |
 | 22–26 s | GAME TAPES: a tape playing, tap to 2x, the PLAY OF THE GAME | Save every big game. |
-| 26–30 s | The Lighthouse Keepers' scene, then the logo | Retro Hoops. Live is an optional subscription. |
+| 26–30 s | The Lighthouse Keepers' scene, then the logo | Retro Hoops. Free to play, Live included. |
 
 Record each phone's screen separately in its own Simulator or with QuickTime from a real device. Don't film the
 phones themselves: Apple wants app footage only.

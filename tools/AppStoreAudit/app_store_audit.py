@@ -58,12 +58,21 @@ for key in ("ITSAppUsesNonExemptEncryption", "NSLocalNetworkUsageDescription", "
     check("Info.plist sets " + key, key in post)
 check("GameKit friends list never read (no NSGKFriendListUsageDescription needed)", "loadFriends" not in plugins or "NSGKFriendListUsageDescription" in post)
 
-# 4. Subscription paywall (guideline 3.1.2).
+# 4. The one purchase: Retro Hoops Pro, a one-time unlock (guidelines 3.1.1 and 3.1.2 no longer apply: no subscription).
 paywall = read("Assets", "Scripts", "UI", "MainMenuController.Live.cs")
-for label in ("TERMS OF USE", "PRIVACY POLICY", "RESTORE PURCHASES", "MANAGE SUBSCRIPTION"):
-    check("Live paywall shows " + label, '"' + label + '"' in paywall)
-check("Subscription terms text mentions auto-renew and cancelling", "renews automatically" in live and "cancel" in live.lower())
+proui = read("Assets", "Scripts", "UI", "MainMenuController.Pro.cs")
+pro = read("Assets", "Scripts", "Logic", "Progression", "Pro.cs")
+store = read("Assets", "Scripts", "Core", "LiveService.cs")
+for label in ("TERMS OF USE", "PRIVACY POLICY", "RESTORE PURCHASES"):
+    check("Pro purchase screen shows " + label, '"' + label + '"' in proui)
+check("Pro terms say one-time and not a subscription", "one-time purchase" in pro and "isn't a subscription" in pro)
+check("Store starts the Pro product (non-consumable id)", "RetroStore_Start(Pro.ProductId)" in store and 'ProductId = "com.phoronomicstudios.retrohoops.pro"' in pro)
+check("LIVE has no paywall (free in v1)", "ShowLivePaywall" not in paywall and "LiveIsFree = true" in pro)
 check("Live data can be deleted in the app (guideline 5.1.1(v))", '"DELETE MY LIVE DATA"' in paywall)
+backend = read("Assets", "Scripts", "Logic", "Net", "Backend.cs")
+server_off = 'public const string Url = "";' in backend
+check("Privacy manifest's collected data matches the Live server switch (off = none collected)",
+      (len(manifest.get("NSPrivacyCollectedDataTypes", [])) == 0) == server_off)
 
 # 5. No debug-only features in release builds.
 settings = read("Assets", "Scripts", "UI", "SettingsController.cs")

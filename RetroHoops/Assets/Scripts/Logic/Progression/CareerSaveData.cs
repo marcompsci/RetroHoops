@@ -277,6 +277,8 @@ namespace CallerRetroBall.Logic
         public ClutchSaveData clutch = new ClutchSaveData();
         /// <summary>Phase 39 welcome-back bonus: last day claimed, days in a row, best run.</summary>
         public int loginDay = -1, loginStreak, loginBest;
+        /// <summary>Phase 41: last App Store answer for Retro Hoops Pro (a cache; the App Store decides), and whether its pass items were granted.</summary>
+        public bool proOwned, proGranted;
         /// <summary>Tournament Builder: the tournament in progress and titles.</summary>
         public CustomCupSaveData customCup = new CustomCupSaveData();
         /// <summary>This week's Weekly Challenges progress.</summary>

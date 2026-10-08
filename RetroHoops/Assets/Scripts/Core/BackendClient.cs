@@ -61,15 +61,9 @@ namespace CallerRetroBall.Core
             if (!r.Ok) { Fail(r.Message("Couldn't sign in to Retro Hoops Live.")); yield break; }
             _token = Backend.Str(r.Json, "token");
             _tokenUntil = Time.unscaledTime + (float)Backend.Num(r.Json, "expiresIn", 3600) - 120f;
-            LiveStore.SetAccountToken(Backend.Str(r.Json, "accountToken"));
             Player = Backend.ReadPlayer(Backend.Obj(r.Json, "player"));
 
-            string txn = LiveStore.OriginalTransactionId;
-            if (!string.IsNullOrEmpty(txn))
-            {
-                yield return Send("POST", "/v1/subscription", Backend.SubscriptionBody(txn), true, x => r = x);
-                if (r.Status == 403) { Fail(r.Message("This subscription belongs to another Game Center player.")); yield break; }
-            }
+            // Phase 41: LIVE is free (Pro.LiveIsFree), so no subscription is linked to the player any more.
             yield return Send("GET", "/v1/me", null, true, x => r = x);
             if (!r.Ok) { Fail(r.Message("Couldn't reach Retro Hoops Live.")); yield break; }
             Player = Backend.ReadPlayer(Backend.Obj(r.Json, "player"));

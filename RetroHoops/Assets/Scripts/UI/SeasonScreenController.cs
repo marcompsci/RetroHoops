@@ -139,6 +139,14 @@ namespace CallerRetroBall.UI
 
                 UiKit.Button(_content, "PLAY NEXT", () => Play(next), ButtonStyle.Primary, 150f);
             }
+            else if (r.stage == RiseStage.Complete && Pro.NextSeasonLocked(r, ProStore.Owned))
+            {
+                // Phase 41: seasons 1-3 are free; season 4 and up (nine more rival crews) come with Retro Hoops Pro.
+                UiKit.Size(UiKit.Label(_content, Loc.T("Season") + " " + (r.seasonsPlayed + 1) + ": " +
+                                       Loc.T("nine more rival crews are waiting. Seasons 4 and up come with Retro Hoops Pro, a one-time unlock."),
+                                       30f, Theme.Cream, TextAlignmentOptions.Center), 110f);
+                UiKit.Button(_content, "GET RETRO HOOPS PRO", () => { App.OpenProOnMenu = true; SceneFlow.GoTo(SceneNames.MainMenu); }, ButtonStyle.Primary, 150f);
+            }
             else if (r.stage == RiseStage.Complete)
             {
                 UiKit.Button(_content, "START NEXT SEASON", StartNextSeason, ButtonStyle.Primary, 150f);
@@ -211,6 +219,7 @@ namespace CallerRetroBall.UI
         {
             var career = App.Career;
             var c = App.Catalog;
+            if (Pro.NextSeasonLocked(career.rise, ProStore.Owned)) { Rebuild(); return; }
             var report = DynastyEngine.OffSeason(career, c);
             if (report == null)
             {

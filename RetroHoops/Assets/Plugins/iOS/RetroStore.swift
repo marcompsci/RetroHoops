@@ -1,11 +1,12 @@
-// Retro Hoops — App Store subscription bridge (original code), StoreKit 2.
+// Retro Hoops — App Store purchase bridge (original code), StoreKit 2.
 // Called from C# via [DllImport("__Internal")] through the @_cdecl functions at the bottom.
-// One product: the Retro Hoops Live monthly auto-renewing subscription. The App Store decides
-// whether it's active (Transaction.currentEntitlements); nothing is stored on any server of ours.
+// One product (Phase 41): Retro Hoops Pro, a one-time non-consumable unlock. (It was the Live monthly
+// subscription before; the code handles both.) The App Store decides whether it's owned
+// (Transaction.currentEntitlements); nothing is stored on any server of ours.
 import Foundation
 import StoreKit
 
-// State codes read by C#: 0 loading, 1 not subscribed, 2 subscribed, 3 purchasing, 4 failed, 5 pending (Ask to Buy).
+// State codes read by C#: 0 loading, 1 not owned, 2 owned, 3 purchasing, 4 failed, 5 pending (Ask to Buy).
 private let kLoading: Int32 = 0
 private let kNotSubscribed: Int32 = 1
 private let kSubscribed: Int32 = 2
@@ -105,7 +106,7 @@ private final class RetroStoreModel {
 
     func buy() {
         guard let p = product else {
-            apply(state: kFailed, error: "The App Store didn't return the subscription. Check your connection and try again.")
+            apply(state: kFailed, error: "The App Store didn't return Retro Hoops Pro. Check your connection and try again.")
             return
         }
         apply(state: kPurchasing, error: "")

@@ -66,7 +66,7 @@ namespace CallerRetroBall.EditorTools
             proj.ReadFromFile(projPath);
             proj.AddFrameworkToProject(proj.GetUnityFrameworkTargetGuid(), "GameKit.framework", false);
             proj.AddFrameworkToProject(proj.GetUnityFrameworkTargetGuid(), "MultipeerConnectivity.framework", false);
-            // Retro Hoops Live: StoreKit 2 (RetroStore.swift) for the subscription, GameKit matchmaking (RetroLive.mm).
+            // StoreKit 2 (RetroStore.swift) for the Retro Hoops Pro unlock (Phase 41), GameKit matchmaking for Live (RetroLive.mm).
             string fw = proj.GetUnityFrameworkTargetGuid();
             proj.AddFrameworkToProject(fw, "StoreKit.framework", false);
             proj.AddFrameworkToProject(fw, "Security.framework", false); // RetroKeychain.mm (the save file's key)

@@ -472,6 +472,28 @@ namespace CallerRetroBall.Logic
             ["WEEKLY & PASS"] = "SEMANALES Y PASE", ["BEST STREAK"] = "MEJOR RACHA", ["CURRENT STREAK"] = "RACHA ACTUAL",
             ["LANDSCAPE: ALL GAMES"] = "HORIZONTAL: TODOS LOS PARTIDOS", ["COMMENTARY (MIC TALLY)"] = "COMENTARIOS (MIC TALLY)",
             ["SMART DIFFICULTY (RISE)"] = "DIFICULTAD INTELIGENTE (ASCENSO)",
+            // Phase 41: Retro Hoops Pro (one-time unlock) and free Live.
+            ["RETRO HOOPS PRO"] = "RETRO HOOPS PRO", ["PRO UNLOCKED"] = "PRO DESBLOQUEADO", ["UNLOCK PRO"] = "DESBLOQUEAR PRO",
+            ["GET RETRO HOOPS PRO"] = "CONSIGUE RETRO HOOPS PRO", ["ONE TIME"] = "PAGO ÚNICO",
+            ["Play people online, free. Rating"] = "Juega en línea contra gente, gratis. Puntuación",
+            ["Unlocked. Thanks for supporting Retro Hoops!"] = "Desbloqueado. ¡Gracias por apoyar Retro Hoops!",
+            ["One-time unlock: Rise seasons 4+ and every Hoops Pass item."] = "Desbloqueo único: temporadas 4+ de Ascenso y todos los objetos del Hoops Pass.",
+            ["Thanks for supporting Retro Hoops! Rise seasons 4 and up are open, and every Hoops Pass item is in your locker."]
+                = "¡Gracias por apoyar Retro Hoops! Las temporadas 4 en adelante de Ascenso están abiertas y todos los objetos del Hoops Pass están en tu vestuario.",
+            ["Rise seasons 4 and up: nine more rival crews, their stories, courts and badges"] = "Temporadas 4 en adelante de Ascenso: nueve crews rivales más, con sus historias, canchas e insignias",
+            ["Every Hoops Pass item now: jerseys, shoes, banners, celebrations and the Skyline dunk"] = "Todos los objetos del Hoops Pass ya: camisetas, zapatillas, pancartas, celebraciones y el mate Skyline",
+            ["One payment, yours for good, on every device with your Apple Account"] = "Un solo pago, para siempre, en todos tus dispositivos con tu cuenta de Apple",
+            ["Supports a one-person studio. No ads, ever"] = "Apoya a un estudio de una sola persona. Sin anuncios, nunca",
+            ["Waiting for the App Store…"] = "Esperando al App Store…", ["Opening the App Store…"] = "Abriendo el App Store…",
+            ["Checking with the App Store…"] = "Comprobando con el App Store…", ["Checking"] = "Comprobando",
+            ["Waiting for approval (Ask to Buy). Pro unlocks as soon as it's approved."] = "Esperando aprobación (Solicitar compra). Pro se desbloquea en cuanto se apruebe.",
+            ["The purchase didn't go through."] = "La compra no se completó.",
+            ["No Retro Hoops Pro purchase found on this Apple Account."] = "No hay ninguna compra de Retro Hoops Pro en esta cuenta de Apple.",
+            ["nine more rival crews are waiting. Seasons 4 and up come with Retro Hoops Pro, a one-time unlock."]
+                = "te esperan nueve crews rivales más. Las temporadas 4 en adelante vienen con Retro Hoops Pro, un desbloqueo único.",
+            ["Play people anywhere over the internet with your own team. Wins and losses move your Live rating. Free: Game Center finds you an opponent."]
+                = "Juega contra gente de cualquier lugar por internet con tu propio equipo. Las victorias y derrotas mueven tu puntuación Live. Gratis: Game Center te busca rival.",
+            ["Season"] = "Temporada",
             ["SCOUTED: THEY'RE CROWDING YOUR JUMPER"] = "TE TIENEN ESTUDIADO: TE CIERRAN EL TIRO",
             ["SCOUTED: THEY'RE WALLING OFF THE DRIVE"] = "TE TIENEN ESTUDIADO: TE CIERRAN LA PENETRACIÓN",
             ["HIGHLIGHTS"] = "MEJORES JUGADAS", ["SHARE RESULT"] = "COMPARTIR RESULTADO",

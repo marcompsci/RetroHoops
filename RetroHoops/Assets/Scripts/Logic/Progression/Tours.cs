@@ -21,7 +21,7 @@ namespace CallerRetroBall.Logic
         public static readonly TourCard TwoPhones = new TourCard("tour.two_phones", "TWO PHONES",
             "Each player on their own iPhone, side by side. One phone hosts and picks both teams; the other joins. No internet needed, just Wi-Fi or Bluetooth on.");
         public static readonly TourCard Live = new TourCard("tour.live", "RETRO HOOPS LIVE",
-            "Play people anywhere over the internet with your own team. Wins and losses move your Live rating. It's a monthly subscription you can cancel any time in iOS Settings.");
+            "Play people anywhere over the internet with your own team. Wins and losses move your Live rating. Free: Game Center finds you an opponent.");
         public static readonly TourCard Couch = new TourCard("tour.couch", "COUCH CUP",
             "A knockout for 2 to 8 friends. Type everyone's name, pick teams, and the bracket says who's up. Pass one phone around, or use 2 PHONES.");
         public static readonly TourCard Watch = new TourCard("tour.watch", "WATCH A GAME",

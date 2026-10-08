@@ -12,7 +12,7 @@ Draft metadata and answers for App Store Connect. Character counts are checked a
 | SKU | `retroball-ios-1` (any unique string) |
 | Primary category | Games ▸ Sports |
 | Secondary category | Games ▸ Arcade |
-| Price | Free. One optional in-app purchase: the Retro Hoops Live monthly subscription (see `LIVE.md`). |
+| Price | Free. One optional in-app purchase: **Retro Hoops Pro**, a one-time $4.99 non-consumable unlock (see `LIVE.md`). |
 | Version | 1.0.0 (build 1). Raise the build number for every upload. |
 
 ## Promotional text (170)
@@ -35,8 +35,11 @@ Draft metadata and answers for App Store Connect. Character counts are checked a
 > **PLAY YOUR FRIENDS**
 > Head to head on one iPhone laid flat between you, on two phones nearby with no internet needed, or in a Couch Cup tournament for up to 8 friends, on one phone or across two. Friends nearby can WATCH A GAME live on a third phone, and every two-phone, Live or watched game can be saved as a GAME TAPE to replay exactly or send to a friend.
 >
-> **RETRO HOOPS LIVE (subscription)**
-> Play people online through Game Center, or invite a Game Center friend, and climb from Rookie to Legend. Rematch without leaving, and chase the monthly leaderboard. Retro Hoops Live is an optional monthly subscription. Everything else is free.
+> **RETRO HOOPS LIVE (free)**
+> Play people online through Game Center, or invite a Game Center friend, and climb from Rookie to Legend. Rematch without leaving, and chase the monthly leaderboard.
+>
+> **RETRO HOOPS PRO (optional, one time)**
+> One purchase: Rise seasons 4+ and every Hoops Pass item.
 >
 > **FRANCHISE**
 > Be the GM of a league club, season after season. Set the rotation, trade with seven other GMs (who call you with offers too), pick a training focus, re-sign your players, chase free agents under the salary cap, scout prospects, and win the draft lottery. Players age, improve, decline, and retire into the Hall of Fame. Play every game Full Court 5-on-5, or simulate.
@@ -77,7 +80,7 @@ Draft metadata and answers for App Store Connect. Character counts are checked a
 > • Optional Game Center and iCloud save sync
 >
 > **MADE TO RESPECT YOUR TIME**
-> Everything except Live works offline. No account, no ads, no tracking. The only purchase is the optional Live subscription.
+> Everything except Live works offline. No account, no ads, no tracking. The only purchase is the optional one-time Retro Hoops Pro unlock.
 >
 > All teams, players, courts, art and music are original.
 
@@ -100,7 +103,7 @@ Add **Spanish (Mexico)** as a localization in App Store Connect and paste these.
 >
 > Modo Franquicia (traspasos, agencia libre, draft y tope salarial), Fin de Semana de las Estrellas con concurso de clavadas y de triples, Cancha completa 5 contra 5, constructor de canchas, estudio de uniformes y nueve temas chiptune originales. Modo Ascenso, Escalera Arcade con jefe secreto, Rey de la Cancha, la Caller Cup, 1 contra 1, Reto Diario y 2 jugadores en un dispositivo. Crea tu jugador y tu propio equipo, descubre códigos secretos y llena tu sala de trofeos.
 >
-> Controles táctiles o mando Bluetooth. Todo funciona sin conexión salvo Live. Sin cuenta, sin anuncios y sin rastreo; la única compra es la suscripción opcional a Live. Todo el contenido es original.
+> Controles táctiles o mando Bluetooth. Todo funciona sin conexión salvo Live. Sin cuenta, sin anuncios y sin rastreo; la única compra es Retro Hoops Pro, un desbloqueo opcional de pago único. Todo el contenido es original.
 
 ## Keywords (100)
 
@@ -124,10 +127,9 @@ The full text is in [`PRIVACY.md`](PRIVACY.md). It covers Live and two-phone pla
 
 ## App Privacy ("nutrition label")
 
-- **Data collection depends on whether the Live server is switched on** (`BackendConfig.Url`, see `server/README.md`). Re-read Apple's definitions before you submit, because this is your declaration, not mine.
-  - **Server off** (Url empty, Live ratings kept on each phone): nothing reaches the developer. Matchmaking and purchases go through Apple, and a player's Game Center name and rating go only to the opponent's device. That would be **Data Not Collected**, but `PrivacyInfo.xcprivacy` (since Phase 28) declares User ID and Gameplay Content, so for a server-off build either remove those two entries from the manifest or answer as below.
-  - **Server on:** answer **Yes**. Collected: **Identifiers ▸ User ID** (the Game Center team player ID) and **Usage Data ▸ Other / Gameplay Content** (Live results and rating). Both are **linked to the user**, **not used for tracking**, and the purpose is **App Functionality**. This matches the manifest. Game Center names on the leaderboard count too; Players can erase their data with LIVE ▸ DELETE MY LIVE DATA.
-- **Tracking:** none. `PrivacyInfo.xcprivacy` (in `Assets/Plugins/iOS`) declares no tracking and no tracking domains; it lists User ID and Gameplay Content (Live) as collected, and the System Boot Time API (reason 35F9.1, used for frame timing). Unity's engine framework ships its own privacy manifest.
+- **Version 1 (Phase 41): Data Not Collected.** The Live ratings server is switched off (`BackendConfig.Url` is empty), Live matchmaking goes through Apple's Game Center, purchases through the App Store, and iCloud sync through Apple. Nothing reaches the developer, and `PrivacyInfo.xcprivacy` declares no collected data. Re-read Apple's definitions before you submit, because this is your declaration.
+- **If the server is switched on later:** answer **Yes**: **Identifiers ▸ User ID** (Game Center team player ID) and **Usage Data ▸ Other / Gameplay Content** (Live results and rating), both **linked to the user**, **not used for tracking**, purpose **App Functionality**. Add the same two entries back to the manifest (the App Store audit checks they match).
+- **Tracking:** none. The manifest declares no tracking and no tracking domains; it lists the System Boot Time API (reason 35F9.1, used for frame timing). Unity's engine framework ships its own privacy manifest.
 
 ## Age rating questionnaire
 
@@ -139,7 +141,7 @@ Answer **None** to everything: violence, sexual content, profanity, drugs, horro
 | User-generated content | No. Typed nicknames are never sent online. Live opponents see only each other's Game Center name. |
 | Online play with other people | Yes, Live (Game Center matchmaking). There's no chat or messaging. |
 | Messaging or chat | No |
-| In-app purchases | **Yes**: Retro Hoops Live, an auto-renewing monthly subscription (see `LIVE.md`) |
+| In-app purchases | **Yes**: Retro Hoops Pro, a one-time non-consumable unlock (see `LIVE.md`) |
 | Advertising | No |
 
 The expected rating is the lowest (4+). Apple updated the questionnaire in 2025 (new 13+/16+/18+ tiers and questions about in-app controls and age assurance); answer those as None / No for this game, and re-read each question when you fill it in.
@@ -188,4 +190,4 @@ Only show real gameplay. Don't add device frames that show non-Apple hardware, a
 
 ## App Review notes (paste into "Notes")
 
-> No login of our own and no ads. One optional auto-renewing subscription, Retro Hoops Live ($10.99/month), unlocks online head-to-head games through Game Center (PLAY ▸ LIVE; details in the subscription's review notes). Everything else is free and works offline. Optional Apple services only: Game Center (Settings ▸ Game Center) and iCloud save sync (Settings ▸ iCloud Sync). All content is original and generated procedurally. To see the main modes quickly: Main menu ▸ PLAY ▸ FRANCHISE (START FRANCHISE, then SIM GAME or PLAY GAME) and PLAY ▸ ALL-STAR CONTESTS ▸ DUNK CONTEST. Rise Mode: Main menu ▸ RISE MODE ▸ PLAY NEXT.
+> No login of our own and no ads. LIVE online play is free (Game Center matchmaking; a match needs a second device with another Game Center account). One optional in-app purchase, Retro Hoops Pro (non-consumable, $4.99), unlocks Rise seasons 4 and up and every Hoops Pass cosmetic: PLAY ▸ RETRO HOOPS PRO (Restore Purchases is on that screen). Everything else is free and works offline. Optional Apple services only: Game Center (Settings ▸ Game Center) and iCloud save sync (Settings ▸ iCloud Sync). All content is original and generated procedurally. To see the main modes quickly: Main menu ▸ PLAY ▸ FRANCHISE (START FRANCHISE, then SIM GAME or PLAY GAME) and PLAY ▸ ALL-STAR CONTESTS ▸ DUNK CONTEST. Rise Mode: Main menu ▸ RISE MODE ▸ PLAY NEXT.

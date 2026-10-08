@@ -2,8 +2,10 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <!--
   Privacy manifest for Retro Hoops' own code (the game scripts and the iOS plugins).
-  No tracking. Retro Hoops Live's server (server/, when BackendConfig.Url is set) stores the player's Game Center
-  id (User ID) and their Live game results and rating (Gameplay Content), linked to the player, only to run Live.
+  No tracking, and (Phase 41, v1) no data collected: the Retro Hoops Live server is switched off (BackendConfig.Url is
+  empty), Live matchmaking goes through Apple's Game Center, and the purchase through the App Store. If the server is
+  ever switched on, declare User ID and Gameplay Content here again (linked, not tracking, App Functionality) and
+  update the App Privacy answers; tools/AppStoreAudit checks the two stay in step.
   Required-reason APIs in the game's own code: elapsed-time clocks (Environment.TickCount / Stopwatch for random seeds and
   frame-time budgets), declared below as System Boot Time, reason 35F9.1. The Unity engine ships its own manifest.
 -->
@@ -14,32 +16,7 @@
 	<key>NSPrivacyTrackingDomains</key>
 	<array/>
 	<key>NSPrivacyCollectedDataTypes</key>
-	<array>
-		<dict>
-			<key>NSPrivacyCollectedDataType</key>
-			<string>NSPrivacyCollectedDataTypeUserID</string>
-			<key>NSPrivacyCollectedDataTypeLinked</key>
-			<true/>
-			<key>NSPrivacyCollectedDataTypeTracking</key>
-			<false/>
-			<key>NSPrivacyCollectedDataTypePurposes</key>
-			<array>
-				<string>NSPrivacyCollectedDataTypePurposeAppFunctionality</string>
-			</array>
-		</dict>
-		<dict>
-			<key>NSPrivacyCollectedDataType</key>
-			<string>NSPrivacyCollectedDataTypeGameplayContent</string>
-			<key>NSPrivacyCollectedDataTypeLinked</key>
-			<true/>
-			<key>NSPrivacyCollectedDataTypeTracking</key>
-			<false/>
-			<key>NSPrivacyCollectedDataTypePurposes</key>
-			<array>
-				<string>NSPrivacyCollectedDataTypePurposeAppFunctionality</string>
-			</array>
-		</dict>
-	</array>
+	<array/>
 	<key>NSPrivacyAccessedAPITypes</key>
 	<array>
 		<dict>

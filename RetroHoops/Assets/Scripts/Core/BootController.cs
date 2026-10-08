@@ -41,7 +41,7 @@ namespace CallerRetroBall.Core
             StoreShots.Current = StoreShots.Parse(System.Environment.GetEnvironmentVariable(StoreShots.Variable));
             UiKit.CheckTextMeshProReady();
             // Start listening to the App Store early (renewals and purchases from other devices arrive any time).
-            LiveStore.EnsureStarted();
+            ProStore.EnsureStarted();
             // Startup timing in the device log (Xcode console), for keeping launch fast.
             Debug.Log("[Retro Hoops] Boot: title shown at " + Mathf.RoundToInt(started * 1000f) + " ms after launch, content + save loaded in "
                       + Mathf.RoundToInt((Time.realtimeSinceStartup - initStart) * 1000f) + " ms");

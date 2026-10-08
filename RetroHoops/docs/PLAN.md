@@ -871,6 +871,23 @@
   - SMART DIFFICULTY (Rise, on by default): three straight losses by 6+ make the AI a little less accurate (up to −5%); three straight blowout wins make it sharper. Settings can turn it off.
 - **Tests:** 802 logic tests pass. UnityCheck is clean for the editor and iOS; the text audit and the App Store audit pass.
 
+### Phase 41: launch mode — free Live, Retro Hoops Pro, feature freeze
+
+- **Decision (Omari, 7 Oct, after the council review):** ship it and stop building. Feature freeze until launch (rules in `LAUNCH_PLAN.md`).
+- **Money model:**
+  - **LIVE is free** (Game Center matchmaking). The paywall, MANAGE SUBSCRIPTION and the subscription check are gone. `Pro.LiveIsFree` keeps the server's old check off.
+  - **Retro Hoops Pro** (`Logic/Progression/Pro.cs`, `UI/MainMenuController.Pro.cs`) is a one-time **$4.99 non-consumable** (`com.phoronomicstudios.retrohoops.pro`). It unlocks Rise seasons 4 and up (seasons 1–3 stay free), and puts all 40 Hoops Pass items in the locker at once. Free players still earn the items through the pass.
+  - The Pro screen shows price, terms, RESTORE PURCHASES, TERMS OF USE and PRIVACY POLICY.
+  - At the end of season 3 the Rise hub shows GET RETRO HOOPS PRO.
+  - A refund re-locks new seasons but leaves items in the locker.
+  - `RetroStore.swift` now sells the Pro product (same StoreKit 2 code; non-consumables have no expiry date).
+- **Privacy:** v1 ships with the Live server off, so the privacy manifest declares **no collected data** and App Privacy is **Data Not Collected**. The App Store audit checks the two stay in step.
+- **Docs:**
+  - `LIVE.md` is rewritten as the IAP setup.
+  - `APP_STORE.md`, `SUPPORT.md`, `PRIVACY.md`, `SUBMISSION.md` and `APP_STORE_REQUIREMENTS.md` are updated.
+  - New `LAUNCH_PLAN.md`: business setup, a 30-minute playtest script, freeze rules, the TestFlight beta kit with invite texts, a dated timeline to submission (23 Oct), and a build-in-public content calendar.
+- **Tests:** 807 logic tests pass (5 new in `Phase41MoneyTests.cs`). UnityCheck is clean for the editor and iOS. The text audit is 0/0, and the App Store audit passes 37/37.
+
 ## Deviations from the brief (deliberate)
 
 - "Oakland Voltage" → **Eastbay Voltage** (real city + electric branding sat too close to real pro-sports naming).

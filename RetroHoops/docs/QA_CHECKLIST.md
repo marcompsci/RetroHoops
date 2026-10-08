@@ -324,3 +324,11 @@ Device: ______  iOS: ______  Build: ______  Date: ______
 - [ ] Rise Season 12: Putt Club intro (Bex), zone defence; win scene; badges IN THE CUP / FULL DOZEN; Flag logo draws.
 - [ ] Work through APP_STORE_REQUIREMENTS.md ► You before submitting.
 
+## Phase 41
+- [ ] PLAY ▸ LIVE opens the lobby straight away (no paywall, no MANAGE SUBSCRIPTION).
+- [ ] PLAY ▸ RETRO HOOPS PRO: price from the App Store, ONE TIME, the four perks, terms, TERMS OF USE, PRIVACY POLICY, RESTORE PURCHASES.
+- [ ] UNLOCK PRO (TestFlight or sandbox): the screen switches to PRO UNLOCKED; the Locker Room has the pass jerseys, shoes, banners, celebrations and the Skyline dunk.
+- [ ] Reinstall: RESTORE PURCHASES brings Pro back.
+- [ ] Rise without Pro: after season 3 the hub shows GET RETRO HOOPS PRO (opens the Pro screen); with Pro, START NEXT SEASON starts season 4 (Paper Cranes).
+- [ ] Spanish: the Pro screen and the Rise lock message are translated.
+

@@ -118,6 +118,7 @@ namespace CallerRetroBall.Logic
                 ["clutch"] = EncodeClutch(d.clutch),
                 ["login"] = EncodeLogin(d),
                 ["feel"] = EncodeFeel(d.settings),
+                ["pro"] = EncodePro(d),
                 ["customCup"] = EncodeCustomCup(d.customCup),
                 ["weekly"] = EncodeWeekly(d.weekly),
                 ["pass"] = EncodePass(d.pass),
@@ -570,6 +571,7 @@ namespace CallerRetroBall.Logic
                 d.clutch = DecodeClutch(Obj(o, "clutch"));
                 DecodeLogin(d, Obj(o, "login"));
                 DecodeFeel(d.settings, Obj(o, "feel"));
+                DecodePro(d, Obj(o, "pro"));
                 d.customCup = DecodeCustomCup(Obj(o, "customCup"));
                 d.weekly = DecodeWeekly(Obj(o, "weekly"));
                 d.pass = DecodePass(Obj(o, "pass"));

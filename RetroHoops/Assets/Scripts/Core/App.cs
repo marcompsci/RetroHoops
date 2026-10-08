@@ -52,6 +52,9 @@ namespace CallerRetroBall.Core
         /// <summary>What the last Rise game changed (announced once by the Rise hub, then cleared).</summary>
         public static RiseOutcome LastRiseOutcome { get; set; }
 
+        /// <summary>Phase 41: set by the Rise hub (season 4 needs Pro) so the main menu opens the Retro Hoops Pro screen.</summary>
+        public static bool OpenProOnMenu { get; set; }
+
         /// <summary>Set after a First Call Classic game so the main menu reopens the bracket.</summary>
         public static bool OpenClassicOnMenu { get; set; }
 

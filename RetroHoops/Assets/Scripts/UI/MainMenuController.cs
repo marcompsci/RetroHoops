@@ -78,14 +78,19 @@ namespace CallerRetroBall.UI
             BuildLogoStrip();
             BuildNextStep();
 
-            // Phase 37: LIVE is an optional subscription, so the footer no longer says "no purchases" (App Review 2.3.1).
+            // Phase 37: the game has an optional purchase (Retro Hoops Pro since Phase 41), so the footer only says "no ads" (App Review 2.3.1).
             var footer = UiKit.Label(Body, "v" + App.Version + "  ·  " + Loc.T("plays offline") + "  ·  " + Loc.T("no ads"), 28f, Theme.Muted);
             UiKit.Band(footer.rectTransform, 0.005f, 0.045f, 24f);
 
             // Phase 37: an App Store screenshot launch opens its screen and skips the first-launch dialogs.
             if (RunStoreShot()) return;
 
-            if (App.OpenClassicOnMenu)
+            if (App.OpenProOnMenu)
+            {
+                App.OpenProOnMenu = false;
+                ShowPro(ShowPlayMenu);
+            }
+            else if (App.OpenClassicOnMenu)
             {
                 App.OpenClassicOnMenu = false;
                 ShowClassic();
@@ -438,9 +443,10 @@ namespace CallerRetroBall.UI
                    + ". Nova, Big Sal, Mic Tally and the Velvet Hour.", ShowStoryMode, ButtonStyle.Primary);
 
             Section(column, "ONLINE");
-            Mode(column, "LIVE", LiveStore.Active
-                ? "Play people online. Rating " + (career.live?.rating ?? LiveMode.StartRating) + "  ·  " + LiveMode.Tier(career.live?.rating ?? LiveMode.StartRating)
-                : "Play people online with Retro Hoops Live (" + LiveStore.Price + "/month).", ShowLive, ButtonStyle.Secondary);
+            ProStore.Remember(); // settle the cached Pro answer (and grant its pass items the first time)
+            Mode(column, "LIVE", Loc.T("Play people online, free. Rating") + " " + (career.live?.rating ?? LiveMode.StartRating) + "  ·  " + LiveMode.Tier(career.live?.rating ?? LiveMode.StartRating), ShowLive, ButtonStyle.Secondary);
+            Mode(column, "RETRO HOOPS PRO", ProStore.Owned ? Loc.T("Unlocked. Thanks for supporting Retro Hoops!")
+                : Loc.T("One-time unlock: Rise seasons 4+ and every Hoops Pass item.") + " " + ProStore.Price, () => ShowPro(ShowPlayMenu), ButtonStyle.Ghost);
 
             Section(column, "PLAY NOW");
             Mode(column, "QUICK CALL", "Pick a team and an opponent. One game. Score and it's still your ball.", ShowQuickCall, ButtonStyle.Primary);
