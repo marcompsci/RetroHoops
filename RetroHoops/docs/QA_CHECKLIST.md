@@ -340,4 +340,5 @@ Device: ______  iOS: ______  Build: ______  Date: ______
 - [ ] Make a dunk: the dunker hangs on the rim and swings left-right, the rim dips, then he drops. Missed dunks don't swing. REDUCE MOTION: hangs without swinging.
 - [ ] On defense, jump at a fake: "YOU BIT ON THE FAKE".
 - [ ] Menu overlays (e.g. PLAY ▸ RETRO HOOPS PRO) are solid: no buttons showing through.
+- [ ] 1-ON-1: score, and you check it up again (make it, take it). Knock the ball or a long rebound out past a sideline: whistle, OUT OF BOUNDS!, the other player's ball at the top. QUICK CALL 3-on-3: the ball still bounces back in off the lines.
 

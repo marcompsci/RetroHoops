@@ -895,6 +895,7 @@
   - **Rim swing:** after a made dunk the dunker hangs on the rim for 0.7 s and swings back and forth (pendulum that dies down) before dropping; the rim is pulled down 2 px at the slam and 1 px while hanging. The simulation holds the dunker there too (can't move), so it costs you getting back on D. `DunkPath.At(..., hangU, ...)`.
   - Overlay panels are now fully opaque (menu buttons no longer show through, e.g. the Pro screen).
   - 815 logic tests pass (8 new in `PumpFakeAndRimHangTests.cs`).
+  - **1-on-1 rules:** make it, take it (the scorer gets the ball back; `rules.oneonone` and any 1-on-1 game). A loose ball that rolls out of bounds (0.25 m past a line) is the other player's: whoever touched it last loses it (a blocker's touch counts), whistle and OUT OF BOUNDS!, then a check at the top. Other modes keep the arcade walls. 820 logic tests pass (5 new in `OneOnOneRulesTests.cs`).
 
 ## Deviations from the brief (deliberate)
 

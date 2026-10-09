@@ -23,6 +23,8 @@ namespace CallerRetroBall.Logic
         EightSeconds = 1,
         /// <summary>Didn't inbound the ball within five seconds.</summary>
         FiveSecondInbound = 2,
+        /// <summary>1-on-1: the ball went out of bounds (Team = the side that touched it last and lost it).</summary>
+        OutOfBounds = 3,
     }
 
     /// <summary>
@@ -121,6 +123,7 @@ namespace CallerRetroBall.Logic
             {
                 case ViolationKind.Backcourt: return "BACKCOURT!";
                 case ViolationKind.EightSeconds: return "8 SECONDS!";
+                case ViolationKind.OutOfBounds: return "OUT OF BOUNDS!";
                 default: return "5 SECONDS!";
             }
         }

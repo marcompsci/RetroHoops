@@ -81,7 +81,10 @@ namespace CallerRetroBall.Logic
         }
 
         /// <summary>Advances a loose ball: gravity, floor bounces, rolling friction, court walls.</summary>
-        public static void StepLoose(BallState b, float dt, CourtGeometry court, BallTuning t)
+        public static void StepLoose(BallState b, float dt, CourtGeometry court, BallTuning t) => StepLoose(b, dt, court, t, true);
+
+        /// <summary>As above; <paramref name="walls"/> false lets the ball roll out of bounds (1-on-1).</summary>
+        public static void StepLoose(BallState b, float dt, CourtGeometry court, BallTuning t, bool walls)
         {
             if (b.Phase != BallPhase.Loose || dt <= 0f) return;
 
@@ -103,6 +106,7 @@ namespace CallerRetroBall.Logic
 
             b.Position = b.Position + b.Velocity * dt;
 
+            if (!walls) return;
             // Arcade walls: the ball bounces back in off the lines instead of going out.
             float hw = court.HalfWidth;
             if (b.Position.x < -hw) { b.Position.x = -hw; b.Velocity.x = Math.Abs(b.Velocity.x) * 0.6f; }

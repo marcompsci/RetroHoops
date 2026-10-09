@@ -1074,7 +1074,7 @@ namespace CallerRetroBall.Logic
                 var end = Scoring.Evaluate(Score[0], Score[1], GameClock, Setup.Rules);
                 _finalPending = end != GameOverReason.None;
                 // Half-court 3-on-3 is winners' ball (and practice keeps it for more reps); otherwise it changes hands.
-                bool keep = Setup.KeepPossessionAfterScore || Setup.Rules.makeItTakeIt || Setup.WinnersBall;
+                bool keep = Setup.KeepPossessionAfterScore || Setup.Rules.makeItTakeIt || Setup.WinnersBall || Setup.OneOnOne; // 1-on-1: make it, take it
                 GoDead(keep ? p.Team : 1 - p.Team, Setup.Flow.deadBallAfterMake);
                 return;
             }
@@ -1279,6 +1279,30 @@ namespace CallerRetroBall.Logic
             if (u >= 1f) ResolveShot();
         }
 
+        /// <summary>Team that touched the ball last (for out of bounds): the holder, a shooter or passer, or a blocker.</summary>
+        private int _lastTouchTeam;
+
+        /// <summary>Out of bounds: this far past a line (m), so a ball rolling on the line is still in.</summary>
+        public const float OutOfBoundsMargin = 0.25f;
+
+        public bool IsOutOfBounds(Vec2 p)
+        {
+            var c = Setup.Court;
+            return p.x < -c.HalfWidth - OutOfBoundsMargin || p.x > c.HalfWidth + OutOfBoundsMargin
+                   || p.y < -OutOfBoundsMargin || p.y > c.depth + OutOfBoundsMargin;
+        }
+
+        /// <summary>1-on-1: the ball rolled out. The other side gets it (checked up at the top).</summary>
+        private void BallOutOfBounds()
+        {
+            int lost = _lastTouchTeam;
+            Ball.Velocity = Vec2.Zero;
+            Ball.VerticalVelocity = 0f;
+            _reboundable = false;
+            Events.Add(new MatchEvent(MatchEventType.Violation, -1, lost, (int)ViolationKind.OutOfBounds));
+            GoDead(1 - lost, Setup.Flow.deadBallAfterTurnover);
+        }
+
         private void StepBallDead(float dt)
         {
             if (Ball.Phase == BallPhase.Loose) BallPhysics.StepLoose(Ball, dt, Setup.Court, Setup.Ball);
@@ -1288,7 +1312,14 @@ namespace CallerRetroBall.Logic
         private void StepLoose(float dt, bool allowPickup)
         {
             var t = Setup.Ball;
-            BallPhysics.StepLoose(Ball, dt, Setup.Court, t);
+            // 1-on-1 has real out of bounds; other modes keep the arcade walls.
+            bool outOfBoundsRule = Setup.OneOnOne && Phase == MatchPhase.Live;
+            BallPhysics.StepLoose(Ball, dt, Setup.Court, t, !outOfBoundsRule);
+            if (outOfBoundsRule && IsOutOfBounds(Ball.Position))
+            {
+                BallOutOfBounds();
+                return;
+            }
             if (!allowPickup) return;
 
             int best;
@@ -1329,6 +1360,7 @@ namespace CallerRetroBall.Logic
         {
             var p = Players[playerIndex];
             if (fromCheck || p.Team != OffenseTeam) _pumpFakes = 0; // a new possession: defenders fall for it again
+            _lastTouchTeam = p.Team;
             Ball.Phase = BallPhase.Held;
             Ball.HolderIndex = playerIndex;
             Ball.Position = p.Position;

@@ -216,8 +216,8 @@ namespace CallerRetroBall.Logic
             ["CREATE TEAM"] = "CREAR EQUIPO",
             ["1-ON-1"] = "1 CONTRA 1", ["CALLER CUP"] = "CALLER CUP", ["SHOOTOUT"] = "DUELO DE TRIPLES", ["VS"] = "VS",
             ["Just you and their best. First to 11."] = "Solo tú contra su mejor jugador. Primero a 11.",
-            ["Your player against their leader. Teammates sit out. First to 11 or two minutes."] =
-                "Tu jugador contra su líder. Los compañeros descansan. Primero a 11 o dos minutos.",
+            ["Your player against their leader. Teammates sit out. First to 11 or two minutes. Make it, take it; out of bounds is the other player's ball."] =
+                "Tu jugador contra su líder. Los compañeros descansan. Primero a 11 o dos minutos. Quien anota, repite; si sale fuera, es del rival.",
             ["Eight teams, three rounds, one cup. You're the eighth seed. Lose once and you're out."] =
                 "Ocho equipos, tres rondas, una copa. Eres el octavo cabeza de serie. Si pierdes, quedas fuera.",
             ["TITLES"] = "TÍTULOS", ["NEW CUP"] = "NUEVA COPA", ["QUARTERFINAL"] = "CUARTOS DE FINAL", ["CUP CHAMPIONS"] = "CAMPEONES DE COPA",
@@ -253,6 +253,7 @@ namespace CallerRetroBall.Logic
             ["Defender in your face? Tap SHOOT quickly to pump fake, then shoot."] = "¿Defensor encima? Toca TIRAR rápido para amagar y luego tira.",
             ["PUMP FAKE! HE BIT"] = "¡AMAGUE! SE LO COMIÓ",
             ["PUMP FAKE"] = "AMAGUE",
+            ["OUT OF BOUNDS!"] = "¡FUERA!",
             ["YOU BIT ON THE FAKE"] = "TE COMISTE EL AMAGUE",
             ["Hold SHOOT, release when the meter hits the gold line."] = "Mantén TIRAR y suelta cuando el medidor llegue a la línea dorada.",
             ["A bit early! Wait for the gold line before you let go."] = "¡Un poco pronto! Espera la línea dorada antes de soltar.",

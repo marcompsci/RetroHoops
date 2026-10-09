@@ -281,6 +281,7 @@ namespace CallerRetroBall.Logic
             if (away.SqrMagnitude < 0.01f) away = Vec2.Up;
             Ball.Phase = BallPhase.Loose;
             Ball.HolderIndex = -1;
+            _lastTouchTeam = b.Team; // the blocker touched it last (out of bounds goes to the shooter)
             Ball.Position = s.Position;
             Ball.Height = 2.3f;
             Ball.Velocity = away * (2.5f + _rng.NextFloat() * 2f);

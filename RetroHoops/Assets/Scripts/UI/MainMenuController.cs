@@ -780,7 +780,7 @@ namespace CallerRetroBall.UI
             var theirs = Secrets.OpponentTeams(c, App.Career.secrets);
             int a = 0, b = 0;
             var column = OpenOverlay("1-ON-1", out var footer);
-            UiKit.Size(UiKit.Label(column, "Your player against their leader. Teammates sit out. First to 11 or two minutes.", 30f, Theme.Cream), 90f);
+            UiKit.Size(UiKit.Label(column, "Your player against their leader. Teammates sit out. First to 11 or two minutes. Make it, take it; out of bounds is the other player's ball.", 30f, Theme.Cream), 130f);
             UiKit.Size(UiKit.Label(column, "YOUR TEAM", 32f, Theme.Muted, TextAlignmentOptions.Center, true), 50f);
             TextMeshProUGUI mineLabel = null, theirLabel = null; // declared first so Refresh() can see them
             mineLabel = UiKit.Label(column, "", 40f, Theme.Gold, TextAlignmentOptions.Center, true);

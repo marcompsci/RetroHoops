@@ -697,6 +697,8 @@ namespace CallerRetroBall.Logic
                 targetScore = 11,
                 useGameClock = true,
                 gameClockSeconds = 120f,
+                // 9 Oct 2026 (Omari): make it take it, the scorer gets the ball back.
+                makeItTakeIt = true,
             });
             c.Rules.Add(new GameRulesDef
             {
