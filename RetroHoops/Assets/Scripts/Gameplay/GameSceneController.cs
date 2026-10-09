@@ -158,6 +158,8 @@ namespace CallerRetroBall.Gameplay
         // Dunks: where the dunker took off, when the ball meets the rim (0..1 of the leap), and the lift that puts their hands on it.
         private Vec2 _leapFrom;
         private float _slamU;
+        /// <summary>Share of the dunk leap spent hanging (and swinging) on the rim after a made dunk (0 = a short hang).</summary>
+        private float _hangU;
         private int _liftAtRimPx;
         private Transform _hoopT, _hoop2T;
         private Vector3 _hoopBase, _hoop2Base;
@@ -1364,6 +1366,22 @@ namespace CallerRetroBall.Gameplay
                     case MatchEventType.EuroStep:
                         if (_match.IsHumanControlled(e.PlayerIndex)) _hud.Toast("EURO STEP", 0.7f);
                         break;
+                    case MatchEventType.PumpFake:
+                        // Ball up for a beat: the arms-up frame flashes, then back to holding it.
+                        _lastShooter = e.PlayerIndex;
+                        _shootPoseUntil = Time.unscaledTime + 0.15f;
+                        if (_match.IsHumanControlled(e.PlayerIndex))
+                        {
+                            if (e.Value >= 0)
+                            {
+                                _hud.Toast("PUMP FAKE! HE BIT", 0.9f);
+                                Sfx(SfxId.Squeak, 0.7f);
+                                Haptics.Light();
+                            }
+                            else _hud.Toast("PUMP FAKE", 0.6f);
+                        }
+                        else if (e.Value >= 0 && _match.IsHumanControlled(e.Value)) _hud.Toast("YOU BIT ON THE FAKE", 0.9f);
+                        break;
                     case MatchEventType.DunkToLayup:
                         if (_match.IsHumanControlled(e.PlayerIndex)) _hud.Toast("NO DUNK FROM THERE: LAYUP", 0.9f);
                         break;
@@ -1387,8 +1405,11 @@ namespace CallerRetroBall.Gameplay
                                     : Dunks.ForAi(_match.Players[e.PlayerIndex].Def.attributes.finishing, Random.value);
                                 // Rise to the rim with the ball (it meets the rim when the simulation's ball does), hang, drop.
                                 float flight = Mathf.Max(0.2f, _match.Ball.FlightDuration);
-                                _leapDuration = flight + 0.45f + (Dunks.LiftScale(_dunkStyle) - 1f) * 0.4f;
+                                // A made dunk hangs and swings on the rim as long as the simulation holds the dunker there.
+                                float hang = _match.Ball.ShotWillScore ? _match.Setup.Flow.rimHangSeconds : 0f;
+                                _leapDuration = flight + 0.45f + (Dunks.LiftScale(_dunkStyle) - 1f) * 0.4f + hang;
                                 _slamU = flight / _leapDuration;
+                                _hangU = hang / _leapDuration;
                                 _leapFrom = _match.Players[e.PlayerIndex].Position;
                                 var hoop = _match.Setup.Court.Hoop;
                                 var meet = DunkPath.MeetPoint(_leapFrom, hoop, _landscape ? DunkPath.ApproachSide : DunkPath.Approach);
@@ -1540,11 +1561,12 @@ namespace CallerRetroBall.Gameplay
             if (dunking)
             {
                 float u = (now - _leapStart) / _leapDuration;
-                dunk = DunkPath.At(_leapFrom, _match.Setup.Court.Hoop, _match.Players[_leaper].Position, u, _slamU, _liftAtRimPx,
+                dunk = DunkPath.At(_leapFrom, _match.Setup.Court.Hoop, _match.Players[_leaper].Position, u, _slamU, _hangU, _liftAtRimPx,
                                    _landscape ? DunkPath.ApproachSide : DunkPath.Approach);
             }
-            // The rim dips a pixel while someone hangs on it.
-            SyncRimDip(dunking && dunk.OnRim);
+            // The rim is pulled down while someone hangs on it (2 pixels at the slam, then 1).
+            if (_reduceMotion) dunk.SwingPx = 0;
+            SyncRimDip(dunking && dunk.OnRim ? dunk.RimDipPx : 0);
             for (int i = 0; i < _playerViews.Length; i++)
             {
                 _playerViews[i].ClearOverride();
@@ -1558,6 +1580,7 @@ namespace CallerRetroBall.Gameplay
                     {
                         if (!_reduceMotion) flair = Dunks.Pose(_dunkStyle, (now - _leapStart) / _leapDuration);
                         flair.ArmsUp = true; // reaching for the rim
+                        if (dunk.OnRim) flair.OffsetX += dunk.SwingPx; // swinging on the rim
                         _playerViews[i].SetOverride(dunk.Ground, dunk.LiftPx);
                         leap = 1f;
                     }
@@ -1623,13 +1646,23 @@ namespace CallerRetroBall.Gameplay
             UpdateControlLabels();
         }
 
-        private bool _rimDipped;
+        private int _rimDipped;
 
-        private void SyncRimDip(bool dip)
+        /// <summary>Distance from player <paramref name="me"/> to the closest opponent on the floor (for coach tips).</summary>
+        private float NearestOpponentDistance(int me)
         {
-            if (dip == _rimDipped || _hoopT == null) return;
-            _rimDipped = dip;
-            var down = dip ? new Vector3(0f, -1f / CourtSpace.PixelsPerUnit, 0f) : Vector3.zero;
+            float best = float.MaxValue;
+            var p = _match.Players[me];
+            for (int i = 0; i < _match.Players.Length; i++)
+                if (_match.Players[i].Team != p.Team) best = Mathf.Min(best, Vec2.Distance(_match.Players[i].Position, p.Position));
+            return best;
+        }
+
+        private void SyncRimDip(int dipPx)
+        {
+            if (dipPx == _rimDipped || _hoopT == null) return;
+            _rimDipped = dipPx;
+            var down = new Vector3(0f, -dipPx / CourtSpace.PixelsPerUnit, 0f);
             // The basket being attacked is the one nearest the simulation's hoop on screen.
             var target = CourtSpace.ToWorld(_match.Setup.Court.Hoop, CourtSpace.RimHeight);
             bool second = _hoop2T != null && (target - _hoop2Base).sqrMagnitude < (target - _hoopBase).sqrMagnitude;
@@ -2217,6 +2250,7 @@ namespace CallerRetroBall.Gameplay
                 NearBallHandler = onDefense && handler >= 0 && Vec2.Distance(_match.Players[me].Position, _match.Players[handler].Position) < 2f,
                 ShotClock = _match.Setup.Rules.shotClockSeconds < 99f ? _match.ShotClock : 0f,
                 MatchTime = _match.Time,
+                TightlyGuarded = _match.HumanHasBall && NearestOpponentDistance(me) < 1.3f,
             };
             _tooEarly = _tooLate = false;
             var tip = CoachTips.Next(App.Career, s, Time.unscaledTime, ref _lastTipAt);

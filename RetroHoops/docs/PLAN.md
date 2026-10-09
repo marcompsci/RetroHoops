@@ -890,6 +890,12 @@
 
 - **8 Oct update (Omari chose the money model):** Retro Hoops Pro is **$3.99** and unlocks **FRANCHISE**, **Rise seasons 2 and up** (season 1 is free) and every Hoops Pass item. PLAY ▸ FRANCHISE · PRO and NEXT ► FRANCHISE open the Pro screen until it's owned. The store text marks Franchise "with Retro Hoops Pro" (guideline 2.3.2). New `CONTENT_KIT.md` (TikTok, Reels, Shorts, X/Threads posts) and `tools/Record Content Clips.command` (Simulator gameplay clips). 807 logic tests pass.
 
+- **9 Oct (Omari asked during the freeze):**
+  - **Pump fake:** tap SHOOT and let go at once (under 0.18 s) to show the ball instead of shooting. The closest defender may bite (leaves his feet, off balance 0.75 s: no contest, no block, can't move), so you shoot over him or drive by. Good defenders and smarter AI bite less; each extra fake in a possession works half as often. Toasts: PUMP FAKE / PUMP FAKE! HE BIT / YOU BIT ON THE FAKE. New coach tip when you're tightly guarded. `Logic/Match/PumpFake.cs`.
+  - **Rim swing:** after a made dunk the dunker hangs on the rim for 0.7 s and swings back and forth (pendulum that dies down) before dropping; the rim is pulled down 2 px at the slam and 1 px while hanging. The simulation holds the dunker there too (can't move), so it costs you getting back on D. `DunkPath.At(..., hangU, ...)`.
+  - Overlay panels are now fully opaque (menu buttons no longer show through, e.g. the Pro screen).
+  - 815 logic tests pass (8 new in `PumpFakeAndRimHangTests.cs`).
+
 ## Deviations from the brief (deliberate)
 
 - "Oakland Voltage" → **Eastbay Voltage** (real city + electric branding sat too close to real pro-sports naming).

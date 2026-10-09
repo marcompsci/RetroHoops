@@ -118,6 +118,10 @@ namespace CallerRetroBall.Logic
         public bool BallInHands;
         /// <summary>Hanging on the rim right after the slam.</summary>
         public bool OnRim;
+        /// <summary>Sideways swing while hanging (art pixels, + = right): the legs swing under the rim and settle.</summary>
+        public int SwingPx;
+        /// <summary>How far the rim is pulled down (art pixels): 2 at the slam, 1 while the dunker hangs.</summary>
+        public int RimDipPx;
     }
 
     /// <summary>
@@ -153,11 +157,23 @@ namespace CallerRetroBall.Logic
         /// <param name="u">0..1 through the leap.</param>
         /// <param name="slamU">0..1 point where the ball reaches the rim (the simulation's flight time / leap time).</param>
         /// <param name="liftAtRimPx">Body lift (art pixels) that puts the hands at the rim from the meet point.</param>
-        public static DunkFrame At(Vec2 start, Vec2 hoop, Vec2 end, float u, float slamU, int liftAtRimPx, float approach)
+        public static DunkFrame At(Vec2 start, Vec2 hoop, Vec2 end, float u, float slamU, int liftAtRimPx, float approach) =>
+            At(start, hoop, end, u, slamU, -1f, liftAtRimPx, approach);
+
+        /// <summary>Swings on the rim: peak sideways swing (art pixels) and how many back-and-forth swings in a full hang.</summary>
+        public const int SwingAmplitudePx = 3;
+        public const float SwingCycles = 1.5f;
+
+        /// <summary>
+        /// As above, with <paramref name="hangU"/> = the share of the leap spent hanging on the rim after the slam
+        /// (made dunks hang and swing; a value of 0 or less uses the short <see cref="HangShare"/> hang).
+        /// </summary>
+        public static DunkFrame At(Vec2 start, Vec2 hoop, Vec2 end, float u, float slamU, float hangU, int liftAtRimPx, float approach)
         {
             var meet = MeetPoint(start, hoop, approach);
-            slamU = Math.Max(0.15f, Math.Min(0.85f, slamU));
-            float hangEnd = slamU + HangShare * (1f - slamU);
+            bool swings = hangU > 0f;
+            slamU = Math.Max(0.15f, Math.Min(swings ? 0.7f : 0.85f, slamU));
+            float hangEnd = swings ? Math.Min(0.95f, slamU + hangU) : slamU + HangShare * (1f - slamU);
             var f = new DunkFrame();
             if (u < 0f) u = 0f;
             if (u >= 1f) { f.Ground = end; return f; }
@@ -172,8 +188,19 @@ namespace CallerRetroBall.Logic
             {
                 f.Ground = meet;
                 // The slam frame is at full reach; hanging sags a pixel.
-                f.LiftPx = u - slamU < 0.04f ? liftAtRimPx : liftAtRimPx - 1;
+                bool slamFrame = u - slamU < 0.04f;
+                f.LiftPx = slamFrame ? liftAtRimPx : liftAtRimPx - 1;
                 f.OnRim = true;
+                f.RimDipPx = slamFrame ? 2 : 1;
+                if (swings)
+                {
+                    // A pendulum under the rim that dies down: out, back, out, then hanging still before the drop.
+                    float h = (u - slamU) / Math.Max(0.001f, hangEnd - slamU);
+                    double swing = Math.Sin(h * SwingCycles * 2.0 * Math.PI) * (1.0 - 0.7 * h);
+                    f.SwingPx = (int)Math.Round(swing * SwingAmplitudePx);
+                    // The body rises a touch at each end of the swing (it's on an arc).
+                    if (!slamFrame && Math.Abs(swing) < 0.35) f.LiftPx = liftAtRimPx - 2;
+                }
             }
             else
             {

@@ -333,3 +333,11 @@ Device: ______  iOS: ______  Build: ______  Date: ______
 - [ ] PLAY ▸ FRANCHISE · PRO without Pro opens the Pro screen; with Pro the row reads FRANCHISE and opens the GM screen. NEXT ► FRANCHISE does the same.
 - [ ] Spanish: the Pro screen and the Rise lock message are translated.
 
+## 9 Oct: pump fake and rim swing
+- [ ] With the ball, tap SHOOT quickly: "PUMP FAKE", the ball pops up and you keep it; hold SHOOT: a normal shot.
+- [ ] Fake with a defender in your face: sometimes "PUMP FAKE! HE BIT", he jumps and stands frozen; shoot right away: the meter frame shows open (white).
+- [ ] Fake twice in one possession: the second works less often. Legend AI bites less than Rookie.
+- [ ] Make a dunk: the dunker hangs on the rim and swings left-right, the rim dips, then he drops. Missed dunks don't swing. REDUCE MOTION: hangs without swinging.
+- [ ] On defense, jump at a fake: "YOU BIT ON THE FAKE".
+- [ ] Menu overlays (e.g. PLAY ▸ RETRO HOOPS PRO) are solid: no buttons showing through.
+

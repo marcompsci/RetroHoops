@@ -64,7 +64,7 @@ namespace CallerRetroBall.UI
         }
 
         public static Sprite PanelSprite() =>
-            _panel != null ? _panel : (_panel = Chunky("ui.panel", new RgbColor(0x1A, 0x1A, 0x2E, 225), Muted.ToRgb32()));
+            _panel != null ? _panel : (_panel = Chunky("ui.panel", new RgbColor(0x1A, 0x1A, 0x2E, 255), Muted.ToRgb32()));
 
         private static readonly System.Collections.Generic.Dictionary<string, Sprite> Discs =
             new System.Collections.Generic.Dictionary<string, Sprite>();

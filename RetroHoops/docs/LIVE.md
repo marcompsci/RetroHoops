@@ -51,7 +51,7 @@ Leaderboards: `retrohoops.live.rating`, `retrohoops.live.monthly` (recurring, 1 
 
 ## App Review notes
 
-> Retro Hoops is free. LIVE (online play) is free and uses Game Center matchmaking; a match needs a second device on the same build with a different Game Center account (without one, the search keeps looking and BACK stops it). The one in-app purchase, Retro Hoops Pro (non-consumable), unlocks Rise seasons 4 and up and every Hoops Pass cosmetic. To see it: PLAY ▸ RETRO HOOPS PRO. Restore Purchases is on that screen. Everything else is free and works offline.
+> Retro Hoops is free. LIVE (online play) is free and uses Game Center matchmaking; a match needs a second device on the same build with a different Game Center account (without one, the search keeps looking and BACK stops it). The one in-app purchase, Retro Hoops Pro (non-consumable, $3.99), unlocks FRANCHISE mode, Rise seasons 2 and up and every Hoops Pass cosmetic. To see it: PLAY ▸ RETRO HOOPS PRO (or tap PLAY ▸ FRANCHISE · PRO). Restore Purchases is on that screen. Everything else is free and works offline.
 
 ## How a Live game works
 

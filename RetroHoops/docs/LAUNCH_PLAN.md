@@ -63,6 +63,7 @@ Send Claude the list as it is. It becomes the fix list. In TestFlight you can al
   - anything a tester finds confusing;
   - App Store / App Review requirements.
 - **Not allowed:** new modes, new seasons or rivals, new settings, new systems, "quick extras".
+- Exception (9 Oct): Omari asked for **pump fakes** and **swinging on the rim after dunks**; both are in build 5.
 - An idea during the freeze goes in **"After launch"** at the bottom of this file, not in the build.
 - Every build still passes the logic tests, UnityCheck, the text audit, the App Store audit and the Build Check before upload.
 

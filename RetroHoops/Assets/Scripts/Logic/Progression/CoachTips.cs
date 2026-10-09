@@ -18,6 +18,8 @@ namespace CallerRetroBall.Logic
         public bool NearBallHandler;
         public float ShotClock;
         public float MatchTime;
+        /// <summary>You have the ball with a defender right on you.</summary>
+        public bool TightlyGuarded;
     }
 
     public sealed class CoachTip
@@ -47,6 +49,7 @@ namespace CallerRetroBall.Logic
             Tip("tip.defense", "On defense: STEAL near the ball, JUMP when they shoot.", s => s.Live && s.OnDefense && s.NearBallHandler),
             Tip("tip.oop", "Gold arrow? Pass now for the alley-oop!", s => s.Live && s.AlleyOopOpen),
             Tip("tip.heat", "One more make and you're HEATING UP.", s => s.HeatThreshold > 0 && s.HumanHotStreak == s.HeatThreshold - 1),
+            Tip("tip.fake", "Defender in your face? Tap SHOOT quickly to pump fake, then shoot.", s => s.Live && s.HumanHasBall && s.TightlyGuarded && s.MatchTime > 8f),
             Tip("tip.shotclock", "Shot clock's low. Get a shot up!", s => s.Live && !s.OnDefense && s.ShotClock > 0f && s.ShotClock < 4f),
         };
 

@@ -276,6 +276,8 @@ namespace CallerRetroBall.Tests
         {
             var m = NewMatch();
             m.Step(Dt, new PlayerInput { ShootPressed = true, ShootHeld = true });
+            // Hold past the pump-fake window (a one-frame tap is a pump fake since 9 Oct 2026), then let go early.
+            for (float t = 0f; t < 0.3f; t += Dt) m.Step(Dt, new PlayerInput { ShootHeld = true });
             m.Step(Dt, new PlayerInput { ShootHeld = false });
             var released = m.Events.Find(e => e.Type == MatchEventType.ShotReleased);
             Assert.AreEqual(MatchEventType.ShotReleased, released.Type);

@@ -27,6 +27,17 @@ namespace CallerRetroBall.Logic
         public float blockCloseRangeBonus = 0.12f;
         public float blockMaxChance = 0.6f;
 
+        // Pump fakes
+        /// <summary>Only a defender this close to the shooter can bite on a pump fake.</summary>
+        public float fakeBiteRange = 2.0f;
+        /// <summary>Bite chance for a 0-defense defender (minus <see cref="fakeBiteFromDefense"/> for a 99).</summary>
+        public float fakeBiteBase = 0.85f;
+        public float fakeBiteFromDefense = 0.45f;
+        /// <summary>A defender who bit is off balance this long: no contest, no block, can't move.</summary>
+        public float fakeBiteRecovery = 0.75f;
+        /// <summary>Each extra fake in the same possession multiplies the bite chance by this (they wise up).</summary>
+        public float fakeRepeatFactor = 0.5f;
+
         // Rebounding
         public float boxOutRadius = 1.1f;
         public float boxOutBonus = 0.3f;
@@ -224,6 +235,7 @@ namespace CallerRetroBall.Logic
             {
                 var o = Players[i];
                 if (o.Team == shooter.Team) continue;
+                if (Time < o.FakedUntil) continue; // bit on a pump fake: off balance, no contest
                 float d = Vec2.Distance(o.Position, shooter.Position);
                 if (IsJumping(i)) d *= Setup.Defense.jumpContestFactor;
                 if (d < effectiveDistance)
@@ -242,7 +254,7 @@ namespace CallerRetroBall.Logic
             for (int i = 0; i < Players.Length; i++)
             {
                 var d = Players[i];
-                if (d.Team == shooter.Team || !IsJumping(i)) continue;
+                if (d.Team == shooter.Team || !IsJumping(i) || Time < d.FakedUntil) continue;
                 float dist = Vec2.Distance(d.Position, shooter.Position);
                 if (dist > t.blockRange) continue;
                 float chance = t.blockBase + t.blockFromDefense * RatingScale.Normalized(d.Def.attributes.defense)

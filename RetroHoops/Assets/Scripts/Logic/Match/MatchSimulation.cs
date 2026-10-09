@@ -20,6 +20,8 @@ namespace CallerRetroBall.Logic
         public float shotFlightBase = 0.5f;
         public float shotFlightPerMeter = 0.06f;
         public float dunkFlightSeconds = 0.22f;
+        /// <summary>After a made dunk the dunker hangs (and swings) on the rim this long before dropping (can't move).</summary>
+        public float rimHangSeconds = 0.7f;
         public float shotArcBase = 1.2f;
         public float shotArcPerMeter = 0.13f;
         public float missSpeedMin = 2.2f;
@@ -251,6 +253,8 @@ namespace CallerRetroBall.Logic
         public float StunnedUntil = -99f;
         public float ScreenedUntil = -99f;
         public float JumpStart = -99f;
+        /// <summary>Bit on a pump fake: off balance (no contest, no block, can't move) until then.</summary>
+        public float FakedUntil = -99f;
         public float StealReadyAt;
 
         public Vec2 Position => Motion.position;
@@ -316,6 +320,8 @@ namespace CallerRetroBall.Logic
         EuroStep = 33,
         /// <summary>A second defender doubles a heated-up scorer (PlayerIndex = the trapper, Value = the ball handler).</summary>
         Trap = 34,
+        /// <summary>A quick tap of SHOOT faked the shot (PlayerIndex = shooter, Value = the defender who bit, or -1).</summary>
+        PumpFake = 35,
     }
 
     public struct MatchEvent
@@ -908,10 +914,17 @@ namespace CallerRetroBall.Logic
             float meter = ChargeTime / fill;
             float overHold = 1f + Setup.Shot.overHoldSeconds / fill;
 
+            bool byPerson = !_autoRelease && ((ChargingIndex == ControlledIndex && !NoHuman) || ChargingIndex == SecondControlledIndex);
             bool release = _autoRelease ? meter >= _aiReleaseMeter
                          : ChargingIndex == ControlledIndex && !NoHuman ? !input.ShootHeld
                          : ChargingIndex == SecondControlledIndex ? !_input2.ShootHeld
                          : meter >= _aiReleaseMeter;
+            // A quick tap of SHOOT (let go almost at once) is a pump fake, not a shot.
+            if (release && byPerson && ChargeTime < Setup.Shot.pumpFakeSeconds)
+            {
+                PumpFake(ChargingIndex);
+                return;
+            }
             if (release || meter >= overHold) ReleaseShot(ChargingIndex, meter);
         }
 
@@ -1043,6 +1056,8 @@ namespace CallerRetroBall.Logic
                 _lastCatcher = -1;
 
                 Events.Add(new MatchEvent(MatchEventType.ShotMade, shooter, p.Team, Ball.ShotPoints));
+                // A made dunk: the dunker hangs (and swings) on the rim for a moment before dropping, and can't move meanwhile.
+                if (Ball.ShotType == ShotType.Dunk) p.StunnedUntil = Math.Max(p.StunnedUntil, Time + Setup.Flow.rimHangSeconds);
                 if (Setup.Rules.bustRule && Score[p.Team] > Setup.Rules.targetScore)
                 {
                     Score[p.Team] = Setup.Rules.bustScore;
@@ -1313,6 +1328,7 @@ namespace CallerRetroBall.Logic
         private void GiveBall(int playerIndex, bool announce, bool fromCheck)
         {
             var p = Players[playerIndex];
+            if (fromCheck || p.Team != OffenseTeam) _pumpFakes = 0; // a new possession: defenders fall for it again
             Ball.Phase = BallPhase.Held;
             Ball.HolderIndex = playerIndex;
             Ball.Position = p.Position;

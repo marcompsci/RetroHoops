@@ -27,6 +27,8 @@ namespace CallerRetroBall.Logic
         public float slightBand = 0.1f;
         /// <summary>Holding past a full meter this long auto-releases (TOO LATE).</summary>
         public float overHoldSeconds = 0.25f;
+        /// <summary>Let go of SHOOT sooner than this after pressing it and it's a pump fake, not a shot.</summary>
+        public float pumpFakeSeconds = 0.18f;
 
         // Timing bonus
         public float timingGreen = 0.22f;
