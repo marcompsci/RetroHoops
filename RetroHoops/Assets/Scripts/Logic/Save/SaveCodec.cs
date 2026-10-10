@@ -429,6 +429,8 @@ namespace CallerRetroBall.Logic
                 ["margins"] = Ints(r.recentMargins),
                 ["recruitable"] = Strings(r.recruitable ?? new List<string>()),
                 ["signed"] = Strings(r.signed ?? new List<string>()),
+                ["made"] = EncodeRiseMade(r),
+                ["nextMade"] = r.nextMade,
                 ["season"] = r.season == null ? null : new Dictionary<string, object>
                 {
                     ["seasonNumber"] = r.season.seasonNumber,
@@ -671,6 +673,7 @@ namespace CallerRetroBall.Logic
             r.teammates = StrList(o, "teammates");
             r.recruitable = StrList(o, "recruitable");
             r.signed = StrList(o, "signed");
+            DecodeRiseMade(r, o);
 
             var s = Obj(o, "season");
             if (s != null)

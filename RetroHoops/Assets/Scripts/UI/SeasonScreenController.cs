@@ -165,6 +165,7 @@ namespace CallerRetroBall.UI
             if (career.dynasty.draftPool.Count > 0)
                 UiKit.Button(_content, "DRAFT PICK WAITING", ShowDraft, ButtonStyle.Primary, 110f, 40f);
             UiKit.Button(_content, "YOUR CREW", ShowCrew, ButtonStyle.Secondary, 110f, 40f);
+            UiKit.Button(_content, "CREATE A PLAYER", ChooseCreate, ButtonStyle.Secondary, 110f, 40f);
             UiKit.Button(_content, "LEAGUE HISTORY", ShowHistory, ButtonStyle.Ghost, 100f, 36f);
             var mates = CrewEngine.TeammateDefs(career, c);
             UiKit.Size(UiKit.Label(_content, "With " + string.Join(" & ", mates.ConvertAll(m => m.DisplayName)) +
@@ -380,12 +381,34 @@ namespace CallerRetroBall.UI
             UiKit.Size(UiKit.Label(col, "SP: " + career.signalPoints + "    Beat a team to unlock its players (league teams: their bench player).",
                                    28f, Theme.Muted), 70f);
 
+            // YOU: the player you control (Rise ► CREATE A PLAYER).
+            var me = PlayerCreator.ForMatch(career, c);
+            UiKit.Size(UiKit.Label(col, Loc.T("YOU") + ":  " + Describe(me), 34f, Theme.Pink, TextAlignmentOptions.Left, true), 56f);
+            UiKit.Button(col, career.customPlayer != null && career.customPlayer.created ? "EDIT MY PLAYER" : "CREATE MY PLAYER",
+                         EditMine, ButtonStyle.Secondary, 90f, 30f);
+
             var mates = CrewEngine.Teammates(career, c);
             for (int slot = 0; slot < mates.Count; slot++)
             {
                 var p = c.Player(mates[slot]);
                 UiKit.Size(UiKit.Label(col, "SPOT " + (slot + 1) + ":  " + Describe(p), 34f, Theme.Gold, TextAlignmentOptions.Left, true), 56f);
             }
+
+            // Created teammates: free, EDIT any time.
+            UiKit.Size(UiKit.Label(col, "CREATED TEAMMATES", 36f, Theme.Cyan, TextAlignmentOptions.Left, true), 56f);
+            foreach (var m in RiseCreate.Made(career))
+            {
+                string id = RiseCreate.PlayerId(m.id);
+                var row = UiKit.Row(col, 16f, "Made " + id);
+                UiKit.Size(row, 80f);
+                UiKit.Size(UiKit.Label(row, Describe(c.Player(id)) + (mates.Contains(id) ? "  <color=#FFD166>" + Loc.T("ON CREW") + "</color>" : ""),
+                                       30f, Theme.Cream, TextAlignmentOptions.Left, false), -1f, 640f);
+                UiKit.Button(row, "EDIT", () => EditMate(id), ButtonStyle.Ghost, 70f, 28f);
+            }
+            string why = RiseCreate.CannotCreate(career);
+            var add = UiKit.Button(col, "CREATE A TEAMMATE", () => NewMate(-1), why == null ? ButtonStyle.Secondary : ButtonStyle.Ghost, 90f, 30f);
+            add.interactable = why == null;
+            UiKit.Size(UiKit.Label(col, why ?? "Up to three. Free, and they start at the same level as the original First Callers.", 26f, Theme.Muted), 60f);
 
             UiKit.Size(UiKit.Label(col, "AVAILABLE", 36f, Theme.Cyan, TextAlignmentOptions.Left, true), 56f);
             foreach (var id in CrewEngine.Pool(career, c))
@@ -413,6 +436,110 @@ namespace CallerRetroBall.UI
                     b.interactable = check == RecruitCheck.Ok;
                 }
             }
+        }
+
+        // ------------------------------------------------------------------ create a player (10 Oct 2026)
+
+        /// <summary>Hub ► CREATE A PLAYER: your own player, or a teammate for your crew.</summary>
+        private void ChooseCreate()
+        {
+            var career = App.Career;
+            string why = RiseCreate.CannotCreate(career);
+            UiControls.Dialog("CREATE A PLAYER", "Build the player you control in Rise, or a teammate for your crew.",
+                ("MY PLAYER", ButtonStyle.Primary, EditMine),
+                ("A TEAMMATE", why == null ? ButtonStyle.Secondary : ButtonStyle.Ghost, () =>
+                {
+                    if (why != null) UiControls.Dialog("CREATE A TEAMMATE", why, ("OK", ButtonStyle.Primary, null));
+                    else NewMate(1);
+                }),
+                ("CANCEL", ButtonStyle.Ghost, null));
+        }
+
+        private void EditMine()
+        {
+            var c = App.Catalog;
+            var career = App.Career;
+            bool made = career.customPlayer != null && career.customPlayer.created;
+            PlayerMaker.Open(RiseCreate.MySpec(career, c), new PlayerMaker.Options
+            {
+                Title = made ? "EDIT MY PLAYER" : "CREATE MY PLAYER",
+                Mine = true,
+                SaveLabel = made ? "SAVE CHANGES" : "CREATE PLAYER",
+                Info = spec =>
+                {
+                    var arch = c.Archetypes.Find(a => (int)a.archetype == spec.Archetype) ?? c.Archetypes[0];
+                    return Loc.T("STARTING OVR") + " " + arch.baseline.Offset(PlayerCreator.RatingOffset).Overall + "  ·  " + Loc.T("your training upgrades carry over");
+                },
+                OnSave = spec =>
+                {
+                    RiseCreate.ApplyMine(App.Career, App.Catalog, spec);
+                    App.SaveCareer();
+                    AfterCreate();
+                },
+                OnClose = AfterCreate,
+            });
+        }
+
+        /// <summary>A new teammate. <paramref name="slot"/> 0/1 puts him straight in that crew spot (-1: just add him).</summary>
+        private void NewMate(int slot)
+        {
+            var c = App.Catalog;
+            PlayerMaker.Open(RiseCreate.NewMateSpec(App.Career, c), new PlayerMaker.Options
+            {
+                Title = "CREATE A TEAMMATE",
+                SaveLabel = slot >= 0 ? "ADD TO MY CREW" : "CREATE",
+                Info = MateInfo,
+                OnSave = spec =>
+                {
+                    var m = RiseCreate.CreateMate(App.Career, App.Catalog, spec, slot);
+                    App.SaveCareer();
+                    AfterCreate();
+                    if (m != null && slot >= 0)
+                        UiControls.Dialog(Loc.T("WELCOME") + ", " + (m.first + " " + m.last).Trim().ToUpperInvariant(),
+                            "He's in SPOT 2 of your crew. Change spots any time in YOUR CREW.", ("OK", ButtonStyle.Primary, null));
+                },
+                OnClose = AfterCreate,
+            });
+        }
+
+        private void EditMate(string playerId)
+        {
+            var c = App.Catalog;
+            var m = RiseCreate.Find(App.Career, playerId);
+            if (m == null) return;
+            PlayerMaker.Open(RiseCreate.SpecOf(c, m), new PlayerMaker.Options
+            {
+                Title = "EDIT TEAMMATE",
+                SaveLabel = "SAVE CHANGES",
+                Info = MateInfo,
+                OnSave = spec =>
+                {
+                    RiseCreate.EditMate(App.Career, App.Catalog, playerId, spec);
+                    App.SaveCareer();
+                    AfterCreate();
+                },
+                OnRemove = () =>
+                {
+                    RiseCreate.RemoveMate(App.Career, App.Catalog, playerId);
+                    App.SaveCareer();
+                    AfterCreate();
+                },
+                OnClose = AfterCreate,
+            });
+        }
+
+        private static string MateInfo(CreatedPlayerSpec spec)
+        {
+            var c = App.Catalog;
+            var arch = c.Archetypes.Find(a => (int)a.archetype == spec.Archetype) ?? c.Archetypes[0];
+            return Loc.T("OVR") + " " + RiseCreate.Ratings(c, arch.id).Overall + "  ·  " + Loc.T("free to put in your crew");
+        }
+
+        /// <summary>Refreshes whatever is open (the crew list, or the hub).</summary>
+        private void AfterCreate()
+        {
+            if (_crewOverlay != null) ShowCrew();
+            else Rebuild();
         }
 
         private string Describe(PlayerDef p)

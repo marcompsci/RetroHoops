@@ -223,6 +223,20 @@ namespace CallerRetroBall.Logic
         public List<string> signed = new List<string>();
         public string pendingEventId;
         public int seasonsPlayed;
+        /// <summary>Teammates you built yourself (Rise ► YOUR CREW ► CREATE A TEAMMATE, 10 Oct 2026). Free to put in a spot.</summary>
+        public List<RiseMateData> made = new List<RiseMateData>();
+        public int nextMade = 1;
+    }
+
+    /// <summary>A teammate you created for your Rise crew. Shows up as <see cref="RiseCreate.PlayerId"/>.</summary>
+    [Serializable]
+    public class RiseMateData
+    {
+        public int id;
+        public string first = "", last = "";
+        public int number = 1;
+        public string archetypeId;
+        public int skin, hair, hairColor, body = 1, height = 1;
     }
 
     [Serializable]

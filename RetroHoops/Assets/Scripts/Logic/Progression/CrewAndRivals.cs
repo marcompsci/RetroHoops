@@ -60,13 +60,15 @@ namespace CallerRetroBall.Logic
         public static List<string> Teammates(CareerSaveData d, ContentCatalog c)
         {
             var r = d?.rise;
+            RiseCreate.Register(d, c); // created teammates (Rise ► CREATE A TEAMMATE) must be in the catalog first
             if (r == null || r.teammates == null || r.teammates.Count != TeammateSlots) return DefaultTeammates(c);
             foreach (var id in r.teammates) if (c.Player(id) == null) return DefaultTeammates(c);
             return r.teammates;
         }
 
         public static bool IsFree(CareerSaveData d, ContentCatalog c, string playerId) =>
-            DefaultTeammates(c).Contains(playerId) || (d.rise.signed != null && d.rise.signed.Contains(playerId));
+            DefaultTeammates(c).Contains(playerId) || (d.rise.signed != null && d.rise.signed.Contains(playerId))
+            || RiseCreate.Find(d, playerId) != null;
 
         public static RecruitCheck CanRecruit(CareerSaveData d, ContentCatalog c, string playerId)
         {
@@ -99,7 +101,9 @@ namespace CallerRetroBall.Logic
         /// <summary>Everyone you could put on the floor: originals, signed players, and unlocked recruits.</summary>
         public static List<string> Pool(CareerSaveData d, ContentCatalog c)
         {
+            RiseCreate.Register(d, c);
             var pool = new List<string>(DefaultTeammates(c));
+            foreach (var m in RiseCreate.Made(d)) pool.Add(RiseCreate.PlayerId(m.id));
             foreach (var id in d.rise.signed) if (!pool.Contains(id)) pool.Add(id);
             foreach (var id in d.rise.recruitable) if (!pool.Contains(id)) pool.Add(id);
             pool.RemoveAll(id => c.Player(id) == null);

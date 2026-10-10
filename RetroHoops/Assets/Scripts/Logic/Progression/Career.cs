@@ -66,6 +66,8 @@ namespace CallerRetroBall.Logic
             if (data.rise.teammates == null) data.rise.teammates = new List<string>();
             if (data.rise.recruitable == null) data.rise.recruitable = new List<string>();
             if (data.rise.signed == null) data.rise.signed = new List<string>();
+            if (data.rise.made == null) data.rise.made = new List<RiseMateData>();
+            RiseCreate.Register(data, c);
             // The creator starts from Rook's look; it only replaces Rook once "created" is set.
             if (data.customPlayer == null || (!data.customPlayer.created && string.IsNullOrEmpty(data.customPlayer.archetypeId)))
                 data.customPlayer = PlayerCreator.FromRook(c);
