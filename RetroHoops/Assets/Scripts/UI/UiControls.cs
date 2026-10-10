@@ -102,7 +102,11 @@ namespace CallerRetroBall.UI
         }
 
         /// <summary>Single-line text field (nickname).</summary>
-        public static TMP_InputField TextField(Transform parent, string value, int maxLength, Action<string> onEndEdit)
+        public static TMP_InputField TextField(Transform parent, string value, int maxLength, Action<string> onEndEdit) =>
+            TextField(parent, value, maxLength, onEndEdit, "Nickname");
+
+        /// <summary>Single-line text field with its own placeholder (shown in the current language).</summary>
+        public static TMP_InputField TextField(Transform parent, string value, int maxLength, Action<string> onEndEdit, string placeholderText)
         {
             var box = UiKit.Panel(parent, Color.white, Theme.ButtonSprite(ButtonStyle.Secondary), true, "TextField");
             box.raycastTarget = true;
@@ -111,7 +115,7 @@ namespace CallerRetroBall.UI
             UiKit.Stretch(area, 24f);
             area.gameObject.AddComponent<RectMask2D>();
 
-            var placeholder = UiKit.Label(area, "Nickname", 40f, Theme.Muted, TextAlignmentOptions.Left, false, "Placeholder");
+            var placeholder = UiKit.Label(area, placeholderText, 40f, Theme.Muted, TextAlignmentOptions.Left, false, "Placeholder");
             UiKit.Stretch(placeholder.rectTransform);
             var text = UiKit.Label(area, "", 40f, Theme.Cream, TextAlignmentOptions.Left, true, "Text");
             UiKit.Stretch(text.rectTransform);

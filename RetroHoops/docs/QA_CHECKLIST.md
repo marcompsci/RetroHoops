@@ -342,3 +342,11 @@ Device: ______  iOS: ______  Build: ______  Date: ______
 - [ ] Menu overlays (e.g. PLAY ▸ RETRO HOOPS PRO) are solid: no buttons showing through.
 - [ ] 1-ON-1: score, and you check it up again (make it, take it). Knock the ball or a long rebound out past a sideline: whistle, OUT OF BOUNDS!, the other player's ball at the top. QUICK CALL 3-on-3: the ball still bounces back in off the lines.
 
+## 10 Oct: Franchise create a player
+- [ ] FRANCHISE ► ROSTER ► CREATE A PLAYER: type a first and last name, change number, look, style and level; the preview updates without the list jumping to the top.
+- [ ] SIGN HIM as a ROOKIE: he's at the end of the bench on the minimum; UP moves him to #1 and you control him in the next game with his look and number.
+- [ ] STAR with a full cap: "Not enough cap room for that level."; a full roster or the playoffs block it too; three created players is the limit.
+- [ ] YOUR CREATED PLAYERS ► EDIT: change his hair and name, SAVE CHANGES; ratings stay the same. Quit and reopen the app: he's still there.
+- [ ] USE MY LOCKER ROOM PLAYER copies your Locker Room look, number and nickname.
+- [ ] Spanish: the create screen is translated.
+

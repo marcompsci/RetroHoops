@@ -33,7 +33,7 @@ namespace CallerRetroBall.Logic
                         (double)p.attrs.rebounding, (double)p.attrs.speed, (double)p.attrs.stamina, (double)p.attrs.clutch,
                         (double)p.age, (double)p.potential, (double)p.salary, (double)p.years, (double)p.team, p.prospect ? 1.0 : 0.0, (double)p.scout,
                         (double)p.seasons, (double)p.titles, (double)p.peak, (double)p.gp, (double)p.pts, (double)p.careerPts,
-                        (double)p.draftYear, (double)p.draftPick,
+                        (double)p.draftYear, (double)p.draftPick, p.created ? 1.0 : 0.0,
                     },
                 }),
                 ["season"] = new Dictionary<string, object>
@@ -98,7 +98,7 @@ namespace CallerRetroBall.Logic
                         age = Math.Max(16, Math.Min(50, I(16))), potential = R(17), salary = Math.Max(0, Math.Min(Franchise.MaxSalary, I(18))),
                         years = Math.Max(0, Math.Min(5, I(19))), team = I(20), prospect = I(21) != 0, scout = Math.Max(0, Math.Min(3, I(22))),
                         seasons = I(23), titles = I(24), peak = I(25), gp = I(26), pts = I(27), careerPts = I(28),
-                        draftYear = n.Count > 29 ? I(29) : 0, draftPick = n.Count > 30 ? I(30) : 0,
+                        draftYear = n.Count > 29 ? I(29) : 0, draftPick = n.Count > 30 ? I(30) : 0, created = n.Count > 31 && I(31) != 0,
                     };
                     if (fp.team >= f.teams.Count || fp.team < -1) fp.team = -1;
                     f.players.Add(fp);

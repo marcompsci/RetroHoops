@@ -85,6 +85,8 @@ namespace CallerRetroBall.Logic
                 if (other == f.you) continue;
                 // They like young players with upside and good value; never your one best player.
                 var targets = new List<FrPlayer>(mine);
+                targets.RemoveAll(x => x.created); // your created players aren't on the table
+                if (targets.Count == 0) continue;
                 targets.Sort((x, y) => Franchise.Value(y).CompareTo(Franchise.Value(x)));
                 if (targets.Count > 1) targets.RemoveAt(0);
                 int pickTarget = Math.Min(targets.Count - 1, rng.Range(0, Math.Max(1, Math.Min(3, targets.Count))));

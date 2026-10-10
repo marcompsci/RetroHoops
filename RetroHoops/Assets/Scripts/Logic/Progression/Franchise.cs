@@ -38,6 +38,8 @@ namespace CallerRetroBall.Logic
         public int careerPts;
         public int draftYear;
         public int draftPick;
+        /// <summary>Made in CREATE A PLAYER (yours: AI GMs never ask for him in trades).</summary>
+        public bool created;
 
         public int Overall => attrs.Overall;
         public string Name => string.IsNullOrEmpty(last) ? first : first + " " + last;
@@ -141,7 +143,7 @@ namespace CallerRetroBall.Logic
     /// expiring players, free agency and preseason cuts. Trade with the other seven GMs, who judge deals
     /// on ratings, age, potential and contracts. Everything is seeded, so the league is the same on reload.
     /// </summary>
-    public static class Franchise
+    public static partial class Franchise
     {
         public const int Teams = 8;
         public const int MinRoster = 7;

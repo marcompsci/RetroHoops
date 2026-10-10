@@ -14,7 +14,7 @@ namespace CallerRetroBall.UI
     /// (re-sign and free agents), DRAFT (lottery, scouting, picks) and HISTORY. Every rule lives in
     /// <see cref="Franchise"/>; this screen calls it and saves.
     /// </summary>
-    public sealed class FranchiseScreen : MonoBehaviour
+    public sealed partial class FranchiseScreen : MonoBehaviour
     {
         private enum Tab { Home = 0, Roster = 1, Trade = 2, League = 3, Market = 4, Draft = 5, History = 6 }
         private static readonly string[] TabNames = { "HOME", "ROSTER", "TRADE", "LEAGUE", "MARKET", "DRAFT", "HISTORY" };
@@ -107,6 +107,14 @@ namespace CallerRetroBall.UI
             {
                 _header.text = Loc.T("FRANCHISE");
                 BuildStart();
+                return;
+            }
+            if (_create != null)
+            {
+                // CREATE A PLAYER takes the whole screen (no tabs) until you create or cancel.
+                _tabsRow.SetActive(false);
+                _header.text = Loc.T(_editId >= 0 ? "EDIT PLAYER" : "CREATE A PLAYER");
+                BuildCreate();
                 return;
             }
             var you = Team(f.you);
@@ -349,6 +357,7 @@ namespace CallerRetroBall.UI
             var roster = Franchise.Roster(f, f.you);
             Line(Loc.T("CAP ROOM") + " " + Franchise.Money(Franchise.CapRoom(f, f.you)) + "  ·  " + roster.Count + "/" + Franchise.MaxRoster + " " + Loc.T("players")
                  + (f.teams[f.you].deadMoney > 0 ? "  ·  " + Loc.T("dead money") + " " + Franchise.Money(f.teams[f.you].deadMoney) : ""), Theme.Muted, 26f, 44f);
+            CreateEntry(f);
             for (int i = 0; i < roster.Count; i++)
             {
                 if (i == 0) Heading("STARTERS (YOU CONTROL #1)");
@@ -361,6 +370,7 @@ namespace CallerRetroBall.UI
                     ("DOWN", ButtonStyle.Ghost, i < roster.Count - 1 ? (System.Action)(() => { Franchise.MoveInRotation(f, id, 1); Save(); }) : null),
                     ("CUT", ButtonStyle.Ghost, canRelease ? (System.Action)(() => ConfirmRelease(p)) : null));
             }
+            CreatedList(f);
             TrainingRow(f);
         }
 
