@@ -173,6 +173,12 @@ namespace CallerRetroBall.UI
             Stretch(label.rectTransform, 12f);
             // Keep text clear of the bottom lip so it sits on the face.
             label.rectTransform.offsetMin = new Vector2(12f, 20f);
+            // 11 Oct 2026: long labels shrink to fit instead of spilling over the button (UNLOCK PRO on the Pro screen)
+            // or breaking mid-word (the Locker Room tabs on iPhone). Labels that fit keep their size.
+            label.enableAutoSizing = true;
+            label.fontSizeMax = fontSize;
+            label.fontSizeMin = Mathf.Max(14f, fontSize * 0.45f);
+            if (label.text.IndexOf(' ') < 0) label.textWrappingMode = TextWrappingModes.NoWrap;
             ApplyTextShadow(label);
 
             Size(image, height);
