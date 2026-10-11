@@ -48,7 +48,29 @@ Caption:
 **X / Threads**
 > Looking for 20 iPhone players to test my retro basketball game this week.
 > Free, takes 15 min, and I want the brutal truth.
-> Reply "hoops" or grab it here: [PUBLIC LINK] #RetroHoops #TestFlight
+> Reply "hoops" or grab it here: https://testflight.apple.com/join/6F4CqA1R #RetroHoops #TestFlight
+
+## Post: "I put myself in my own game" (create-a-player, week of 12 Oct)
+
+The best hook we have: it explains the game in 15 seconds with no words. Film it on your phone with **iOS Screen Recording** (portrait, sound on) on the TestFlight build.
+
+**Shot list (15–20 s)**
+1. 0–2 s: RISE MODE ▸ CREATE A PLAYER ▸ MY PLAYER. On-screen text: **I put myself in my own basketball game.**
+2. 2–7 s: type your name, flip HAIR / SKIN TONE / HEIGHT fast so the preview changes, set #16. Text: **(I made the game too.)**
+3. 7–9 s: tap CREATE PLAYER, then YOUR CREW showing you at the top.
+4. 9–16 s: a game: pump fake (defender jumps), drive, dunk, rim swing. Text on the dunk: **Pump fake. Rim swing.**
+5. 16–20 s: end card text: **Retro Hoops. Beta link in bio.**
+
+**Caption (TikTok / Reels / Shorts)**
+> I made a retro basketball game with AI… then put myself in it 🏀 Build yourself, build your crew, pump fake your friends. iPhone beta link in bio. #RetroHoops #buildinpublic #indiegame #pixelart #basketball
+
+**X / Threads**
+> New in Retro Hoops: create-a-player.
+> Build yourself, sign yourself, then pump fake a defender out of his shoes and hang on the rim.
+> iPhone beta (free): https://testflight.apple.com/join/6F4CqA1R #RetroHoops #buildinpublic
+> [clip]
+
+**Bio link:** https://testflight.apple.com/join/6F4CqA1R (public TestFlight link, first 100 testers).
 
 ## Post 3: How it was made, the AI lane (Mon 12 Oct)
 
