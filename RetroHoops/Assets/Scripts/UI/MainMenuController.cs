@@ -79,7 +79,7 @@ namespace CallerRetroBall.UI
             BuildNextStep();
 
             // Phase 37: the game has an optional purchase (Retro Hoops Pro since Phase 41), so the footer only says "no ads" (App Review 2.3.1).
-            var footer = UiKit.Label(Body, "v" + App.Version + "  ·  " + Loc.T("plays offline") + "  ·  " + Loc.T("no ads"), 28f, Theme.Muted);
+            var footer = UiKit.Label(Body, "v" + App.VersionAndBuild + "  ·  " + Loc.T("plays offline") + "  ·  " + Loc.T("no ads"), 28f, Theme.Muted);
             UiKit.Band(footer.rectTransform, 0.005f, 0.045f, 24f);
 
             // Phase 37: an App Store screenshot launch opens its screen and skips the first-launch dialogs.

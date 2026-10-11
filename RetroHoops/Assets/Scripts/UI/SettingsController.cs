@@ -204,7 +204,7 @@ namespace CallerRetroBall.UI
             UiKit.Button(column, "DEV: UNLOCK ALL", () => App.DevUnlockAll(), ButtonStyle.Ghost, 90f, 30f);
 #endif
 
-            var credits = UiKit.Label(column, LicenseText + "\n\n<color=#8D99AE>v" + App.Version + "</color>", 30f, Theme.Cream, TextAlignmentOptions.TopLeft);
+            var credits = UiKit.Label(column, LicenseText + "\n\n<color=#8D99AE>v" + App.VersionAndBuild + "</color>", 30f, Theme.Cream, TextAlignmentOptions.TopLeft);
             UiKit.Size(credits, 620f);
         }
 

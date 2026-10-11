@@ -266,6 +266,7 @@ namespace CallerRetroBall.Logic
             ["He's at the end of your bench. Move him UP to #1 on the ROSTER to control him in games."] = "Está al final de tu banquillo. Súbelo al #1 en la PLANTILLA para controlarlo en los partidos.",
             ["PUMP FAKE"] = "AMAGUE",
             ["OUT OF BOUNDS!"] = "¡FUERA!",
+            ["build"] = "compilación",
             ["CREATE A TEAMMATE"] = "CREAR COMPAÑERO",
             ["MY PLAYER"] = "MI JUGADOR",
             ["A TEAMMATE"] = "UN COMPAÑERO",

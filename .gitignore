@@ -44,3 +44,7 @@ tools/**/obj/
 xcuserdata/
 DerivedData/
 build/
+
+# Written by ReleaseTools at build time (11 Oct 2026)
+RetroHoops/Assets/Resources/build_number.txt
+RetroHoops/Assets/Resources/build_number.txt.meta

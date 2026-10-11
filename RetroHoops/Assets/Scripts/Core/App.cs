@@ -17,6 +17,25 @@ namespace CallerRetroBall.Core
         /// <summary>The Player Settings version (set by ProjectSetup / ReleaseTools), shown on menus.</summary>
         public static string Version => Application.version;
 
+        private static string _build;
+
+        /// <summary>The iOS build number written by ReleaseTools at build time (empty in the Editor before a build).</summary>
+        public static string BuildNumber
+        {
+            get
+            {
+                if (_build == null)
+                {
+                    var asset = Resources.Load<TextAsset>("build_number");
+                    _build = asset != null ? asset.text.Trim() : "";
+                }
+                return _build;
+            }
+        }
+
+        /// <summary>"1.0 (build 9)", or just the version when no build number is known.</summary>
+        public static string VersionAndBuild => string.IsNullOrEmpty(BuildNumber) ? Version : Version + " (" + Logic.Loc.T("build") + " " + BuildNumber + ")";
+
         public static ContentDatabase Content { get; private set; }
 
         /// <summary>The match the GameScene should play next (set by menus).</summary>

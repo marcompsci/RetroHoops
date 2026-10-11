@@ -300,6 +300,15 @@ namespace CallerRetroBall.EditorTools
             PlayerSettings.SetIl2CppCodeGeneration(NamedBuildTarget.iOS, Il2CppCodeGeneration.OptimizeSize);
         }
 
+        /// <summary>11 Oct 2026: the iOS build number goes into Resources/build_number.txt so Settings can show "v1.0 (build 9)".</summary>
+        private static void WriteBuildNumber()
+        {
+            const string path = "Assets/Resources/build_number.txt";
+            Directory.CreateDirectory(Path.GetDirectoryName(path));
+            File.WriteAllText(path, PlayerSettings.iOS.buildNumber ?? "");
+            AssetDatabase.ImportAsset(path, ImportAssetOptions.ForceUpdate);
+        }
+
         private static void Build(iOSSdkVersion sdk, string output)
         {
             EnsureOrientations();
@@ -327,6 +336,7 @@ namespace CallerRetroBall.EditorTools
 
             if (!File.Exists(IconPath) || !File.Exists(LaunchPath)) GenerateIconAndLaunch();
             ApplyReleaseSettings();
+            WriteBuildNumber();
             PlayerSettings.iOS.sdkVersion = sdk;
 
             var options = new BuildPlayerOptions

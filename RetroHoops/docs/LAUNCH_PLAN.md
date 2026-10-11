@@ -64,6 +64,8 @@ Send Claude the list as it is. It becomes the fix list. In TestFlight you can al
   - App Store / App Review requirements.
 - **Not allowed:** new modes, new seasons or rivals, new settings, new systems, "quick extras".
 - Exception (9 Oct): Omari asked for **pump fakes** and **swinging on the rim after dunks**; both are in build 5.
+- Further exceptions (9–10 Oct): 1-on-1 make-it-take-it + out of bounds (build 6), Franchise create-a-player (build 7), Rise create-a-player (build 8).
+- **11 Oct: v1 is FEATURE-COMPLETE (Omari's call after council review #2).** Build 8 is the v1 feature set. From here: fixes only, App Store items, the build-number line in Settings. Every new idea goes to the v1.1 list below.
 - An idea during the freeze goes in **"After launch"** at the bottom of this file, not in the build.
 - Every build still passes the logic tests, UnityCheck, the text audit, the App Store audit and the Build Check before upload.
 
@@ -163,7 +165,14 @@ Ready-to-post hooks, captions and X/Threads text for every post below are in **`
 
 ---
 
-## After launch (ideas parked by the freeze)
+## After launch: the v1.1 list (ideas parked by the freeze)
+
+Add new ideas here, not to the build. Pick from this list only after v1 is live.
+
+- Share created players by QR/link, like kits (every shared player is an ad).
+- Supabase (or other) online backend: accounts, cloud leaderboards. Needs a privacy review first.
+- Cosmetics pass / extra Pro content.
+- iPad-first marketing assets.
 
 - Paid Live tier or Live season pass (only once matchmaking regularly finds games).
 - Android version (Unity).
