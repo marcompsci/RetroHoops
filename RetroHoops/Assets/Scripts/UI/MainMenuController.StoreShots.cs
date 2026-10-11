@@ -30,6 +30,7 @@ namespace CallerRetroBall.UI
                 case StoreShotPlan.Clutch: ShowClutch(); break;
                 case StoreShotPlan.Park: ShowPark(); break;
                 case StoreShotPlan.Locker: _storeShotScene = SceneNames.LockerRoom; break;
+                case StoreShotPlan.Pro: ShowPro(ShowPlayMenu); break;
                 case StoreShotPlan.Game:
                 case StoreShotPlan.FullCourt:
                     var request = StoreShots.GameRequest(App.Catalog, StoreShots.Current.Plan == StoreShotPlan.FullCourt);

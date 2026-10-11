@@ -3,7 +3,7 @@ using System;
 namespace CallerRetroBall.Logic
 {
     /// <summary>What a store screenshot shows.</summary>
-    public enum StoreShotPlan { Title = 0, PlayMenu = 1, Game = 2, FullCourt = 3, Clutch = 4, Park = 5, Locker = 6 }
+    public enum StoreShotPlan { Title = 0, PlayMenu = 1, Game = 2, FullCourt = 3, Clutch = 4, Park = 5, Locker = 6, Pro = 7 }
 
     public sealed class StoreShot
     {
@@ -32,6 +32,8 @@ namespace CallerRetroBall.Logic
             new StoreShot { Name = "clutch", Plan = StoreShotPlan.Clutch, Settle = 9 },
             new StoreShot { Name = "park", Plan = StoreShotPlan.Park, Settle = 9 },
             new StoreShot { Name = "locker", Plan = StoreShotPlan.Locker, Settle = 10 },
+            // 11 Oct 2026: the Retro Hoops Pro screen, for the in-app purchase's App Review screenshot (not a store shot).
+            new StoreShot { Name = "pro", Plan = StoreShotPlan.Pro, Settle = 9 },
         };
 
         /// <summary>The shot this launch is for (null on a normal launch).</summary>

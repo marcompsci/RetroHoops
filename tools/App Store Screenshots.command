@@ -18,7 +18,8 @@ echo "App: $APP (built $(stat -f '%Sm' "$APP" 2>/dev/null))"
 BUNDLE="$(/usr/libexec/PlistBuddy -c 'Print :CFBundleIdentifier' "$APP/Info.plist")"
 
 # name:seconds to wait, in App Store order (keep in step with StoreShots.All in Logic/Feel/StoreShots.cs).
-SHOTS="game:14 title:8 fullcourt:14 play:9 clutch:9 park:9 locker:10"
+SHOTS="game:14 title:8 fullcourt:14 play:9 clutch:9 park:9 locker:10 pro:9"
+# 08-pro.png is for the Retro Hoops Pro in-app purchase review screenshot, not the store listing.
 
 shoot_on() {
   local NAME="$1" DEVICE="$2"

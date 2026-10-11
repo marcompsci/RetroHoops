@@ -42,7 +42,7 @@ Draft metadata and answers for App Store Connect. Character counts are checked a
 > One purchase: Franchise mode, Rise seasons 2+ and every Hoops Pass item.
 >
 > **FRANCHISE (with Retro Hoops Pro)**
-> Be the GM of a league club, season after season. Set the rotation, trade with seven other GMs (who call you with offers too), pick a training focus, re-sign your players, chase free agents under the salary cap, scout prospects, and win the draft lottery. Players age, improve, decline, and retire into the Hall of Fame. Play every game Full Court 5-on-5, or simulate.
+> Be the GM of a league club, season after season. Set the rotation, trade with seven other GMs (who call you with offers too), pick a training focus, re-sign your players, chase free agents under the salary cap, scout prospects, and win the draft lottery. Create up to three players of your own and sign them. Players age, improve, decline, and retire into the Hall of Fame. Play every game Full Court 5-on-5, or simulate.
 >
 > **LEGACY**
 > Take your own player from a high-school senior to the pros: recruiting stars, college or straight to the draft, draft night, contracts, sponsors, a skill tree, story choices, and a Hall of Fame vote.
@@ -54,7 +54,7 @@ Draft metadata and answers for App Store Connect. Character counts are checked a
 > Eighteen late-game situations: down two with twenty seconds left, up one and they have the ball. Win for a star, then go for the goal and the bonus. A new DAILY CLUTCH every day, and an editor to make your own and send the code to a friend.
 >
 > **RISE MODE**
-> Beat the street crews of The Blacktop Circuit, then play a season in The Caller League with event cards, crew chemistry, recruits, ten rotating rival crews and story scenes. Halfway through, it's the All-Star Weekend.
+> Beat the street crews of The Blacktop Circuit, then play a season in The Caller League with event cards, crew chemistry, recruits, ten rotating rival crews and story scenes. Create yourself and up to three teammates for your crew. Halfway through, it's the All-Star Weekend.
 >
 > **ALL-STAR WEEKEND**
 > • Dunk Contest: pick a dunk, enter its combo in the air, time the slam, and face five judges
@@ -67,7 +67,6 @@ Draft metadata and answers for App Store Connect. Character counts are checked a
 > • Holiday Games on Christmas, Halloween, Easter and Fourth of July courts
 > • 1-on-1, a Daily Challenge, H-O-R-S-E, 21 and more party games
 > • Tournament Builder: your own 4, 8 or 16-team bracket
-> • 2 Player on one iPhone, face to face
 >
 > **MAKE IT YOURS**
 > Create your player and your team. Design Home, Away and Alt kits in the Kit Studio and share them with a code or QR. Build up to three courts of your own: floor, paint, lines, stands, sky and a centre-court logo. Pick your music in the Music Player: nine original chiptune tracks.
@@ -76,15 +75,13 @@ Draft metadata and answers for App Store Connect. Character counts are checked a
 > • Touch controls or a Bluetooth controller
 > • English and Spanish
 > • Colour filters, captions, VoiceOver menus, left-handed layout, large buttons, tap-to-shoot, reduce motion
-> • Optional CRT scanlines and 120 Hz on ProMotion iPhones
-> • Optional Game Center and iCloud save sync
 >
 > **MADE TO RESPECT YOUR TIME**
 > Everything except Live works offline. No account, no ads, no tracking. The only purchase is the optional one-time Retro Hoops Pro unlock.
 >
 > All teams, players, courts, art and music are original.
 
-*(2,715 characters without the quote markers.)*
+*(3,887 characters without the quote markers and bold marks; 11 Oct 2026.)*
 
 ## Spanish (Mexico) localization
 
