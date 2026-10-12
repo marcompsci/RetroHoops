@@ -282,6 +282,7 @@ namespace CallerRetroBall.Logic
             ["ON A TEAM"] = "EN UN EQUIPO",
             ["EDIT MY PROFILE"] = "EDITAR MI PERFIL",
             ["Your tester info and game stats are copied.\n\n1. Take a screenshot (side button + volume up).\n2. Tap the screenshot, then Share Beta Feedback (or press and hold the Retro Hoops icon ► Send Beta Feedback).\n3. Paste into the comment and tell us what happened."] = "Tu información de probador y tus estadísticas están copiadas.\n\n1. Haz una captura (botón lateral + subir volumen).\n2. Toca la captura y luego Compartir comentarios beta (o mantén pulsado el icono de Retro Hoops ► Enviar comentarios beta).\n3. Pega en el comentario y cuéntanos qué pasó.",
+            ["Want the ball? Tap PASS and your teammate passes it to you."] = "¿Quieres el balón? Toca PASE y tu compañero te lo pasa.",
             ["LIVE POINTS"] = "PUNTOS LIVE",
             ["UPSET"] = "SORPRESA",
             ["SCORING"] = "ANOTACIÓN",

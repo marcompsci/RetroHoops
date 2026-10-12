@@ -20,6 +20,8 @@ namespace CallerRetroBall.Logic
         public float MatchTime;
         /// <summary>You have the ball with a defender right on you.</summary>
         public bool TightlyGuarded;
+        /// <summary>v1.1: an AI teammate has the ball (the human can call for it with PASS).</summary>
+        public bool TeammateHasBall;
     }
 
     public sealed class CoachTip
@@ -50,6 +52,7 @@ namespace CallerRetroBall.Logic
             Tip("tip.oop", "Gold arrow? Pass now for the alley-oop!", s => s.Live && s.AlleyOopOpen),
             Tip("tip.heat", "One more make and you're HEATING UP.", s => s.HeatThreshold > 0 && s.HumanHotStreak == s.HeatThreshold - 1),
             Tip("tip.fake", "Defender in your face? Tap SHOOT quickly to pump fake, then shoot.", s => s.Live && s.HumanHasBall && s.TightlyGuarded && s.MatchTime > 8f),
+            Tip("tip.callball", "Want the ball? Tap PASS and your teammate passes it to you.", s => s.Live && s.TeammateHasBall && !s.MustClear && s.MatchTime > 15f),
             Tip("tip.shotclock", "Shot clock's low. Get a shot up!", s => s.Live && !s.OnDefense && s.ShotClock > 0f && s.ShotClock < 4f),
         };
 

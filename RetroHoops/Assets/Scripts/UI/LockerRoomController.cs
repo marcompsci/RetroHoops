@@ -47,13 +47,16 @@ namespace CallerRetroBall.UI
             _wallet = UiKit.Label(Body, "", 36f, Theme.Cream, TextAlignmentOptions.Center, true, "Wallet");
             UiKit.Band(_wallet.rectTransform, 0.94f, 1f, 24f);
 
-            var tabs = UiKit.Row(Body, 10f, "Tabs");
-            UiKit.Band(tabs, 0.875f, 0.935f, 32f);
+            // Two rows of tabs (5 + 4) so every name fits on one line ("PLAYER", not "PLAY/ER").
+            var tabsTop = UiKit.Row(Body, 10f, "Tabs");
+            UiKit.Band(tabsTop, 0.906f, 0.937f, 32f);
+            var tabsBottom = UiKit.Row(Body, 10f, "Tabs2");
+            UiKit.Band(tabsBottom, 0.873f, 0.904f, 32f);
             _tabImages = new UnityEngine.UI.Image[TabNames.Length];
             for (int i = 0; i < TabNames.Length; i++)
             {
                 var t = (Tab)i;
-                var b = UiKit.Button(tabs, TabNames[i], () => Show(t), ButtonStyle.Secondary, 100f, 24f);
+                var b = UiKit.Button(i < 5 ? tabsTop : tabsBottom, TabNames[i], () => Show(t), ButtonStyle.Secondary, 56f, 28f);
                 _tabImages[i] = b.GetComponent<UnityEngine.UI.Image>();
             }
 

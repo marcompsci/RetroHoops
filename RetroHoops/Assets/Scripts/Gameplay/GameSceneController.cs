@@ -2289,6 +2289,7 @@ namespace CallerRetroBall.Gameplay
                 ShotClock = _match.Setup.Rules.shotClockSeconds < 99f ? _match.ShotClock : 0f,
                 MatchTime = _match.Time,
                 TightlyGuarded = _match.HumanHasBall && NearestOpponentDistance(me) < 1.3f,
+                TeammateHasBall = _match.HumanTeamHasBall && !_match.HumanHasBall,
             };
             _tooEarly = _tooLate = false;
             var tip = CoachTips.Next(App.Career, s, Time.unscaledTime, ref _lastTipAt);
