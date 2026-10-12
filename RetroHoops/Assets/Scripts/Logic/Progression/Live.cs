@@ -18,6 +18,12 @@ namespace CallerRetroBall.Logic
         public int seasonMonth, seasonBest, seasonGames;
         /// <summary>The last finished season, and the last season already paid out.</summary>
         public int endedMonth, endedBest, endedGames, rewardedMonth;
+        /// <summary>12 Oct 2026 LIVE POINTS (see <see cref="LivePoints"/>): all-time wins/scoring/time points, this month's,
+        /// the day the daily time cap counts for, today's time points, and the current/best Live win streak.</summary>
+        public int pWins, pScoring, pActivity;
+        public int pMonth, pMonthWins, pMonthScoring, pMonthActivity;
+        public int pDay, pDayActivity;
+        public int pStreak, pBestStreak;
     }
 
     /// <summary>What a finished Live season paid.</summary>
@@ -213,6 +219,9 @@ namespace CallerRetroBall.Logic
                 seasonMonth = Math.Max(0, s.seasonMonth), seasonBest = Math.Max(0, Math.Min(4000, s.seasonBest)), seasonGames = Math.Max(0, s.seasonGames),
                 endedMonth = Math.Max(0, s.endedMonth), endedBest = Math.Max(0, Math.Min(4000, s.endedBest)), endedGames = Math.Max(0, s.endedGames),
                 rewardedMonth = Math.Max(0, s.rewardedMonth),
+                pWins = s.pWins, pScoring = s.pScoring, pActivity = s.pActivity,
+                pMonth = Math.Max(0, s.pMonth), pMonthWins = s.pMonthWins, pMonthScoring = s.pMonthScoring, pMonthActivity = s.pMonthActivity,
+                pDay = Math.Max(0, s.pDay), pDayActivity = s.pDayActivity, pStreak = s.pStreak, pBestStreak = s.pBestStreak,
             };
         }
 

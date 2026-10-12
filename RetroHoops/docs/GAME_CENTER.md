@@ -33,12 +33,14 @@ In App Store Connect, open **App ▸ Features ▸ Game Center**. The IDs must ma
 | `retrohoops.live.rating` | Live Rating (best) | High to low | Integer |
 | `retrohoops.lb.gauntlet` | Skills Gauntlet (best) | High to low | Integer |
 | `retrohoops.lb.clutch` | CLUTCH Stars | High to low | Integer (Phase 38: total CLUTCH stars, 0–54) |
+| `retrohoops.live.points` | Live Points (all-time) | High to low | Integer (12 Oct 2026: wins + scoring + time played, see `LivePoints.cs`) |
 
 ### Leaderboard (Recurring, Phase 33)
 
 | Leaderboard ID | Name | Sort | Score format | Recurrence |
 |---|---|---|---|---|
 | `retrohoops.live.monthly` | Live Rating (this month) | High to low | Integer | Starts on the 1st, lasts 1 month, repeats |
+| `retrohoops.live.points.monthly` | Live Points (this month) | High to low | Integer | Starts on the 1st, lasts 1 month, repeats |
 
 In App Store Connect choose **Recurring** (not Classic) for this one. The game posts your Live rating to it only in a month you've played Live, so each month's board shows that month's active players.
 

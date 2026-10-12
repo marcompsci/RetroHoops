@@ -37,6 +37,9 @@ namespace CallerRetroBall.Logic
                 ["team"] = l.teamId ?? "", ["until"] = l.subscribedUntil, ["month"] = l.month,
                 ["sm"] = l.seasonMonth, ["sb"] = l.seasonBest, ["sg"] = l.seasonGames,
                 ["em"] = l.endedMonth, ["eb"] = l.endedBest, ["eg"] = l.endedGames, ["rm"] = l.rewardedMonth,
+                ["pw"] = l.pWins, ["ps"] = l.pScoring, ["pa"] = l.pActivity,
+                ["pm"] = l.pMonth, ["pmw"] = l.pMonthWins, ["pms"] = l.pMonthScoring, ["pma"] = l.pMonthActivity,
+                ["pd"] = l.pDay, ["pda"] = l.pDayActivity, ["pst"] = l.pStreak, ["pbs"] = l.pBestStreak,
             };
         }
 
@@ -54,7 +57,12 @@ namespace CallerRetroBall.Logic
             l.month = Math.Max(0, Int(o, "month", 0));
             l.seasonMonth = Int(o, "sm", 0); l.seasonBest = Int(o, "sb", 0); l.seasonGames = Int(o, "sg", 0);
             l.endedMonth = Int(o, "em", 0); l.endedBest = Int(o, "eb", 0); l.endedGames = Int(o, "eg", 0); l.rewardedMonth = Int(o, "rm", 0);
-            return LiveMode.Sanitize(l);
+            l.pWins = Int(o, "pw", 0); l.pScoring = Int(o, "ps", 0); l.pActivity = Int(o, "pa", 0);
+            l.pMonth = Int(o, "pm", 0); l.pMonthWins = Int(o, "pmw", 0); l.pMonthScoring = Int(o, "pms", 0); l.pMonthActivity = Int(o, "pma", 0);
+            l.pDay = Int(o, "pd", 0); l.pDayActivity = Int(o, "pda", 0); l.pStreak = Int(o, "pst", 0); l.pBestStreak = Int(o, "pbs", 0);
+            l = LiveMode.Sanitize(l);
+            LivePoints.Sanitize(l);
+            return l;
         }
 
         private static object EncodeCouch(CouchCupSaveData c)

@@ -59,6 +59,7 @@ namespace CallerRetroBall.UI
                                            + live.seasonGames + "/" + LiveSeason.MinGames + " GAMES TO QUALIFY", 26f, Theme.Muted, TextAlignmentOptions.Center, true), 44f);
             if (signedIn)
                 UiKit.Button(column, "FRIENDS THIS MONTH", () => App.GameCenter.ShowLeaderboard(LiveMode.MonthlyLeaderboardId, true), ButtonStyle.Secondary, 90f, 30f);
+            LivePointsBlock(column, live, signedIn);
             if (BackendConfig.Enabled)
                 UiKit.Button(column, "DELETE MY LIVE DATA", () => UiControls.Dialog("DELETE LIVE DATA",
                     "Erase your Live rating and record from the Retro Hoops server?",
@@ -104,6 +105,31 @@ namespace CallerRetroBall.UI
                 watch.Status = status;
                 watch.Find = find;
                 watch.OnReady = () => ShowLive();
+            }
+        }
+
+        /// <summary>12 Oct 2026 LIVE POINTS: this month's points and division, the breakdown, and the two points boards.</summary>
+        private void LivePointsBlock(RectTransform column, LiveSaveData live, bool signedIn)
+        {
+            LivePoints.Roll(live, System.DateTime.UtcNow);
+            int month = LivePoints.MonthTotal(live);
+            int next = LivePoints.ToNextDivision(month);
+            UiKit.Size(UiKit.Label(column, Loc.T("LIVE POINTS") + " " + month + "  ·  " + Loc.T(LivePoints.Division(month)), 40f, Theme.Gold, TextAlignmentOptions.Center, true), 64f);
+            UiKit.Size(UiKit.Label(column, Loc.T("WINS") + " " + live.pMonthWins + "  ·  " + Loc.T("SCORING") + " " + live.pMonthScoring + "  ·  " + Loc.T("TIME") + " " + live.pMonthActivity
+                                           + (next > 0 ? "\n" + next + " " + Loc.T("to") + " " + Loc.T(LivePoints.Divisions[LivePoints.DivisionIndex(month) + 1]) : "")
+                                           + "\n" + Loc.T("ALL-TIME") + " " + LivePoints.Total(live) + "  ·  " + Loc.T("BEST STREAK") + " " + live.pBestStreak
+                                           + "  ·  " + Loc.T("TIME TODAY") + " " + live.pDayActivity + "/" + LivePoints.DailyActivityCap,
+                                   26f, Theme.Cream, TextAlignmentOptions.Center), 120f);
+            var row = UiKit.Row(column, 16f, "Points boards");
+            UiKit.Size(row, 90f);
+            UiKit.Button(row, "HOW POINTS WORK", () => UiControls.Dialog("LIVE POINTS",
+                "Every Live game you finish earns points:\n• WIN: 100, plus up to 50 for beating a higher-rated player and 10 for each win in a row after the first (up to 50)\n"
+                + "• SCORING: 1 per point your team scores (up to 50 a game)\n• TIME: 2 per minute played (up to 60 a day)\nQuitting earns nothing. Monthly points set your division and reset on the 1st.",
+                ("OK", ButtonStyle.Primary, null)), ButtonStyle.Ghost, 90f, 26f);
+            if (signedIn)
+            {
+                UiKit.Button(row, "POINTS THIS MONTH", () => App.GameCenter.ShowLeaderboard(LivePoints.MonthlyLeaderboardId, false), ButtonStyle.Secondary, 90f, 26f);
+                UiKit.Button(row, "ALL-TIME", () => App.GameCenter.ShowLeaderboard(LivePoints.LeaderboardId, false), ButtonStyle.Secondary, 90f, 26f);
             }
         }
 

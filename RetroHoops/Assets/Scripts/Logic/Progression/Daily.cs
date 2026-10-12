@@ -265,6 +265,9 @@ namespace CallerRetroBall.Logic
             L(Gauntlet.LeaderboardId, "Skills Gauntlet (best)", false, "Integer", d => d.gauntlet?.best ?? 0),
             L(LiveMode.MonthlyLeaderboardId, "Live Rating (this month)", false, "Integer", d => LiveMode.MonthlyScore(d.live, DateTime.UtcNow)),
             L(Clutch.LeaderboardId, "CLUTCH Stars", false, "Integer", d => Clutch.TotalStars(d.clutch)),
+            // 12 Oct 2026: LIVE POINTS (wins + scoring + time played), all-time and this month.
+            L(LivePoints.LeaderboardId, "Live Points (all-time)", false, "Integer", d => LivePoints.Total(d.live)),
+            L(LivePoints.MonthlyLeaderboardId, "Live Points (this month)", false, "Integer", d => LivePoints.MonthlyScore(d.live, DateTime.UtcNow)),
         };
 
         public static readonly string[] AllAchievements = All.ConvertAll(a => a.Id).ToArray();

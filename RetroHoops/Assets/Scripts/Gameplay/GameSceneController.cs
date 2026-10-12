@@ -102,6 +102,11 @@ namespace CallerRetroBall.Gameplay
             var live = App.Career.live ?? (App.Career.live = new LiveSaveData());
             live.month = LiveMode.MonthKey(System.DateTime.UtcNow); // Phase 33: counts for this month's leaderboard
             LiveSeason.Observe(live, live.month, true); // Phase 36: counts toward this month's Live season
+            // 12 Oct 2026 LIVE POINTS: wins + scoring + time played (a quit earns nothing).
+            int theirRating = _link.Seat == 0 ? _liveSetup.GuestRating : _liveSetup.HostRating;
+            var points = LivePoints.Record(live, System.DateTime.UtcNow, outcome != Backend.Outcome.Quit, won, live.rating, theirRating,
+                                           _match.Score[LocalTeam], _match.Time);
+            string pointsLine = "\n" + Loc.T("LIVE POINTS") + " " + LivePoints.Total(live) + " (+" + points.Total + ")  ·  " + points.Describe();
             if (_serverMatchKey != null)
             {
                 // Rated on the Retro Hoops Live server: it changes ratings only when both phones' reports agree.
@@ -113,15 +118,16 @@ namespace CallerRetroBall.Gameplay
                     else if (state == "open") hud.Toast("RESULT SENT: RATING UPDATES WHEN BOTH RESULTS ARE IN", 3f);
                     else if (state == "disputed") hud.Toast("THE TWO RESULTS DIDN'T MATCH: NO RATING CHANGE", 3f);
                 });
-                return "Result sent to Retro Hoops Live (" + (won ? "win" : "loss") + "). Ratings update on the server.";
+                App.SaveCareer();
+                App.ReportGameCenter();
+                return "Result sent to Retro Hoops Live (" + (won ? "win" : "loss") + "). Ratings update on the server." + pointsLine;
             }
-            int theirs = _link.Seat == 0 ? _liveSetup.GuestRating : _liveSetup.HostRating;
-            int delta = LiveMode.Apply(live, theirs, won);
+            int delta = LiveMode.Apply(live, theirRating, won);
             LiveSeason.Observe(live, live.month, false);
             _liveDelta = delta;
             App.SaveCareer();
             App.ReportGameCenter();
-            return "LIVE RATING " + live.rating + " (" + (delta >= 0 ? "+" : "") + delta + ")  ·  " + LiveMode.Tier(live.rating) + "  ·  " + live.wins + "-" + live.losses;
+            return "LIVE RATING " + live.rating + " (" + (delta >= 0 ? "+" : "") + delta + ")  ·  " + LiveMode.Tier(live.rating) + "  ·  " + live.wins + "-" + live.losses + pointsLine;
         }
         /// <summary>The team this phone plays: the guest of a two-phone game is team B.</summary>
         private int LocalTeam => _link != null ? _link.Seat : _match.Setup.HumanTeam;
