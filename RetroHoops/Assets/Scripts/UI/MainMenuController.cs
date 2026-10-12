@@ -74,6 +74,8 @@ namespace CallerRetroBall.UI
             UiKit.Button(column, "PRACTICE LAB", ShowPractice, ButtonStyle.Secondary, 120f, 52f);
             UiKit.Button(column, "LOCKER ROOM", () => SceneFlow.GoTo(SceneNames.LockerRoom), ButtonStyle.Secondary, 120f, 52f);
             UiKit.Button(column, "SETTINGS", () => SceneFlow.GoTo(SceneNames.Settings), ButtonStyle.Ghost, 104f, 46f);
+            // TestFlight copies only: BETA FEEDBACK (the report goes out through TestFlight's own feedback).
+            if (Beta.IsTestFlight) UiKit.Button(column, "SEND FEEDBACK", BetaFeedbackScreen.SendFeedback, ButtonStyle.Ghost, 104f, 46f);
 
             BuildLogoStrip();
             BuildNextStep();
@@ -159,6 +161,13 @@ namespace CallerRetroBall.UI
             {
                 App.OpenAllStar = false;
                 AllStarScreen.Open(false);
+            }
+
+            // TestFlight: the tester profile once, before anything else.
+            if (Beta.IsTestFlight && !App.Career.beta.asked && _overlay == null)
+            {
+                BetaFeedbackScreen.OpenProfile();
+                return;
             }
 
             // First launch: Coach Dee says hello, then the tutorial is offered (once per session until it's done).

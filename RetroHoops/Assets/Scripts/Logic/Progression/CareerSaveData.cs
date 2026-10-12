@@ -293,6 +293,8 @@ namespace CallerRetroBall.Logic
         public int loginDay = -1, loginStreak, loginBest;
         /// <summary>Phase 41: last App Store answer for Retro Hoops Pro (a cache; the App Store decides), and whether its pass items were granted.</summary>
         public bool proOwned, proGranted;
+        /// <summary>12 Oct 2026: the TestFlight tester's profile (see <see cref="BetaFeedback"/>).</summary>
+        public BetaProfileData beta = new BetaProfileData();
         /// <summary>Tournament Builder: the tournament in progress and titles.</summary>
         public CustomCupSaveData customCup = new CustomCupSaveData();
         /// <summary>This week's Weekly Challenges progress.</summary>

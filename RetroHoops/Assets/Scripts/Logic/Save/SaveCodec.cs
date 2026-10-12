@@ -119,6 +119,7 @@ namespace CallerRetroBall.Logic
                 ["login"] = EncodeLogin(d),
                 ["feel"] = EncodeFeel(d.settings),
                 ["pro"] = EncodePro(d),
+                ["beta"] = EncodeBeta(d.beta),
                 ["customCup"] = EncodeCustomCup(d.customCup),
                 ["weekly"] = EncodeWeekly(d.weekly),
                 ["pass"] = EncodePass(d.pass),
@@ -574,6 +575,7 @@ namespace CallerRetroBall.Logic
                 DecodeLogin(d, Obj(o, "login"));
                 DecodeFeel(d.settings, Obj(o, "feel"));
                 DecodePro(d, Obj(o, "pro"));
+                d.beta = DecodeBeta(Obj(o, "beta"));
                 d.customCup = DecodeCustomCup(Obj(o, "customCup"));
                 d.weekly = DecodeWeekly(Obj(o, "weekly"));
                 d.pass = DecodePass(Obj(o, "pass"));

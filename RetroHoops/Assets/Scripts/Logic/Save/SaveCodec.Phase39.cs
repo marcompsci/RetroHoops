@@ -43,6 +43,26 @@ namespace CallerRetroBall.Logic
             d.proGranted = Bool(o, "granted", false);
         }
 
+        // 12 Oct 2026: BETA FEEDBACK profile.
+        private static object EncodeBeta(BetaProfileData b)
+        {
+            b = b ?? new BetaProfileData();
+            return new Dictionary<string, object> { ["name"] = b.name ?? "", ["games"] = b.hoopsGames, ["hoops"] = b.hoops, ["asked"] = b.asked, ["sent"] = b.sent };
+        }
+
+        private static BetaProfileData DecodeBeta(Dictionary<string, object> o)
+        {
+            var b = new BetaProfileData();
+            if (o == null) return b;
+            string name = Str(o, "name", "") ?? "";
+            b.name = name.Length > BetaFeedback.MaxName ? name.Substring(0, BetaFeedback.MaxName) : name;
+            b.hoopsGames = Math.Max(-1, Math.Min(BetaFeedback.HoopsGamesOptions.Length - 1, Int(o, "games", -1)));
+            b.hoops = Math.Max(-1, Math.Min(BetaFeedback.HoopOptions.Length - 1, Int(o, "hoops", -1)));
+            b.asked = Bool(o, "asked", false);
+            b.sent = Math.Max(0, Int(o, "sent", 0));
+            return b;
+        }
+
         private static object EncodeFeel(SettingsData s)
         {
             s = s ?? new SettingsData();
