@@ -169,6 +169,16 @@ Ready-to-post hooks, captions and X/Threads text for every post below are in **`
 
 Add new ideas here, not to the build. Pick from this list only after v1 is live.
 
+- **12 Oct research (App Store, Google Play reviews, Hoop Land / Basketball Battle / Retro Bowl, r/HoopLand). Ranked for v1.1:**
+  1. **CALL FOR THE BALL / always in control.** Hoop Land reviewers' top gameplay complaint: teammates won't pass for the last shot, and the game takes your player away. Add a "give me the ball" button (the AI passes when it can) and a Settings switch to never auto-switch players.
+  2. **Fouls that need real contact.** Hoop Land players hate automatic fouls on any bump. Retro Hoops has no fouls yet: add light fouls (and free throws) only for hard contact, with a setting to turn them off.
+  3. **Share a whole league/Franchise by code** (Hoop Land's custom-league sharing is a favourite): teams, created players, kits and courts in one code.
+  4. **Commissioner tools in Franchise:** edit rosters and ratings, injuries on/off, expansion team.
+  5. **Injuries (optional, off by default)** for Franchise and Legacy.
+  6. **Career life off the court:** more varied post-game messages and a fan/follower feed after big games (Hoop Land reviewers ask for both).
+  7. **Accessories in the creator:** headbands, sleeves, goggles, tattoos (pixel), for created players and the Locker Room.
+  8. **Defense that isn't repetitive:** a TAKE THE CHARGE button and switching onto the shooter (reviewers of 1-on-1 games say defense is the boring half).
+  Already in Retro Hoops (keep pointing to them in marketing): cloud save (iCloud), no ads / no pay-to-win, two phones without internet, daily and weekly challenges, create-a-player and team, custom courts and kits, controller support.
 - Share created players by QR/link, like kits (every shared player is an ad).
 - Supabase (or other) online backend: accounts, cloud leaderboards. Needs a privacy review first.
 - Cosmetics pass / extra Pro content.
