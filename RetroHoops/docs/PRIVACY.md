@@ -1,6 +1,6 @@
 # Retro Hoops privacy policy
 
-*Last updated: October 2026*
+*Last updated: 12 October 2026*
 
 Retro Hoops is made by **Omari Bell** (contact: **rodlonbell16@gmail.com**).
 
@@ -14,19 +14,12 @@ Retro Hoops is made by **Omari Bell** (contact: **rodlonbell16@gmail.com**).
 
 **Two phones nearby.** When you play 2 Player on two phones, the game connects them directly over Wi-Fi or Bluetooth (Apple's Multipeer Connectivity). Only game data and the device name you see on screen are exchanged. Nothing goes over the internet.
 
+**Beta testing (TestFlight copies only).** If you test Retro Hoops through Apple's TestFlight, the game asks for an optional tester card: a name or handle and two answers about how much you play basketball and basketball games. It stays on your phone. **SEND FEEDBACK** only copies your tester card, the build number, your phone model and iOS version, and your game totals (games, wins, points) to your clipboard. Nothing is sent unless you paste it into TestFlight's own Share Beta Feedback yourself. TestFlight feedback, screenshots and crash reports are delivered to the developer by Apple under Apple's TestFlight terms and privacy policy. App Store copies of the game don't have this feature.
+
 **Purchases.** Retro Hoops Pro, a one-time purchase, is sold by Apple. The developer receives no payment details.
 
 **Children.** Retro Hoops doesn't knowingly collect personal information from anyone, including children.
 
+**Your choices.** You can delete everything the game saved by deleting the app (and, if iCloud Sync is on, by turning it off in Settings first or removing the app's data in iCloud settings). Settings ▸ RESET SAVE in the game also erases your career. For questions or requests, email rodlonbell16@gmail.com.
+
 **Changes.** If this policy changes, the new version will be posted at this address with a new date.
-
----
-
-### For the developer: App Store privacy answers once the Live server is on
-
-- App Privacy ▸ Data Collection: **Yes**.
-  - **Identifiers ▸ User ID** (Game Center player ID). Linked to the user. Used for App Functionality. Not used for tracking.
-  - **Usage Data ▸ Product Interaction**, or **Other Data ▸ Gameplay Content**, for Live game results and ratings. Linked to the user. App Functionality. Not used for tracking.
-- `Assets/Plugins/iOS/PrivacyInfo.xcprivacy`: add the matching `NSPrivacyCollectedDataTypes` entries (`NSPrivacyCollectedDataTypeUserID`, `NSPrivacyCollectedDataTypeGameplayContent`), each with linked = true, tracking = false, and purpose `NSPrivacyCollectedDataTypePurposeAppFunctionality`.
-- While `BackendConfig.Url` is empty, none of this applies, and the "Data Not Collected" answer stands.
-

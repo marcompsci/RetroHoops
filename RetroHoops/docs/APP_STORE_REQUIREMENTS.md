@@ -38,3 +38,14 @@ This is the checklist for App Review. **Done in code** items are checked by `too
 
 - Phases 39–40 haven't been compiled in Unity/Xcode on the Mac or run in the Simulator.
 - Nothing has been uploaded to App Store Connect; App Review may still raise things these checks can't see.
+
+## App Privacy answers if the Live server is switched on (moved from PRIVACY.md, 12 Oct 2026)
+
+
+- App Privacy ▸ Data Collection: **Yes**.
+  - **Identifiers ▸ User ID** (Game Center player ID). Linked to the user. Used for App Functionality. Not used for tracking.
+  - **Usage Data ▸ Product Interaction**, or **Other Data ▸ Gameplay Content**, for Live game results and ratings. Linked to the user. App Functionality. Not used for tracking.
+- `Assets/Plugins/iOS/PrivacyInfo.xcprivacy`: add the matching `NSPrivacyCollectedDataTypes` entries (`NSPrivacyCollectedDataTypeUserID`, `NSPrivacyCollectedDataTypeGameplayContent`), each with linked = true, tracking = false, and purpose `NSPrivacyCollectedDataTypePurposeAppFunctionality`.
+- While `BackendConfig.Url` is empty, none of this applies, and the "Data Not Collected" answer stands.
+
+
