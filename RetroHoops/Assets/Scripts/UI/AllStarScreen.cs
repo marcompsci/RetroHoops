@@ -322,8 +322,8 @@ namespace CallerRetroBall.UI
             var size = parent.rect.size;
             _dunker.rectTransform.anchoredPosition = new Vector2(x * size.x, size.y * (0.18f + lift));
             _dunker.rectTransform.localEulerAngles = new Vector3(0f, 0f, degrees);
-            float w = (float)CharacterSpriteGenerator.FrameWidth / _dunker.texture.width;
-            float h = (float)CharacterSpriteGenerator.FrameHeight / _dunker.texture.height;
+            float w = (float)CharacterSpriteGenerator.SheetFrameWidth / _dunker.texture.width;
+            float h = (float)CharacterSpriteGenerator.SheetFrameHeight / _dunker.texture.height;
             CharacterSpriteGenerator.FrameOrigin(view, frame, out int fx, out int fy);
             float u = (float)fx / _dunker.texture.width, v = (float)fy / _dunker.texture.height;
             _dunker.uvRect = flip ? new Rect(u + w, v, -w, h) : new Rect(u, v, w, h);

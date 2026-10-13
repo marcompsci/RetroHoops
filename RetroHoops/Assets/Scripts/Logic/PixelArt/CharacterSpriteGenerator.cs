@@ -18,10 +18,19 @@ namespace CallerRetroBall.Logic.PixelArt
     /// 0-1 = idle, 2-5 = run, 6 = arms up (shot), 7 = crossover dribble (low, wide, ball hand across),
     /// 8 = step-back (leaning back, ball up), 9 = chest thump. Every frame gets a dark 1px outline.
     /// </summary>
-    public static class CharacterSpriteGenerator
+    public static partial class CharacterSpriteGenerator
     {
+        /// <summary>Logical frame size (layout, poses, hand reach): one unit = one court art pixel.</summary>
         public const int FrameWidth = 16;
         public const int FrameHeight = 24;
+        /// <summary>
+        /// 13 Oct 2026 art pass: sheets are drawn at 2x detail (32 x 48 per frame) with smoothed edges, light from the
+        /// upper left, a 1px hi-res outline and jersey numbers. Slice with <see cref="SheetFrameWidth"/> and show at
+        /// <see cref="ArtScale"/> times the court's pixels per unit so players stay the same size on court.
+        /// </summary>
+        public const int ArtScale = 2;
+        public const int SheetFrameWidth = FrameWidth * ArtScale;
+        public const int SheetFrameHeight = FrameHeight * ArtScale;
         public const int IdleFrames = 2;
         public const int RunFrames = 4;
         public const int ShootFrames = 1;
@@ -78,8 +87,8 @@ namespace CallerRetroBall.Logic.PixelArt
         /// <summary>Bottom-left pixel of a frame within the sheet.</summary>
         public static void FrameOrigin(CharacterView view, int frame, out int x, out int y)
         {
-            x = frame * FrameWidth;
-            y = (int)view * FrameHeight;
+            x = frame * SheetFrameWidth;
+            y = (int)view * SheetFrameHeight;
         }
 
         /// <summary>Maps an eight-way court facing to a sprite view and horizontal flip.</summary>
@@ -112,9 +121,12 @@ namespace CallerRetroBall.Logic.PixelArt
             => GenerateSheet(look, KitLook.Classic(jersey, trim, accent, shoes, pattern, shorts));
 
         /// <summary>A sheet in a Kit Studio kit: jersey cut, collar, stripes, chest, pattern, shorts and shoe styles.</summary>
-        public static PixelCanvas GenerateSheet(AppearanceDef look, KitLook kit)
+        public static PixelCanvas GenerateSheet(AppearanceDef look, KitLook kit) => GenerateSheet(look, kit, -1);
+
+        /// <param name="number">Jersey number printed on the back (-1 = none).</param>
+        public static PixelCanvas GenerateSheet(AppearanceDef look, KitLook kit, int number)
         {
-            var sheet = new PixelCanvas(FrameWidth * FramesPerView, FrameHeight * ViewCount);
+            var sheet = new PixelCanvas(SheetFrameWidth * FramesPerView, SheetFrameHeight * ViewCount);
             var p = new Palette(look, kit.Jersey, kit.Trim, kit.Accent);
             p.Shoe = kit.Shoe;
             p.Shorts = kit.Shorts;
@@ -124,15 +136,23 @@ namespace CallerRetroBall.Logic.PixelArt
                 for (int f = 0; f < FramesPerView; f++)
                 {
                     var frame = new PixelCanvas(FrameWidth, FrameHeight);
+                    _info = default;
+                    _skipHead = true;
                     DrawFrame(frame, (CharacterView)v, f, look, p);
-                    AddOutline(frame);
+                    _skipHead = false;
+                    var big = SpriteDetail.Scale2x(frame);
+                    DrawHead2x(big, (CharacterView)v, Mod(look.hairStyle, HairStyleCount), p);
+                    var hi = SpriteDetail.Finish(big, _info, (CharacterView)v, p.Jersey, p.Trim, p.Skin, number);
                     FrameOrigin((CharacterView)v, f, out int ox, out int oy);
-                    for (int y = 0; y < FrameHeight; y++)
-                        for (int x = 0; x < FrameWidth; x++)
-                            sheet.Set(ox + x, oy + y, frame.Get(x, y));
+                    for (int y = 0; y < SheetFrameHeight; y++)
+                        for (int x = 0; x < SheetFrameWidth; x++)
+                            sheet.Set(ox + x, oy + y, hi.Get(x, y));
                 }
             return sheet;
         }
+
+        [ThreadStatic] private static SpriteDetail.FrameInfo _info;
+        [ThreadStatic] private static bool _skipHead;
 
         private struct Palette
         {
@@ -273,13 +293,14 @@ namespace CallerRetroBall.Logic.PixelArt
                     Rect(c, cx - 2, torsoTop, 4, 1, p.Trim);                                  // round collar
                 }
                 if (kit.Chest == ChestMark.Band) Rect(c, torsoLeft, torsoBottom + 3, torsoW, 1, p.Accent);
-                else if (kit.Chest == ChestMark.Number) Rect(c, cx - 1, torsoBottom + 1, 3, 3, p.Trim);
-                else Rect(c, cx - 1, torsoBottom + 2, 2, 2, p.Accent);                     // chest mark
+                else if (kit.Chest == ChestMark.Number) { Rect(c, cx - 1, torsoBottom + 1, 3, 3, p.Trim); _info.Number = true; _info.NumX = cx - 3; _info.NumY = torsoBottom + 1; _info.NumW = 7; }
+                else { Rect(c, cx - 1, torsoBottom + 2, 2, 2, p.Accent); _info.Number = true; _info.NumX = cx - 3; _info.NumY = torsoBottom + 1; _info.NumW = 7; } // chest mark (a number at 2x)
             }
             else if (view == CharacterView.Back)
             {
                 if (kit.Collar == CollarStyle.Crew) Rect(c, cx - 2, torsoTop, 4, 1, p.Trim);
                 Rect(c, cx - 1, torsoBottom + 1, 3, 3, p.Trim);                            // number block
+                _info.Number = true; _info.NumX = torsoLeft; _info.NumY = torsoBottom + 1; _info.NumW = torsoW;
             }
             else
             {
@@ -334,8 +355,10 @@ namespace CallerRetroBall.Logic.PixelArt
             Rect(c, cx - 1, neck, 2, 1, p.SkinShade);
             int headW = view == CharacterView.Side ? 5 : 6;
             int headLeft = cx - 3 + (view == CharacterView.Side ? 1 : 0);
-            Rect(c, headLeft, headBottom, headW, headTop - headBottom + 1, p.Skin);
-            if (view == CharacterView.Front)
+            _info.HeadLeft = headLeft; _info.HeadBottom = headBottom; _info.HeadW = headW; _info.HeadTop = headTop;
+            if (!_skipHead) Rect(c, headLeft, headBottom, headW, headTop - headBottom + 1, p.Skin);
+            if (_skipHead) { }
+            else if (view == CharacterView.Front)
             {
                 c.Set(cx - 2, headBottom + 2, p.Eye);
                 c.Set(cx + 1, headBottom + 2, p.Eye);
@@ -348,7 +371,7 @@ namespace CallerRetroBall.Logic.PixelArt
                 c.Set(headLeft + headW, headBottom + 1, p.Skin); // nose
             }
 
-            DrawHair(c, view, Mod(look.hairStyle, HairStyleCount), headLeft, headW, headBottom, headTop, p);
+            if (!_skipHead) DrawHair(c, view, Mod(look.hairStyle, HairStyleCount), headLeft, headW, headBottom, headTop, p);
 
             if (stepBack || thump)
             {

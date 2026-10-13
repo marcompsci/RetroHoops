@@ -68,8 +68,8 @@ namespace CallerRetroBall.UI
             if (_image == null || _image.texture == null) return;
             var b = Loop[_beat];
             _until = Time.unscaledTime + b.Seconds;
-            float w = (float)CharacterSpriteGenerator.FrameWidth / _image.texture.width;
-            float h = (float)CharacterSpriteGenerator.FrameHeight / _image.texture.height;
+            float w = (float)CharacterSpriteGenerator.SheetFrameWidth / _image.texture.width;
+            float h = (float)CharacterSpriteGenerator.SheetFrameHeight / _image.texture.height;
             CharacterSpriteGenerator.FrameOrigin(b.View, b.Frame, out int fx, out int fy);
             float u = (float)fx / _image.texture.width, v = (float)fy / _image.texture.height;
             _image.uvRect = b.Flip ? new Rect(u + w, v, -w, h) : new Rect(u, v, w, h);

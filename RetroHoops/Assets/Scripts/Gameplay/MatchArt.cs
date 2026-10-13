@@ -79,7 +79,7 @@ namespace CallerRetroBall.Gameplay
         public Sprite[,] PlayerFrames(PlayerDef player, RgbColor jersey, RgbColor trim, RgbColor accent, RgbColor? shoes, TeamPattern pattern,
                                       RgbColor? shorts = null)
         {
-            var sheet = CharacterSpriteGenerator.GenerateSheet(player.appearance, jersey, trim, accent, shoes, pattern, shorts);
+            var sheet = CharacterSpriteGenerator.GenerateSheet(player.appearance, KitLook.Classic(jersey, trim, accent, shoes, pattern, shorts), player.jerseyNumber);
             return Slice(sheet, player.id);
         }
 
@@ -91,17 +91,17 @@ namespace CallerRetroBall.Gameplay
                 for (int f = 0; f < CharacterSpriteGenerator.FramesPerView; f++)
                 {
                     CharacterSpriteGenerator.FrameOrigin((CharacterView)v, f, out int x, out int y);
-                    var rect = new Rect(x, y, CharacterSpriteGenerator.FrameWidth, CharacterSpriteGenerator.FrameHeight);
-                    // Pivot at the feet (bottom centre, one pixel up to sit on the shadow).
+                    var rect = new Rect(x, y, CharacterSpriteGenerator.SheetFrameWidth, CharacterSpriteGenerator.SheetFrameHeight);
+                    // Pivot at the feet (bottom centre, one court pixel up to sit on the shadow). 2x detail: twice the pixels per unit.
                     var pivot = new Vector2(0.5f, 1f / CharacterSpriteGenerator.FrameHeight);
-                    frames[v, f] = Own(Sprite.Create(tex, rect, pivot, CourtSpace.PixelsPerUnit, 0, SpriteMeshType.FullRect));
+                    frames[v, f] = Own(Sprite.Create(tex, rect, pivot, CourtSpace.PixelsPerUnit * CharacterSpriteGenerator.ArtScale, 0, SpriteMeshType.FullRect));
                 }
             return frames;
         }
 
         /// <summary>Sheet in a Kit Studio kit.</summary>
         public Sprite[,] PlayerFrames(PlayerDef player, KitLook kit) =>
-            Slice(CharacterSpriteGenerator.GenerateSheet(player.appearance, kit), player.id);
+            Slice(CharacterSpriteGenerator.GenerateSheet(player.appearance, kit, player.jerseyNumber), player.id);
 
         /// <summary>
         /// BIG HEADS secret: for each frame, a sprite of everything from the head row up, pivoted at
@@ -114,10 +114,10 @@ namespace CallerRetroBall.Gameplay
                 for (int f = 0; f < CharacterSpriteGenerator.FramesPerView; f++)
                 {
                     var body = frames[v, f];
-                    int row = CharacterSpriteGenerator.HeadBottomRow(look, f);
+                    int row = CharacterSpriteGenerator.HeadBottomRow(look, f) * CharacterSpriteGenerator.ArtScale;
                     var r = body.rect;
                     var rect = new Rect(r.x, r.y + row, r.width, r.height - row);
-                    heads[v, f] = Own(Sprite.Create(body.texture, rect, new Vector2(0.5f, 0f), CourtSpace.PixelsPerUnit, 0, SpriteMeshType.FullRect));
+                    heads[v, f] = Own(Sprite.Create(body.texture, rect, new Vector2(0.5f, 0f), CourtSpace.PixelsPerUnit * CharacterSpriteGenerator.ArtScale, 0, SpriteMeshType.FullRect));
                 }
             return heads;
         }

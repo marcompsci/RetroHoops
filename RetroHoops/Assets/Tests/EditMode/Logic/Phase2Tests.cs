@@ -474,22 +474,22 @@ namespace CallerRetroBall.Tests
             foreach (var p in c.Players)
             {
                 var sheet = CharacterSpriteGenerator.GenerateSheet(p.appearance, RgbColor.FromHex("#FFD400"), RgbColor.FromHex("#2B2B2E"), RgbColor.FromHex("#4B1F7A"));
-                Assert.AreEqual(CharacterSpriteGenerator.FrameWidth * CharacterSpriteGenerator.FramesPerView, sheet.Width);
-                Assert.AreEqual(CharacterSpriteGenerator.FrameHeight * CharacterSpriteGenerator.ViewCount, sheet.Height);
+                Assert.AreEqual(CharacterSpriteGenerator.SheetFrameWidth * CharacterSpriteGenerator.FramesPerView, sheet.Width);
+                Assert.AreEqual(CharacterSpriteGenerator.SheetFrameHeight * CharacterSpriteGenerator.ViewCount, sheet.Height);
                 for (int v = 0; v < CharacterSpriteGenerator.ViewCount; v++)
                     for (int f = 0; f < CharacterSpriteGenerator.FramesPerView; f++)
                     {
                         CharacterSpriteGenerator.FrameOrigin((CharacterView)v, f, out int ox, out int oy);
                         int opaque = 0;
                         bool feetOnFloor = false;
-                        for (int y = 0; y < CharacterSpriteGenerator.FrameHeight; y++)
-                            for (int x = 0; x < CharacterSpriteGenerator.FrameWidth; x++)
+                        for (int y = 0; y < CharacterSpriteGenerator.SheetFrameHeight; y++)
+                            for (int x = 0; x < CharacterSpriteGenerator.SheetFrameWidth; x++)
                                 if (sheet.Get(ox + x, oy + y).a > 0)
                                 {
                                     opaque++;
-                                    if (y <= 1) feetOnFloor = true;
+                                    if (y <= CharacterSpriteGenerator.ArtScale) feetOnFloor = true;
                                 }
-                        Assert.Greater(opaque, 80, p.id + " view " + v + " frame " + f);
+                        Assert.Greater(opaque, 80 * CharacterSpriteGenerator.ArtScale * CharacterSpriteGenerator.ArtScale, p.id + " view " + v + " frame " + f);
                         Assert.IsTrue(feetOnFloor, p.id + " frame floats above the floor");
                     }
             }

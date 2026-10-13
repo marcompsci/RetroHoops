@@ -216,7 +216,7 @@ namespace CallerRetroBall.UI
             var sheet = CharacterSpriteGenerator.GenerateSheet(look, jersey?.colorA ?? crew.primary, jersey?.colorB ?? crew.secondary,
                                                                crew.accent, shoes?.colorA, TeamPattern.Solid);
             CharacterSpriteGenerator.FrameOrigin(CharacterView.Front, 0, out int fx, out int fy);
-            var frame = new PixelCanvas(CharacterSpriteGenerator.FrameWidth, CharacterSpriteGenerator.FrameHeight);
+            var frame = new PixelCanvas(CharacterSpriteGenerator.SheetFrameWidth, CharacterSpriteGenerator.SheetFrameHeight);
             for (int y = 0; y < frame.Height; y++)
                 for (int x = 0; x < frame.Width; x++)
                     frame.Pixels[y * frame.Width + x] = sheet.Get(fx + x, fy + y);
@@ -225,7 +225,7 @@ namespace CallerRetroBall.UI
             var stage = UiKit.Panel(_content, Color.white, Theme.PanelSprite(), true, "Preview");
             UiKit.Size(stage, 320f);
             var pic = UiKit.Picture(stage.transform, _previewTex, "Player");
-            UiKit.Place(pic.rectTransform, new Vector2(0.5f, 0.5f), new Vector2(frame.Width * 11f, frame.Height * 11f));
+            UiKit.Place(pic.rectTransform, new Vector2(0.5f, 0.5f), new Vector2(frame.Width * 11f / CharacterSpriteGenerator.ArtScale, frame.Height * 11f / CharacterSpriteGenerator.ArtScale));
             var number = UiKit.Label(stage.transform, "#" + d.jerseyNumber, 48f, Theme.Gold, TextAlignmentOptions.Right, true);
             UiKit.Place(number.rectTransform, new Vector2(0.85f, 0.75f), new Vector2(200f, 70f));
 
@@ -295,7 +295,7 @@ namespace CallerRetroBall.UI
                                                                CustomTeams.Color(d.accent), CustomTeams.Color(d.shoes), (TeamPattern)d.pattern,
                                                                CustomTeams.Color(d.shorts));
             CharacterSpriteGenerator.FrameOrigin(CharacterView.Front, 0, out int fx, out int fy);
-            var frame = new PixelCanvas(CharacterSpriteGenerator.FrameWidth, CharacterSpriteGenerator.FrameHeight);
+            var frame = new PixelCanvas(CharacterSpriteGenerator.SheetFrameWidth, CharacterSpriteGenerator.SheetFrameHeight);
             for (int y = 0; y < frame.Height; y++)
                 for (int x = 0; x < frame.Width; x++)
                     frame.Pixels[y * frame.Width + x] = sheet.Get(fx + x, fy + y);
@@ -304,7 +304,7 @@ namespace CallerRetroBall.UI
             var stage = UiKit.Panel(_content, Color.white, Theme.PanelSprite(), true, "TeamPreview");
             UiKit.Size(stage, 340f);
             var pic = UiKit.Picture(stage.transform, _teamPreviewTex, "Player");
-            UiKit.Place(pic.rectTransform, new Vector2(0.3f, 0.5f), new Vector2(frame.Width * 11f, frame.Height * 11f));
+            UiKit.Place(pic.rectTransform, new Vector2(0.3f, 0.5f), new Vector2(frame.Width * 11f / CharacterSpriteGenerator.ArtScale, frame.Height * 11f / CharacterSpriteGenerator.ArtScale));
             var look = new TeamDef
             {
                 id = "preview", logoShape = (LogoShape)d.logoShape, logoMotif = (LogoMotif)d.logoMotif,

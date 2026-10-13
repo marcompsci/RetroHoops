@@ -188,14 +188,14 @@ namespace CallerRetroBall.UI
                 ? CharacterSpriteGenerator.GenerateSheet(look, team.primary, team.secondary, team.accent, null, team.pattern)
                 : CharacterSpriteGenerator.GenerateSheet(look, new RgbColor(0x2B, 0x2D, 0x42), new RgbColor(0xFF, 0xD1, 0x66), new RgbColor(0xEF, 0x47, 0x6F));
             CharacterSpriteGenerator.FrameOrigin(CharacterView.Front, 0, out int fx, out int fy);
-            var frame = new PixelCanvas(CharacterSpriteGenerator.FrameWidth, CharacterSpriteGenerator.FrameHeight);
+            var frame = new PixelCanvas(CharacterSpriteGenerator.SheetFrameWidth, CharacterSpriteGenerator.SheetFrameHeight);
             for (int y = 0; y < frame.Height; y++)
                 for (int x = 0; x < frame.Width; x++)
                     frame.Pixels[y * frame.Width + x] = sheet.Get(fx + x, fy + y);
             if (_previewTex != null) Destroy(_previewTex);
             _previewTex = TextureFactory.ToTexture(frame, "ui.franchise.create.preview");
             _preview.texture = _previewTex;
-            UiKit.Place(_preview.rectTransform, new Vector2(0.5f, 0.5f), new Vector2(frame.Width * 11f, frame.Height * 11f));
+            UiKit.Place(_preview.rectTransform, new Vector2(0.5f, 0.5f), new Vector2(frame.Width * 11f / CharacterSpriteGenerator.ArtScale, frame.Height * 11f / CharacterSpriteGenerator.ArtScale));
             _previewNumber.text = "#" + s.Number;
 
             if (_createInfo != null)

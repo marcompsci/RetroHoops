@@ -74,10 +74,15 @@ namespace CallerRetroBall.Logic.PixelArt
                     }
                     else if (hardwood)
                     {
-                        // Vertical planks with staggered seams.
-                        int plank = x / 6;
-                        bool seam = x % 6 == 0 || (y + plank * 13) % 40 == 0;
-                        col = seam ? floorDark : (plank % 2 == 0 ? court.floor : floorLight);
+                        // 13 Oct 2026 art pass: narrow maple boards in three tones, staggered butt joints and long grain streaks.
+                        int plank = x / 4;
+                        uint ph = Hash((uint)plank * 2654435761u ^ seed);
+                        int joint = 28 + (int)(ph % 24);
+                        bool seam = x % 4 == 0 || (y + (int)(ph >> 8) % joint) % joint == 0;
+                        int tone = (int)(ph % 3);
+                        col = tone == 0 ? court.floor : (tone == 1 ? floorLight : court.floor.Darken(0.05f));
+                        if (seam) col = floorDark;
+                        else if (Hash((uint)(x * 7919) ^ (uint)(y / 5) * 104729u ^ seed) % 29 == 0) col = col.Darken(0.07f);
                     }
                     else if (style == FloorStyle.Tiles)
                     {
@@ -100,6 +105,8 @@ namespace CallerRetroBall.Logic.PixelArt
                     }
                     c.Set(x, y, col);
                 }
+
+            FinishFloor(c, g, court, hardwood);
 
             // Paint (key) fill
             FillCourtRect(c, g, -g.paintWidth * 0.5f, 0f, g.paintWidth * 0.5f, g.paintLength, court.paint.WithAlpha(hardwood ? (byte)200 : (byte)150));
@@ -130,10 +137,68 @@ namespace CallerRetroBall.Logic.PixelArt
             // Centre-top logo circle segment (decor, original)
             CourtArc(c, g, new Vec2(0f, g.depth), 1.8f, 90f, 270f, line);
 
+            LineShadows(c, g, court.lines);
             DrawCrowd(c, g, court, rng, drawPeople);
             if (court.theme != HolidayTheme.None) DrawHoliday(c, g, court, seed);
             if (bannerA.HasValue) DrawBanner(c, g, bannerA.Value, bannerB ?? bannerA.Value);
             return c;
+        }
+
+        // ------------------------------------------------------------------ 13 Oct 2026 art pass: floor finish
+
+        private static uint Hash(uint h)
+        {
+            h ^= h >> 16; h *= 0x7feb352d; h ^= h >> 15; h *= 0x846ca68b; h ^= h >> 16;
+            return h;
+        }
+
+        /// <summary>
+        /// Lights the floor like an arena: a team-tinted apron outside the lines, a soft pool of light around the key
+        /// that fades toward the corners, and (on hardwood) a varnish shine near the hoop. Gradients are dithered
+        /// into three steps so it stays crisp pixel art.
+        /// </summary>
+        private static void FinishFloor(PixelCanvas c, CourtGeometry g, CourtDef court, bool hardwood)
+        {
+            CourtToPixel(g, new Vec2(-g.HalfWidth, 0f), out float xl, out float yBase);
+            CourtToPixel(g, new Vec2(g.HalfWidth, g.depth), out float xr, out float yTop);
+            CourtToPixel(g, new Vec2(0f, g.paintLength * 0.7f), out float lx, out float ly);
+            int baseline = (int)Math.Round(yBase);
+            float rx = c.Width * 0.62f, ry = baseline * 0.85f;
+            for (int y = 0; y <= Math.Min(baseline, c.Height - 1); y++)
+                for (int x = 0; x < c.Width; x++)
+                {
+                    var p = c.Get(x, y);
+                    bool apron = x < xl - 0.5f || x > xr + 0.5f || y < yTop - 0.5f;
+                    if (apron && hardwood) p = RgbColor.Lerp(p, court.paint.Darken(0.25f), 0.38f);
+                    else if (apron) p = p.Darken(0.1f);
+                    float dx = (x - lx) / rx, dy = (y - ly) / ry;
+                    float d = dx * dx + dy * dy;                         // 0 at the light, ~1 at the corners
+                    float v = 0.5f - d * 0.6f + (hardwood && d < 0.18f ? 0.35f * (1f - d / 0.18f) : 0f);
+                    float th = PixelCanvas.BayerThreshold(x, y);
+                    int step = v + th * 0.5f > 0.75f ? 1 : (v + th * 0.5f < 0.15f ? -1 : 0);
+                    if (step > 0) p = p.Lighten(hardwood ? 0.07f : 0.05f);
+                    else if (step < 0) p = p.Darken(0.09f);
+                    c.Set(x, y, p);
+                }
+        }
+
+        /// <summary>A one-pixel shadow under and right of every line pixel: painted lines sit on the floor.</summary>
+        private static void LineShadows(PixelCanvas c, CourtGeometry g, RgbColor line)
+        {
+            CourtToPixel(g, Vec2.Zero, out _, out float baselinePy);
+            int top = Math.Min(c.Height - 1, (int)Math.Round(baselinePy));
+            var marks = new bool[c.Width * (top + 1)];
+            for (int y = 0; y <= top; y++)
+                for (int x = 0; x < c.Width; x++)
+                    marks[y * c.Width + x] = c.Get(x, y).Equals(line);
+            for (int y = 1; y <= top; y++)
+                for (int x = 0; x < c.Width - 1; x++)
+                {
+                    if (!marks[y * c.Width + x]) continue;
+                    int sx = x + 1, sy = y - 1;
+                    if (marks[sy * c.Width + sx]) continue;
+                    c.Set(sx, sy, c.Get(sx, sy).Darken(0.16f));
+                }
         }
 
         // ------------------------------------------------------------------ holiday decorations

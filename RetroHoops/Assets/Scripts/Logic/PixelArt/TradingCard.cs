@@ -80,12 +80,14 @@ namespace CallerRetroBall.Logic.PixelArt
             CharacterSpriteGenerator.FrameOrigin(CharacterView.Front, 0, out int fx, out int fy);
             int spriteW = CharacterSpriteGenerator.FrameWidth * SpriteScale;
             int left = (Width - spriteW) / 2, bottom = winB + 4;
-            for (int y = 0; y < CharacterSpriteGenerator.FrameHeight; y++)
-                for (int x = 0; x < CharacterSpriteGenerator.FrameWidth; x++)
+            // The sheet is drawn at 2x detail: show it at 1.5x of that (the same 3x of a court pixel as before).
+            int spriteH = CharacterSpriteGenerator.FrameHeight * SpriteScale, art = CharacterSpriteGenerator.ArtScale;
+            for (int y = 0; y < spriteH; y++)
+                for (int x = 0; x < spriteW; x++)
                 {
-                    var p = sheet.Get(fx + x, fy + y);
+                    var p = sheet.Get(fx + x * art / SpriteScale, fy + y * art / SpriteScale);
                     if (p.a == 0) continue;
-                    c.FillRect(left + x * SpriteScale, bottom + y * SpriteScale, SpriteScale, SpriteScale, p);
+                    c.Set(left + x, bottom + y, p);
                 }
 
             // Team logo in the window's top-right corner (half size).

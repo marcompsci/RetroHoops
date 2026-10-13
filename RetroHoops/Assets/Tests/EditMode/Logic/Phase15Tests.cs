@@ -496,12 +496,16 @@ namespace CallerRetroBall.Tests
         {
             var look = new AppearanceDef(2, 0, 0, BodyType.Standard, 1);
             var sheet = CharacterSpriteGenerator.GenerateSheet(look, RgbColor.FromHex("#FF0000"), RgbColor.FromHex("#FFFFFF"), RgbColor.FromHex("#0000FF"));
-            var shade = CharacterSpriteGenerator.SkinTones[2].Darken(0.18f);
+            // 2x art: the chin row (HeadBottomRow at double size) is skin; the row under it is the shaded neck.
+            var skin = CharacterSpriteGenerator.SkinTones[2];
+            int a = CharacterSpriteGenerator.ArtScale;
             for (int f = 0; f < CharacterSpriteGenerator.IdleFrames; f++)
             {
                 CharacterSpriteGenerator.FrameOrigin(CharacterView.Front, f, out int ox, out int oy);
-                int row = CharacterSpriteGenerator.HeadBottomRow(look, f);
-                Assert.AreEqual(shade, sheet.Get(ox + CharacterSpriteGenerator.FrameWidth / 2 - 1, oy + row), "frame " + f);
+                int row = CharacterSpriteGenerator.HeadBottomRow(look, f) * a;
+                int x = ox + CharacterSpriteGenerator.SheetFrameWidth / 2 - 1;
+                Assert.AreEqual(skin, sheet.Get(x, oy + row), "frame " + f + " chin");
+                Assert.AreNotEqual(skin, sheet.Get(x, oy + row - 1), "frame " + f + " neck");
             }
         }
     }

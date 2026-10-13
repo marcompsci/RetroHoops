@@ -156,14 +156,14 @@ namespace CallerRetroBall.UI
                 ? CharacterSpriteGenerator.GenerateSheet(look, crew.primary, crew.secondary, crew.accent, null, crew.pattern)
                 : CharacterSpriteGenerator.GenerateSheet(look, new RgbColor(0xF7, 0x25, 0x85), new RgbColor(0x4C, 0xC9, 0xF0), new RgbColor(0x1A, 0x1A, 0x2E));
             CharacterSpriteGenerator.FrameOrigin(CharacterView.Front, 0, out int fx, out int fy);
-            var frame = new PixelCanvas(CharacterSpriteGenerator.FrameWidth, CharacterSpriteGenerator.FrameHeight);
+            var frame = new PixelCanvas(CharacterSpriteGenerator.SheetFrameWidth, CharacterSpriteGenerator.SheetFrameHeight);
             for (int y = 0; y < frame.Height; y++)
                 for (int x = 0; x < frame.Width; x++)
                     frame.Pixels[y * frame.Width + x] = sheet.Get(fx + x, fy + y);
             if (_tex != null) UnityEngine.Object.Destroy(_tex);
             _tex = TextureFactory.ToTexture(frame, "ui.playermaker.preview");
             _preview.texture = _tex;
-            UiKit.Place(_preview.rectTransform, new Vector2(0.5f, 0.5f), new Vector2(frame.Width * 11f, frame.Height * 11f));
+            UiKit.Place(_preview.rectTransform, new Vector2(0.5f, 0.5f), new Vector2(frame.Width * 11f / CharacterSpriteGenerator.ArtScale, frame.Height * 11f / CharacterSpriteGenerator.ArtScale));
             _number.text = "#" + s.Number;
             if (_info != null)
             {

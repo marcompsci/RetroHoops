@@ -291,7 +291,7 @@ namespace CallerRetroBall.UI
             }
             var sheet = CharacterSpriteGenerator.GenerateSheet(look, jersey, trim, accent);
             CharacterSpriteGenerator.FrameOrigin(CharacterView.Front, 0, out int fx, out int fy);
-            var frame = new PixelCanvas(CharacterSpriteGenerator.FrameWidth, CharacterSpriteGenerator.FrameHeight);
+            var frame = new PixelCanvas(CharacterSpriteGenerator.SheetFrameWidth, CharacterSpriteGenerator.SheetFrameHeight);
             for (int y = 0; y < frame.Height; y++)
                 for (int x = 0; x < frame.Width; x++)
                     frame.Pixels[y * frame.Width + x] = sheet.Get(fx + x, fy + y);

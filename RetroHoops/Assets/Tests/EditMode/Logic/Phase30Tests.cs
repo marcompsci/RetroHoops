@@ -261,8 +261,8 @@ namespace CallerRetroBall.Tests
         {
             CallerRetroBall.Logic.PixelArt.CharacterSpriteGenerator.FrameOrigin(v, f1, out int x1, out int y1);
             CallerRetroBall.Logic.PixelArt.CharacterSpriteGenerator.FrameOrigin(v, f2, out int x2, out int y2);
-            for (int y = 0; y < CallerRetroBall.Logic.PixelArt.CharacterSpriteGenerator.FrameHeight; y++)
-                for (int x = 0; x < CallerRetroBall.Logic.PixelArt.CharacterSpriteGenerator.FrameWidth; x++)
+            for (int y = 0; y < CallerRetroBall.Logic.PixelArt.CharacterSpriteGenerator.SheetFrameHeight; y++)
+                for (int x = 0; x < CallerRetroBall.Logic.PixelArt.CharacterSpriteGenerator.SheetFrameWidth; x++)
                     if (!sheet.Get(x1 + x, y1 + y).Equals(sheet.Get(x2 + x, y2 + y))) return false;
             return true;
         }
@@ -277,7 +277,7 @@ namespace CallerRetroBall.Tests
                 foreach (var kit in new[] { CallerRetroBall.Logic.KitLook.Classic(RgbColor.FromHex("#C1121F"), RgbColor.White, RgbColor.FromHex("#FFD166"), null, TeamPattern.Solid, null) })
                 {
                     var sheet = CallerRetroBall.Logic.PixelArt.CharacterSpriteGenerator.GenerateSheet(look, kit);
-                    Assert.AreEqual(CallerRetroBall.Logic.PixelArt.CharacterSpriteGenerator.FrameWidth * 10, sheet.Width, "10 frames per view");
+                    Assert.AreEqual(CallerRetroBall.Logic.PixelArt.CharacterSpriteGenerator.SheetFrameWidth * 10, sheet.Width, "10 frames per view");
                     for (int v = 0; v < 3; v++)
                         foreach (int f in new[] { CallerRetroBall.Logic.PixelArt.CharacterSpriteGenerator.CrossoverFrame,
                                                   CallerRetroBall.Logic.PixelArt.CharacterSpriteGenerator.StepBackFrame,
