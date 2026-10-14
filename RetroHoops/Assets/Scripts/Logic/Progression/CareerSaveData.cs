@@ -322,6 +322,8 @@ namespace CallerRetroBall.Logic
         public List<string> badgesSeen = new List<string>();
         /// <summary>Coach tips already shown.</summary>
         public List<string> tipsSeen = new List<string>();
+        /// <summary>14 Oct 2026: skill moves your player has pulled off (secret ones show in SKILL MOVES once found).</summary>
+        public List<string> movesFound = new List<string>();
         /// <summary>Story scenes already shown.</summary>
         public List<string> storySeen = new List<string>();
         public List<MatchHistoryEntry> history = new List<MatchHistoryEntry>();

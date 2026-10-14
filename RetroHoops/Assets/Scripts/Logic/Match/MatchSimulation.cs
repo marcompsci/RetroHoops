@@ -322,6 +322,13 @@ namespace CallerRetroBall.Logic
         Trap = 34,
         /// <summary>A quick tap of SHOOT faked the shot (PlayerIndex = shooter, Value = the defender who bit, or -1).</summary>
         PumpFake = 35,
+        // 36-38 are kept for the v1.1 branch (Foul, FreeThrow, AndOne).
+        /// <summary>A skill move (PlayerIndex = handler, Value = <see cref="SkillMoveKind"/>, Chance = the defender it worked on, -1 = none).</summary>
+        SkillMove = 39,
+        /// <summary>A skill move beat the defender (PlayerIndex = handler, Value = the defender).</summary>
+        DefenderBeaten = 40,
+        /// <summary>A bank shot kissed the glass (PlayerIndex = shooter).</summary>
+        BankKiss = 41,
     }
 
     public struct MatchEvent
@@ -710,8 +717,8 @@ namespace CallerRetroBall.Logic
                 if (i == _driveIndex) { _desired[i] = DriveDesired(Players[i]); continue; }
                 // The inbounder stays on the baseline until the pass is away.
                 if (MustInbound && Ball.IsHeld && i == Ball.HolderIndex) { _desired[i] = Vec2.Zero; continue; }
-                if (i == ControlledIndex && !NoHuman) { _desired[i] = FrameMove(input.Move); continue; }
-                if (i == SecondControlledIndex) { _desired[i] = FrameMove(_input2.Move); continue; }
+                if (i == ControlledIndex && !NoHuman) { _desired[i] = SkillDesired(i, FrameMove(input.Move)); continue; }
+                if (i == SecondControlledIndex) { _desired[i] = SkillDesired(i, FrameMove(_input2.Move)); continue; }
                 _desired[i] = AiDesired(Players[i]);
             }
             Integrate(dt, freezeAll: false);
@@ -740,7 +747,7 @@ namespace CallerRetroBall.Logic
                 bool dribbling = Ball.IsHeld && Ball.HolderIndex == i;
                 float scale = IsHumanControlled(i) || p.Team == Setup.HumanTeam ? 1f : AiProfile(p.Team).movementScale;
                 if (Time < p.ScreenedUntil) scale *= Setup.Defense.screenSlow;
-                float max = Movement.MaxSpeed(p.Def.attributes.speed, dribbling, tuning, scale) * StaminaSpeedFactor(p) * HeatSpeedFactor(p);
+                float max = Movement.MaxSpeed(p.Def.attributes.speed, dribbling, tuning, scale) * StaminaSpeedFactor(p) * HeatSpeedFactor(p) * SkillSpeedFactor(i);
                 if (Setup.StreetRules && dribbling && !freezeAll) CheckAnkles(i, desired);
                 p.Motion = Movement.Step(p.Motion, desired, max, dt, tuning);
                 UpdateStamina(p, max, dt, freezeAll);
@@ -839,6 +846,9 @@ namespace CallerRetroBall.Logic
             if (input.CallPlay != PlayCall.None) StartPlay(team, input.CallPlay, me);
             bool hasBall = Ball.IsHeld && Ball.HolderIndex == me;
             bool teamHasBall = Ball.IsHeld && Players[Ball.HolderIndex].Team == team;
+            // Skill moves come from the stick alone (no button this step).
+            FeedSkillMoves(me, input, hasBall && ChargingIndex < 0
+                && !input.ShootPressed && !input.PassPressed && !input.DunkPressed && !input.LayupPressed);
             if (hasBall && ChargingIndex < 0)
             {
                 if (input.ShootPressed && CanShoot(me)) { CancelDrive(); BeginCharge(me, -1f); }
@@ -954,6 +964,7 @@ namespace CallerRetroBall.Logic
                 Heated = p.HotStreak >= Setup.Shot.heatThreshold,
                 Stamina01 = p.Stamina,
                 LateGame = Setup.Rules.useGameClock && GameClock <= Setup.Flow.lateGameSeconds,
+                Bank = type == ShotType.Layup && IsBankAngle(p.Position, court.Hoop),
                 Bonus = Setup.HumanSpotBonus != null && IsHumanControlled(shooter) && shooter == ControlledIndex
                     ? Setup.HumanSpotBonus[(int)ShotZones.SpotOf(p.Position, court)] : 0f,
             };
@@ -1013,6 +1024,7 @@ namespace CallerRetroBall.Logic
             Ball.ShotPoints = points;
             Ball.ShotGrade = eval.Grade;
             Ball.ShotType = type;
+            Ball.ShotBank = ctx.Bank;
             Ball.FlightFrom = p.Position;
             Ball.FlightTo = court.Hoop;
             Ball.FlightTime = 0f;
@@ -1271,11 +1283,33 @@ namespace CallerRetroBall.Logic
 
         private void StepShot(float dt)
         {
+            float before = Ball.FlightTime / Ball.FlightDuration;
             Ball.FlightTime += dt;
             float u = Math.Min(1f, Ball.FlightTime / Ball.FlightDuration);
-            Ball.Position = Vec2.Lerp(Ball.FlightFrom, Ball.FlightTo, u);
-            Ball.Height = Ball.FlightStartHeight + (Ball.FlightEndHeight - Ball.FlightStartHeight) * u
-                          + 4f * Ball.FlightArc * u * (1f - u);
+            if (Ball.ShotBank)
+            {
+                // Off the glass: up to the board on the shooter's side, then it drops in (or rims out).
+                var spot = BankSpot(Ball.FlightFrom, Ball.FlightTo);
+                if (u < BankSplit)
+                {
+                    float a = u / BankSplit;
+                    Ball.Position = Vec2.Lerp(Ball.FlightFrom, spot, a);
+                    Ball.Height = Ball.FlightStartHeight + (BankHeight - Ball.FlightStartHeight) * a + 2.4f * Ball.FlightArc * a * (1f - a);
+                }
+                else
+                {
+                    float b = (u - BankSplit) / (1f - BankSplit);
+                    Ball.Position = Vec2.Lerp(spot, Ball.FlightTo, b);
+                    Ball.Height = BankHeight + (Ball.FlightEndHeight - BankHeight) * b;
+                }
+                if (before < BankSplit && u >= BankSplit) Events.Add(new MatchEvent(MatchEventType.BankKiss, Ball.ShooterIndex, Players[Ball.ShooterIndex].Team));
+            }
+            else
+            {
+                Ball.Position = Vec2.Lerp(Ball.FlightFrom, Ball.FlightTo, u);
+                Ball.Height = Ball.FlightStartHeight + (Ball.FlightEndHeight - Ball.FlightStartHeight) * u
+                              + 4f * Ball.FlightArc * u * (1f - u);
+            }
             if (u >= 1f) ResolveShot();
         }
 
@@ -1359,7 +1393,11 @@ namespace CallerRetroBall.Logic
         private void GiveBall(int playerIndex, bool announce, bool fromCheck)
         {
             var p = Players[playerIndex];
-            if (fromCheck || p.Team != OffenseTeam) _pumpFakes = 0; // a new possession: defenders fall for it again
+            if (fromCheck || p.Team != OffenseTeam)
+            {
+                _pumpFakes = 0; // a new possession: defenders fall for it again
+                ResetSkillRepeats();
+            }
             _lastTouchTeam = p.Team;
             Ball.Phase = BallPhase.Held;
             Ball.HolderIndex = playerIndex;

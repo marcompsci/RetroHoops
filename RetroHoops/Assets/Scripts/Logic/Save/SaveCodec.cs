@@ -150,6 +150,7 @@ namespace CallerRetroBall.Logic
                 ["badgesSeen"] = Strings(d.badgesSeen ?? new List<string>()),
                 ["storySeen"] = Strings(d.storySeen ?? new List<string>()),
                 ["tipsSeen"] = Strings(d.tipsSeen ?? new List<string>()),
+                ["movesFound"] = Strings(d.movesFound ?? new List<string>()),
                 ["customPlayer"] = EncodeCustom(d.customPlayer ?? new CustomPlayerData()),
                 ["records"] = EncodeRecords(d.records ?? new CareerRecords()),
                 ["history"] = List(d.history ?? new List<MatchHistoryEntry>(), h => new Dictionary<string, object>
@@ -563,6 +564,7 @@ namespace CallerRetroBall.Logic
                 d.settings.musicMenu = Math.Max(-1, Math.Min(Soundtrack.Count - 1, Int(disp, "musicMenu", -1)));
                 d.settings.musicGame = Math.Max(-2, Math.Min(Soundtrack.Count - 1, Int(disp, "musicGame", -1)));
                 d.tipsSeen = StrList(o, "tipsSeen");
+                d.movesFound = StrList(o, "movesFound");
                 d.secrets = DecodeSecrets(Obj(o, "secrets"));
                 d.customTeam = DecodeTeam(Obj(o, "customTeam"));
                 d.kits = DecodeKits(Obj(o, "kits"));

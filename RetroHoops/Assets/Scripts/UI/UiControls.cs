@@ -161,6 +161,34 @@ namespace CallerRetroBall.UI
             return root;
         }
 
+        /// <summary>
+        /// 14 Oct 2026: a tall info dialog for longer text (SKILL MOVES): most of the screen, the text shrinks
+        /// to fit, one OK button.
+        /// </summary>
+        public static GameObject InfoDialog(string title, string body)
+        {
+            var canvas = UiKit.CreateScreenCanvas("DialogCanvas", 50);
+            var scrim = UiKit.Panel(canvas.transform, Theme.Scrim, name: "Scrim");
+            UiKit.Stretch(scrim.rectTransform);
+            scrim.raycastTarget = true;
+            var panel = UiKit.Panel(canvas.transform, Color.white, Theme.PanelSprite(), true, "Dialog");
+            UiKit.Band(panel.rectTransform, 0.1f, 0.9f, 60f);
+            panel.gameObject.AddComponent<OverlayPop>();
+            var column = UiKit.Column(panel.transform, 22f, new RectOffset(44, 44, 40, 40));
+            UiKit.Stretch(column);
+            column.GetComponent<VerticalLayoutGroup>().childAlignment = TextAnchor.MiddleCenter;
+
+            UiKit.Size(UiKit.Label(column, title, 54f, Theme.Gold, TextAlignmentOptions.Center, true), 80f);
+            var text = UiKit.Label(column, body, 32f, Theme.Cream);
+            text.enableAutoSizing = true;
+            text.fontSizeMax = 32f;
+            text.fontSizeMin = 20f;
+            UiKit.Size(text, 1080f);
+            var root = canvas.gameObject;
+            UiKit.Button(column, "OK", () => UnityEngine.Object.Destroy(root), ButtonStyle.Primary, 120f, 44f);
+            return root;
+        }
+
         /// <summary>Small stat pill: "LABEL value".</summary>
         public static TextMeshProUGUI Stat(Transform parent, string label, string value, float height = 64f)
         {

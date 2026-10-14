@@ -96,6 +96,8 @@ namespace CallerRetroBall.Logic
         public bool LateGame;
         /// <summary>Phase 36: flat make-chance bonus (SPOT SPECIALIST ranks, your own player only).</summary>
         public float Bonus;
+        /// <summary>14 Oct 2026: a layup from the side that goes off the glass (the board shields it a little from the contest).</summary>
+        public bool Bank;
     }
 
     /// <summary>The full breakdown of a shot, useful for UI, tuning, and tests.</summary>
@@ -186,6 +188,7 @@ namespace CallerRetroBall.Logic
                 float closeness = 1f - c.NearestDefenderDistance / t.contestRadius;
                 float defense = 0.5f + 0.5f * RatingScale.Normalized(c.NearestDefenderDefense);
                 e.ContestPenalty = t.maxContestPenalty * closeness * defense;
+                if (c.Bank && c.Type == ShotType.Layup) e.ContestPenalty *= 1f - MatchSimulation.BankContestShield;
                 e.Contested = e.ContestPenalty >= 0.05f;
             }
             if (c.NearestDefenderDistance >= t.openLookDistance)

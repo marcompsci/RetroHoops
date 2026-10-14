@@ -55,6 +55,8 @@ namespace CallerRetroBall.Logic
         public float FlightStartHeight;
         public float FlightEndHeight;
         public float FlightArc;
+        /// <summary>The shot in the air is a bank shot (off the glass).</summary>
+        public bool ShotBank;
         /// <summary>Pass receiver (or interceptor); -1 for shots.</summary>
         public int TargetIndex = -1;
         public int PasserIndex = -1;

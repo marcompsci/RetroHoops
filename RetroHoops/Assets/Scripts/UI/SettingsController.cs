@@ -158,6 +158,10 @@ namespace CallerRetroBall.UI
             }
 
             UiKit.Button(column, "HOW TO PLAY", MainMenuController.StartTutorial, ButtonStyle.Secondary, 110f, 40f);
+            // 14 Oct 2026: the skill-move list (secret moves stay ??? until you pull them off).
+            UiKit.Button(column, "SKILL MOVES", () =>
+                UiControls.InfoDialog("SKILL MOVES", SkillMoveInfo.ListText(App.Career)),
+                ButtonStyle.Secondary, 110f, 40f);
 
             Header(column, "GAME CENTER");
             UiControls.ToggleRow(column, "SIGN IN", s.gameCenter, v => App.SetGameCenter(v));

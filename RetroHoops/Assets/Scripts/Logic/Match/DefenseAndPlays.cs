@@ -152,6 +152,7 @@ namespace CallerRetroBall.Logic
                             - t.stealVsHandling * RatingScale.Normalized(handler.Def.attributes.playmaking))
                            * (0.5f + 0.5f * closeness);
             if (ChargingIndex == handler.Index) chance *= 0.5f; // ball is up, harder to poke
+            if (SkillProtected(handler.Index)) chance *= 0.3f;   // mid-spin: the body is between you and the ball
             chance = Math.Max(0.03f, Math.Min(0.6f, chance));
 
             if (_rng.NextFloat() < chance)
@@ -236,7 +237,7 @@ namespace CallerRetroBall.Logic
                 var o = Players[i];
                 if (o.Team == shooter.Team) continue;
                 if (Time < o.FakedUntil) continue; // bit on a pump fake: off balance, no contest
-                float d = Vec2.Distance(o.Position, shooter.Position);
+                float d = Vec2.Distance(o.Position, shooter.Position) + SkillSpace(shooter.Index); // step-back room
                 if (IsJumping(i)) d *= Setup.Defense.jumpContestFactor;
                 if (d < effectiveDistance)
                 {

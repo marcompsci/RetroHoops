@@ -211,6 +211,9 @@ namespace CallerRetroBall.Gameplay
         private DribbleMoveKind _myMove;
         private float _moveStart = -10f;
         private float _moveReadyAt;
+        /// <summary>14 Oct 2026: the skill move the controlled player just did (drives the dribble pose).</summary>
+        private SkillMoveKind _skillPose;
+        private float _skillPoseStart = -10f;
         private Vec2 _lastMoveDir;
         /// <summary>The rim the offence attacks, as drawn (Full Court: whichever end that is right now).</summary>
         private Vector3 HoopWorld => CourtSpace.ToWorldSnapped(_match.Setup.Court.Hoop, CourtSpace.RimHeight);
@@ -1377,6 +1380,22 @@ namespace CallerRetroBall.Gameplay
                     case MatchEventType.Trap:
                         if (_match.IsHumanControlled(e.Value)) _hud.Toast("DOUBLE TEAM! FIND THE OPEN MAN", 1.1f);
                         break;
+                    case MatchEventType.SkillMove:
+                        OnSkillMove(e, human);
+                        break;
+                    case MatchEventType.DefenderBeaten:
+                        if (e.Team == human || Versus)
+                        {
+                            Sfx(SfxId.CrowdOooh, 0.6f);
+                            if (!_reduceMotion && e.Value >= 0)
+                                _bursts.Spawn(CourtSpace.ToWorldSnapped(_match.Players[e.Value].Position, 0.5f), Color.white, 6, 2.2f, 0.35f);
+                            if (_match.IsHumanControlled(e.PlayerIndex)) Haptics.Light();
+                        }
+                        else if (_match.IsHumanControlled(e.Value)) _hud.Toast("HE GOT YOU", 0.8f);
+                        break;
+                    case MatchEventType.BankKiss:
+                        Sfx(SfxId.Backboard, 0.8f);
+                        break;
                     case MatchEventType.EuroStep:
                         if (_match.IsHumanControlled(e.PlayerIndex)) _hud.Toast("EURO STEP", 0.7f);
                         break;
@@ -1447,7 +1466,7 @@ namespace CallerRetroBall.Gameplay
                         bool dunk = _match.Ball.ShotType == ShotType.Dunk;
                         _netAt = Time.unscaledTime;
                         _netSecond = AttackingSecondHoop();
-                        _hud.Toast((dunk ? Dunks.Name(_dunkStyle) + "  +" : swish ? "SWISH  +" : "+") + e.Value, 1.1f);
+                        _hud.Toast((dunk ? Dunks.Name(_dunkStyle) + "  +" : _match.Ball.ShotBank ? "OFF THE GLASS  +" : swish ? "SWISH  +" : "+") + e.Value, 1.1f);
                         if (!_reduceMotion) _bursts.Spawn(HoopWorld, swish ? (Color)new Color32(0xFF, 0xD1, 0x66, 255) : Color.white, dunk ? 28 : (swish ? 20 : 12), dunk ? 5f : 4f);
                         if (dunk)
                         {
@@ -1791,8 +1810,67 @@ namespace CallerRetroBall.Gameplay
         /// Plays your equipped dribble move when you cut sharply with the ball (looks only:
         /// speed and handling come from the simulation, not from this).
         /// </summary>
+        /// <summary>A skill move: a toast and a squeak, the dribble pose for your player, and secret moves get found.</summary>
+        private void OnSkillMove(MatchEvent e, int human)
+        {
+            var kind = (SkillMoveKind)e.Value;
+            if (!_match.IsHumanControlled(e.PlayerIndex)) return;
+            Sfx(SfxId.Squeak, 0.75f, kind == SkillMoveKind.Spin ? 1.25f : 1.05f);
+            if (e.PlayerIndex == _match.ControlledIndex)
+            {
+                _skillPose = kind;
+                _skillPoseStart = Time.unscaledTime;
+            }
+            bool counts = !Demo && !Versus && !Theater && e.PlayerIndex == _match.ControlledIndex && App.Career != null;
+            if (counts && SkillMoveInfo.Discover(App.Career, kind))
+            {
+                _hud.Toast(SecretFoundToast(kind), 1.8f);
+                Sfx(SfxId.Stinger, 0.6f);
+                Haptics.Medium();
+                App.SaveCareer();
+                return;
+            }
+            _hud.Toast(SkillToast(kind), 0.7f);
+        }
+
+        private static string SkillToast(SkillMoveKind k)
+        {
+            switch (k)
+            {
+                case SkillMoveKind.Spin: return "SPIN MOVE";
+                case SkillMoveKind.Jab: return "JAB STEP";
+                case SkillMoveKind.Hesi: return "HESI";
+                case SkillMoveKind.StepBack: return "STEP-BACK";
+                default: return "SHAKE";
+            }
+        }
+
+        private static string SecretFoundToast(SkillMoveKind k)
+        {
+            switch (k)
+            {
+                case SkillMoveKind.Hesi: return "SECRET MOVE FOUND: HESI!";
+                case SkillMoveKind.StepBack: return "SECRET MOVE FOUND: STEP-BACK!";
+                default: return "SECRET MOVE FOUND: SHAKE!";
+            }
+        }
+
+        private static DribbleMoveKind PoseFor(SkillMoveKind k)
+        {
+            switch (k)
+            {
+                case SkillMoveKind.Spin: return DribbleMoveKind.SpinCycle;
+                case SkillMoveKind.Jab: return DribbleMoveKind.RockerStep;
+                case SkillMoveKind.Hesi: return DribbleMoveKind.HesiHop;
+                case SkillMoveKind.StepBack: return DribbleMoveKind.StepBack;
+                default: return DribbleMoveKind.DoubleCross;
+            }
+        }
+
         private FlairPose UpdateDribbleMove(float now)
         {
+            if (_skillPose != SkillMoveKind.None && now - _skillPoseStart < Flair.DribbleMoveSeconds && _match.HumanHasBall)
+                return Flair.DribbleMove(PoseFor(_skillPose), now - _skillPoseStart);
             if (!_match.HumanHasBall || _match.ChargingIndex >= 0)
             {
                 _lastMoveDir = Vec2.Zero;

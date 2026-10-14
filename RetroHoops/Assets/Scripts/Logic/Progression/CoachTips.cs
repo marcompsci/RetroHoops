@@ -52,6 +52,8 @@ namespace CallerRetroBall.Logic
             Tip("tip.oop", "Gold arrow? Pass now for the alley-oop!", s => s.Live && s.AlleyOopOpen),
             Tip("tip.heat", "One more make and you're HEATING UP.", s => s.HeatThreshold > 0 && s.HumanHotStreak == s.HeatThreshold - 1),
             Tip("tip.fake", "Defender in your face? Tap SHOOT quickly to pump fake, then shoot.", s => s.Live && s.HumanHasBall && s.TightlyGuarded && s.MatchTime > 8f),
+            Tip("tip.spin", "Swirl the stick half a circle to SPIN past your man.", s => s.Live && s.HumanHasBall && s.TightlyGuarded && s.MatchTime > 25f),
+            Tip("tip.jab", "Standing still? Flick the stick at the rim and let go to JAB STEP.", s => s.Live && s.HumanHasBall && s.TightlyGuarded && s.MatchTime > 45f),
             Tip("tip.callball", "Want the ball? Tap PASS and your teammate passes it to you.", s => s.Live && s.TeammateHasBall && !s.MustClear && s.MatchTime > 15f),
             Tip("tip.shotclock", "Shot clock's low. Get a shot up!", s => s.Live && !s.OnDefense && s.ShotClock > 0f && s.ShotClock < 4f),
         };
