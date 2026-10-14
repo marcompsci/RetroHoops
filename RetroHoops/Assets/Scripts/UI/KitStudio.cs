@@ -60,20 +60,7 @@ namespace CallerRetroBall.UI
 
         private KitData Draft => _drafts[_slot];
 
-        private static void EnsureSlots(CareerSaveData career)
-        {
-            var c = App.Catalog;
-            var team = c.Team(CustomTeams.TeamId);
-            if (team != null)
-            {
-                Kits.Ensure(career.kits, team.primary, team.secondary, team.accent, team.shorts, team.shoes);
-                return;
-            }
-            var crew = c.Team(DefaultContent.PlayerCrewId);
-            var jersey = c.Find(c.Cosmetics, career.equippedJersey);
-            var shoes = c.Find(c.Cosmetics, career.equippedShoes);
-            Kits.Ensure(career.kits, jersey?.colorA ?? crew.primary, jersey?.colorB ?? crew.secondary, crew.accent, null, shoes?.colorA);
-        }
+        private static void EnsureSlots(CareerSaveData career) => RiseOutfit.EnsureKits(career, App.Catalog);
 
         // ------------------------------------------------------------------ build
 

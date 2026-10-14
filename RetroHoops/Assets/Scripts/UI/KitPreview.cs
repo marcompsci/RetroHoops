@@ -55,10 +55,36 @@ namespace CallerRetroBall.UI
             Apply();
         }
 
+        /// <summary>15 Oct 2026: stand still in one view (CREATE MY PLAYER's turn buttons). <see cref="Play"/> resumes the loop.</summary>
+        public void Hold(CharacterView view, bool flip, int frame = 0)
+        {
+            Paused = false;
+            _held = new Beat(view, frame, flip, 0.4f);
+            _holding = true;
+            Apply();
+        }
+
+        public void Play()
+        {
+            _holding = false;
+            Paused = false;
+            _until = 0f;
+        }
+
+        private Beat _held;
+        private bool _holding;
+
         private void Update()
         {
             if (_image == null || _image.texture == null || Paused) return;
             if (Time.unscaledTime < _until) return;
+            if (_holding)
+            {
+                // Standing in the held view: breathe between the two idle frames.
+                if (_held.Frame <= 1) _held.Frame = 1 - _held.Frame;
+                Apply();
+                return;
+            }
             _beat = (_beat + 1) % Loop.Length;
             Apply();
         }
@@ -66,7 +92,7 @@ namespace CallerRetroBall.UI
         private void Apply()
         {
             if (_image == null || _image.texture == null) return;
-            var b = Loop[_beat];
+            var b = _holding ? _held : Loop[_beat];
             _until = Time.unscaledTime + b.Seconds;
             float w = (float)CharacterSpriteGenerator.SheetFrameWidth / _image.texture.width;
             float h = (float)CharacterSpriteGenerator.SheetFrameHeight / _image.texture.height;

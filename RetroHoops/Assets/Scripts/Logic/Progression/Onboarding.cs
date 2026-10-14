@@ -34,6 +34,16 @@ namespace CallerRetroBall.Logic
             return r;
         }
 
+        // ------------------------------------------------------------------ create your player (15 Oct 2026)
+
+        /// <summary>
+        /// A brand-new player builds their Rise player (look, outfit, style of play) right after Coach Dee's hello,
+        /// before the tutorial. Offered once; SKIP leaves the default player, and CREATE MY PLAYER stays in Rise.
+        /// </summary>
+        public static bool OfferCreatePlayer(CareerSaveData d) =>
+            d != null && !d.tutorialDone && (d.totals?.games ?? 0) == 0
+            && (d.customPlayer == null || !d.customPlayer.created) && !Tours.Seen(d, Tours.MakePlayer);
+
         // ------------------------------------------------------------------ NEXT
 
         /// <summary>The one thing to suggest next, given where this career is (and what's waiting today).</summary>

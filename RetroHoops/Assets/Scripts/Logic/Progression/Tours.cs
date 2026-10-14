@@ -29,6 +29,10 @@ namespace CallerRetroBall.Logic
         public static readonly TourCard TapesCard = new TourCard("tour.tapes", "GAME TAPES",
             "After a two-phone, Live or watched game, tap SAVE GAME TAPE. Tapes replay the whole game exactly, and you can send one to a friend nearby.");
 
+        /// <summary>15 Oct 2026: marks the first-launch CREATE YOUR PLAYER step as done (see Onboarding.OfferCreatePlayer).</summary>
+        public static readonly TourCard MakePlayer = new TourCard("tour.make_player", "CREATE YOUR PLAYER",
+            "Build the player you'll take from the street circuit to the league: name, look, outfit and style of play.");
+
         public static readonly TourCard[] All = { WhatsNew, TwoPhones, Live, Couch, Watch, TapesCard };
 
         public static bool Seen(CareerSaveData d, TourCard card) => d == null || card == null || d.storySeen.Contains(card.Id);

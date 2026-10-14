@@ -464,6 +464,7 @@ namespace CallerRetroBall.UI
             {
                 Title = made ? "EDIT MY PLAYER" : "CREATE MY PLAYER",
                 Mine = true,
+                Outfit = true, // 15 Oct 2026: see and change what he wears in Rise
                 SaveLabel = made ? "SAVE CHANGES" : "CREATE PLAYER",
                 Info = spec =>
                 {

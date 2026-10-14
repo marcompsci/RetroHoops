@@ -28,6 +28,36 @@ namespace CallerRetroBall.UI
         private static void ResetStatics() => _tutorialOffered = false;
 
         /// <summary>Starts the how-to-play tutorial (also reachable from Settings).</summary>
+        /// <summary>
+        /// 15 Oct 2026: first launch ► CREATE YOUR PLAYER, step by step (you, look, outfit, style of play). The same
+        /// player is your Rise player; SKIP keeps the default and Rise ► CREATE MY PLAYER is always there.
+        /// </summary>
+        private static void OpenOnboardingMaker(System.Action then)
+        {
+            var c = App.Catalog;
+            PlayerMaker.Open(RiseCreate.MySpec(App.Career, c), new PlayerMaker.Options
+            {
+                Title = "CREATE YOUR PLAYER",
+                Mine = true,
+                Outfit = true,
+                Wizard = true,
+                SkipLabel = "SKIP FOR NOW",
+                SaveLabel = "CREATE PLAYER",
+                Info = spec =>
+                {
+                    var arch = c.Archetypes.Find(a => (int)a.archetype == spec.Archetype) ?? c.Archetypes[0];
+                    return Loc.T("STARTING OVR") + " " + arch.baseline.Offset(PlayerCreator.RatingOffset).Overall + "  ·  " + Loc.T("you'll play as him in RISE MODE");
+                },
+                OnSave = spec =>
+                {
+                    RiseCreate.ApplyMine(App.Career, App.Catalog, spec);
+                    App.SaveCareer();
+                    then?.Invoke();
+                },
+                OnClose = () => then?.Invoke(),
+            });
+        }
+
         public static void StartTutorial()
         {
             var request = MatchRequest.PracticeDefault();
@@ -186,8 +216,16 @@ namespace CallerRetroBall.UI
                                                   ("PLAY TUTORIAL", ButtonStyle.Primary, StartTutorial),
                                                   ("JUST PLAY", ButtonStyle.Secondary, StartFirstGame),
                                                   ("MAYBE LATER", ButtonStyle.Ghost, null));
-                if (!App.Career.storySeen.Contains(Story.Welcome)) StoryView.Show(Story.Beat(Story.Welcome, App.Career.nickname), Offer);
-                else Offer();
+                // 15 Oct 2026 (Omari): a new player creates their Rise player (look, outfit, style) before the tutorial.
+                void Create()
+                {
+                    if (!Onboarding.OfferCreatePlayer(App.Career)) { Offer(); return; }
+                    Tours.MarkSeen(App.Career, Tours.MakePlayer);
+                    App.SaveCareer();
+                    OpenOnboardingMaker(Offer);
+                }
+                if (!App.Career.storySeen.Contains(Story.Welcome)) StoryView.Show(Story.Beat(Story.Welcome, App.Career.nickname), Create);
+                else Create();
             }
 
             if (App.CareerFromCloud)
