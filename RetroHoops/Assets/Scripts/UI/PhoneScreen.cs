@@ -314,7 +314,7 @@ namespace CallerRetroBall.UI
             if (m.Found.Count > 0 || m.MixFound.Count > 0 || m.State == PhoneMusic.Status.NoCleanSongs || m.HiddenExplicit > 0)
             {
                 var career = Core.App.Career;
-                UiControls.ToggleRow(_content, "EXPLICIT SONGS", career == null || career.phone.explicitSongs, v => PhoneMusic.Instance.SetExplicit(v));
+                UiControls.ToggleRow(_content, "EXPLICIT SONGS", career != null && career.phone.explicitSongs, v => PhoneMusic.Instance.SetExplicit(v));
                 Line("Explicit songs play only with this on. iPhone Screen Time limits still apply.", 22f, Theme.Muted, 60f);
             }
             Line("Songs play from Apple Music. Retro Hoops doesn't own or include them. Credits as listed on Apple Music.", 22f, Theme.Muted, 80f);

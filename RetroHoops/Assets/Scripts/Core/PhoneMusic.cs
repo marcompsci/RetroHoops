@@ -173,7 +173,7 @@ namespace CallerRetroBall.Core
         /// </summary>
         private void ApplyFilter()
         {
-            bool allow = Data == null || Data.explicitSongs;
+            bool allow = Data != null && Data.explicitSongs;
             Songs.Clear();
             HiddenExplicit = 0;
             if (MixMode)

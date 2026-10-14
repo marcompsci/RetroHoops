@@ -22,7 +22,7 @@ namespace CallerRetroBall.Logic
                 mix.Add(new Dictionary<string, object> { ["id"] = m.id ?? "", ["t"] = m.title ?? "", ["a"] = m.artist ?? "", ["al"] = m.album ?? "", ["u"] = m.url ?? "", ["e"] = m.@explicit });
             return new Dictionary<string, object>
             {
-                ["music"] = p.musicOn, ["explicit"] = p.explicitSongs, ["seed"] = (double)p.shuffleSeed, ["cycle"] = p.cycle,
+                ["music"] = p.musicOn, ["explicitOn"] = p.explicitSongs, ["seed"] = (double)p.shuffleSeed, ["cycle"] = p.cycle,
                 ["agentRead"] = p.agentRead, ["agentReplies"] = Ints(p.agentReplies ?? new List<int>()),
                 ["feed"] = feed,
                 ["source"] = p.musicSource, ["mix"] = mix, ["feedNew"] = p.feedNew, ["chat"] = p.quickChat,
@@ -34,7 +34,9 @@ namespace CallerRetroBall.Logic
             var p = new PhoneData();
             if (o == null) return p;
             p.musicOn = Bool(o, "music", true);
-            p.explicitSongs = Bool(o, "explicit", true);
+            // 15 Oct 2026: a new key, off by default. Saves from build 17 had "explicit" on only because that was the
+            // default then, so it isn't carried over: everyone starts with explicit songs off and can turn them on.
+            p.explicitSongs = Bool(o, "explicitOn", false);
             double seed = Num(o, "seed", 0);
             p.shuffleSeed = seed > 0 && seed <= uint.MaxValue ? (uint)seed : 0u;
             p.cycle = Math.Max(0, Int(o, "cycle", 0));

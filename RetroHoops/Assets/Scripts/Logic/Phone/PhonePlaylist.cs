@@ -20,7 +20,7 @@ namespace CallerRetroBall.Logic
     /// Apple Music.
     /// - The song list comes from Omari's screenshots.
     /// - The clean version when Apple Music has one; otherwise the explicit one, which plays only with EXPLICIT SONGS on
-    ///   (15 Oct 2026, Omari; on by default, and iPhone Screen Time limits still apply).
+    ///   (off by default; iPhone Screen Time limits still apply).
     /// - The playlist plays on shuffle. Every time it loops, it's dealt in a new order, and the first song is
     ///   never the one that just played.
     /// - Every song shows its credits and a + that opens it in Apple Music to add to your library.
@@ -163,8 +163,11 @@ namespace CallerRetroBall.Logic
     {
         /// <summary>Play the Apple Music playlist (when allowed and subscribed).</summary>
         public bool musicOn = true;
-        /// <summary>15 Oct 2026: play explicit versions when Apple Music has no clean one (on by default; Screen Time still applies).</summary>
-        public bool explicitSongs = true;
+        /// <summary>
+        /// Play explicit versions when Apple Music has no clean one. Off by default (15 Oct 2026, Omari: keeps the
+        /// age rating); the player turns it on with EXPLICIT SONGS, and iPhone Screen Time limits still apply.
+        /// </summary>
+        public bool explicitSongs;
         /// <summary>15 Oct 2026: which music plays: 0 = the Retro Hoops playlist, 1 = MY MIX (the player's own songs).</summary>
         public int musicSource;
         public List<MixSong> myMix = new List<MixSong>();

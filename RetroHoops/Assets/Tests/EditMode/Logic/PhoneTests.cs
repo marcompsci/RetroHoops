@@ -169,7 +169,7 @@ namespace CallerRetroBall.Tests
             d.phone.agentRead = 2;
             d.phone.agentReplies = new List<int> { 1, -1, 0 };
             d.phone.quickChat = false;
-            d.phone.explicitSongs = false;
+            d.phone.explicitSongs = true;
             SocialFeed.Add(d.phone, SocialFeed.PostsFor(Summary(false, false, 21, 17), new FeedContext { BestPlay = "SLAM!", Photo = "potg-abc.png" }));
             d.phone.feed[1].photo = "../../secret.png";
             var back = SaveCodec.Decode(SaveCodec.Encode(d), c, out _);
@@ -179,7 +179,7 @@ namespace CallerRetroBall.Tests
             Assert.AreEqual(2, back.phone.agentRead);
             Assert.AreEqual("1,-1,0", string.Join(",", back.phone.agentReplies));
             Assert.IsFalse(back.phone.quickChat);
-            Assert.IsFalse(back.phone.explicitSongs);
+            Assert.IsTrue(back.phone.explicitSongs, "turned on by the player: kept");
             Assert.AreEqual(3, back.phone.feed.Count);
             Assert.AreEqual("potg-abc.png", back.phone.feed[0].photo);
             Assert.AreEqual("", back.phone.feed[1].photo, "no folders in a photo name");
@@ -189,7 +189,7 @@ namespace CallerRetroBall.Tests
             // An old save without a phone loads with the defaults.
             var fresh = SaveCodec.Decode(SaveCodec.Encode(new CareerSaveData()), c, out _);
             Assert.IsTrue(fresh.phone.musicOn);
-            Assert.IsTrue(fresh.phone.explicitSongs, "explicit songs on by default");
+            Assert.IsFalse(fresh.phone.explicitSongs, "explicit songs off by default");
             Assert.AreEqual(0, fresh.phone.feed.Count);
         }
 
