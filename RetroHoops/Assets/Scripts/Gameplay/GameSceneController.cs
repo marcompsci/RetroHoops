@@ -566,6 +566,7 @@ namespace CallerRetroBall.Gameplay
             // The stands' fans are drawn for the portrait view; landscape leaves the stands empty.
             if (!_landscape) BuildCrowd(world, court, setup, artGeometry, banner != null);
             else BuildSidelineCrowd(world, court, setup);
+            if (!_landscape && !setup.FullCourt) BuildNearSide(world, court, setup, artGeometry);
 
             var arrowGo = new GameObject("ReceiverArrow");
             arrowGo.transform.SetParent(world, false);
@@ -590,7 +591,8 @@ namespace CallerRetroBall.Gameplay
             if (cam == null) cam = new GameObject("Main Camera", typeof(Camera)).GetComponent<Camera>();
             _cameraRig = cam.GetComponent<CourtCameraRig>();
             if (_cameraRig == null) _cameraRig = cam.gameObject.AddComponent<CourtCameraRig>();
-            var bg = court.floor.Darken(0.35f);
+            // Portrait half court: the near-side art fades into this colour, so there's no seam below it.
+            var bg = !_landscape && !setup.FullCourt ? CourtsideGenerator.DeepColor(court) : court.floor.Darken(0.35f);
             _cameraRig.Init(setup.Court, new Color32(bg.r, bg.g, bg.b, 255), setup.FullCourt, _landscape);
         }
 
@@ -2780,6 +2782,62 @@ namespace CallerRetroBall.Gameplay
                     go.transform.position = pos;
                     fans.Add(new Fan { Renderer = sr, Idle = pick.idle, Cheer = pick.cheer, Base = pos });
                 }
+            }
+            _fans = fans.ToArray();
+        }
+
+        /// <summary>
+        /// 13 Oct 2026: portrait half court. Below the court art: an LED board (arenas) or a low wall (outdoors), a
+        /// front row of fans seen from behind (they cheer with the rest of the crowd), and steps fading to a dark
+        /// colour under the buttons.
+        /// </summary>
+        private void BuildNearSide(Transform world, CourtDef court, MatchSetup setup, CourtGeometry g)
+        {
+            const float ppu = CourtSpace.PixelsPerUnit;
+            int texW = CourtGenerator.TextureWidth(g);
+            CourtGenerator.CourtToPixel(g, Vec2.Zero, out float originPx, out float originPy);
+            var canvas = CourtsideGenerator.NearSide(court, texW, setup.TeamA.primary, setup.TeamB.primary);
+            int pad = CourtsideGenerator.SidePad;
+            // Top edge of the near side = bottom edge of the court art (court pixel row 0).
+            var pivot = new Vector2((originPx + pad) / canvas.Width, 1f);
+            var go = new GameObject("NearSide");
+            go.transform.SetParent(world, false);
+            go.transform.localPosition = new Vector3(0f, -originPy / ppu, 0f);
+            var sr = go.AddComponent<SpriteRenderer>();
+            sr.sprite = _art.NearSide(canvas, pivot);
+            sr.sortingOrder = -9990;
+
+            if (court.crowdDensity <= 0f) return;
+            var skins = CharacterSpriteGenerator.SkinTones;
+            RgbColor[] shirts =
+            {
+                setup.TeamA.primary, setup.TeamA.secondary, setup.TeamB.primary, setup.TeamB.secondary,
+                court.paint, court.lines.Darken(0.3f),
+            };
+            var sprites = new (Sprite idle, Sprite cheer)[shirts.Length * 2];
+            for (int i = 0; i < sprites.Length; i++)
+            {
+                var shirt = shirts[i % shirts.Length];
+                var skin = skins[(i * 5 + 3) % skins.Length];
+                int look = i * 3 + i / shirts.Length;
+                sprites[i] = (_art.FrontRowFan(shirt, skin, false, look), _art.FrontRowFan(shirt, skin, true, look));
+            }
+            var fans = new System.Collections.Generic.List<Fan>(_fans);
+            var parent = new GameObject("FrontRow").transform;
+            parent.SetParent(world, false);
+            var rng = new SeededRandom(StableHash.Of(court.id + ":frontrow"));
+            float feetY = -originPy / ppu - CourtsideGenerator.FanRowFromTop / ppu;
+            foreach (int slot in CourtsideGenerator.FanSlots(texW, StableHash.Of(court.id), court.crowdDensity))
+            {
+                var pick = sprites[rng.Range(0, sprites.Length)];
+                var fgo = new GameObject("Fan");
+                fgo.transform.SetParent(parent, false);
+                var fsr = fgo.AddComponent<SpriteRenderer>();
+                fsr.sprite = pick.idle;
+                fsr.sortingOrder = -9980;
+                var pos = new Vector3((slot - pad - originPx) / ppu, feetY, 0f);
+                fgo.transform.position = pos;
+                fans.Add(new Fan { Renderer = fsr, Idle = pick.idle, Cheer = pick.cheer, Base = pos });
             }
             _fans = fans.ToArray();
         }
