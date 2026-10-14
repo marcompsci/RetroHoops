@@ -1,4 +1,5 @@
 using CallerRetroBall.Logic;
+using CallerRetroBall.Logic.PixelArt;
 using UnityEngine;
 
 namespace CallerRetroBall.Gameplay
@@ -8,6 +9,7 @@ namespace CallerRetroBall.Gameplay
     {
         private SpriteRenderer _ball;
         private SpriteRenderer _shadow;
+        private Sprite[] _frames;
 
         public static BallView Create(Transform parent, MatchArt art)
         {
@@ -24,6 +26,7 @@ namespace CallerRetroBall.Gameplay
             ballGo.transform.SetParent(go.transform, false);
             view._ball = ballGo.AddComponent<SpriteRenderer>();
             view._ball.sprite = art.Ball;
+            view._frames = art.BallFrames;
             return view;
         }
 
@@ -53,6 +56,12 @@ namespace CallerRetroBall.Gameplay
                 : CourtSpace.SortingOrder(ball.Position, 1);
             _ball.sortingOrder = order;
             _shadow.sortingOrder = order - 3;
+            // Spin while it flies or rolls loose; still in someone's hands.
+            if (_frames != null && _frames.Length > 0)
+            {
+                var s = _frames[PropSpriteGenerator.BallSpinFrame(Time.time, !ball.IsHeld)];
+                if (_ball.sprite != s) _ball.sprite = s;
+            }
             // Shadow fades as the ball rises.
             float a = Mathf.Clamp01(1f - ball.Height / 4f);
             _shadow.color = new Color(1f, 1f, 1f, a);

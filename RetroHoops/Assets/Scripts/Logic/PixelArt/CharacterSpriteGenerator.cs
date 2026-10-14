@@ -563,27 +563,8 @@ namespace CallerRetroBall.Logic.PixelArt
     }
 
     /// <summary>Small original props: ball, drop shadow, hoop, and the controlled-player ring.</summary>
-    public static class PropSpriteGenerator
+    public static partial class PropSpriteGenerator
     {
-        public static PixelCanvas Ball()
-        {
-            var c = new PixelCanvas(8, 8);
-            c.Stamp(new[]
-            {
-                "..####..",
-                ".#+#+##.",
-                "#++#+###",
-                "########",
-                "###+####",
-                "###+####",
-                ".##+###.",
-                "..####..",
-            }, 0, 7, RgbColor.FromHex("#E8742A"), RgbColor.FromHex("#3A1A0A"));
-            c.Set(2, 6, RgbColor.FromHex("#FFB070"));
-            c.Set(1, 5, RgbColor.FromHex("#FFB070"));
-            return c;
-        }
-
         /// <summary>Soft ellipse shadow (black, partial alpha) for players and the ball.</summary>
         public static PixelCanvas Shadow(int width = 12, int height = 4)
         {
@@ -610,82 +591,6 @@ namespace CallerRetroBall.Logic.PixelArt
                     float d = dx * dx + dy * dy;
                     if (d <= 1f && d >= 0.45f) c.Set(x, y, RgbColor.White);
                 }
-            return c;
-        }
-
-        /// <summary>Backboard, rim, and net seen from the 3/4 court camera. Pivot: rim centre = (16, 7).</summary>
-        public static PixelCanvas Hoop()
-        {
-            const int w = 32, h = 30;
-            var c = new PixelCanvas(w, h);
-            var board = RgbColor.FromHex("#F4F4F8");
-            var boardEdge = RgbColor.FromHex("#9AA0B4");
-            var rim = RgbColor.FromHex("#E4572E");
-            var net = RgbColor.FromHex("#FFFFFF").WithAlpha(210);
-
-            // Board (upper part of the sprite) with a target square.
-            c.FillRect(1, 14, 30, 14, board);
-            for (int x = 1; x < 31; x++) { c.Set(x, 14, boardEdge); c.Set(x, 27, boardEdge); }
-            for (int y = 14; y < 28; y++) { c.Set(1, y, boardEdge); c.Set(30, y, boardEdge); }
-            for (int x = 11; x <= 20; x++) { c.Set(x, 15, rim); c.Set(x, 22, rim); }
-            for (int y = 15; y <= 22; y++) { c.Set(11, y, rim); c.Set(20, y, rim); }
-
-            // Net: tapered strands below the rim.
-            for (int row = 0; row < 6; row++)
-            {
-                int half = 5 - row / 2;
-                for (int x = 16 - half; x <= 15 + half; x += 2) c.Set(x, 6 - row, net);
-                c.Set(16 - half, 6 - row, net);
-                c.Set(15 + half, 6 - row, net);
-            }
-
-            // Rim ellipse (12 x 5) centred on (16, 7).
-            for (int x = 12; x <= 19; x++) { c.Set(x, 9, rim); c.Set(x, 5, rim); }
-            foreach (int x in new[] { 10, 11, 20, 21 }) { c.Set(x, 8, rim); c.Set(x, 6, rim); }
-            c.Set(10, 7, rim);
-            c.Set(21, 7, rim);
-            CharacterSpriteGenerator.AddOutline(c);
-            return c;
-        }
-
-        /// <summary>
-        /// The basket from the side, for landscape Full Court: backboard on the LEFT (flip it for the right-hand
-        /// basket), arm, rim seen nearly edge-on, net. Pivot: rim centre = (<see cref="HoopSidePivotX"/>, <see cref="HoopSidePivotY"/>).
-        /// </summary>
-        public static PixelCanvas HoopSide()
-        {
-            const int w = 26, h = 30;
-            var c = new PixelCanvas(w, h);
-            var board = RgbColor.FromHex("#F4F4F8");
-            var boardEdge = RgbColor.FromHex("#9AA0B4");
-            var rim = RgbColor.FromHex("#E4572E");
-            var net = RgbColor.FromHex("#FFFFFF").WithAlpha(210);
-            var metal = RgbColor.FromHex("#5C6378");
-
-            // Backboard seen at an angle: a narrow panel with a red square edge.
-            c.FillRect(3, 6, 4, 22, board);
-            for (int y = 6; y < 28; y++) { c.Set(3, y, boardEdge); c.Set(6, y, boardEdge); }
-            for (int x = 3; x < 7; x++) { c.Set(x, 6, boardEdge); c.Set(x, 27, boardEdge); }
-            for (int y = 9; y <= 16; y++) c.Set(5, y, rim);
-            // Support arm behind the board.
-            c.FillRect(0, 14, 3, 2, metal);
-            // Bracket from the board to the rim.
-            for (int x = 7; x <= 9; x++) c.Set(x, 8, metal);
-
-            // Rim: a flat ellipse (12 x 4) centred on the pivot.
-            int cx = HoopSidePivotX, cy = HoopSidePivotY;
-            for (int x = cx - 4; x <= cx + 4; x++) { c.Set(x, cy + 2, rim); c.Set(x, cy - 1, rim); }
-            foreach (int x in new[] { cx - 6, cx - 5, cx + 5, cx + 6 }) { c.Set(x, cy + 1, rim); c.Set(x, cy, rim); }
-
-            // Net: tapered strands below the rim.
-            for (int row = 0; row < 6; row++)
-            {
-                int half = 5 - row / 2;
-                for (int x = cx - half; x <= cx + half; x += 2) c.Set(x, cy - 2 - row, net);
-                c.Set(cx - half, cy - 2 - row, net);
-                c.Set(cx + half, cy - 2 - row, net);
-            }
-            CharacterSpriteGenerator.AddOutline(c);
             return c;
         }
 

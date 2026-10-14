@@ -20,6 +20,11 @@ namespace CallerRetroBall.Gameplay
         public Sprite Ring { get; private set; }
         /// <summary>The basket seen from the side (landscape Full Court).</summary>
         public Sprite HoopSide { get; private set; }
+        /// <summary>Net frames (rest, stretched, flared) for the swish animation.</summary>
+        public Sprite[] HoopFrames { get; private set; }
+        public Sprite[] HoopSideFrames { get; private set; }
+        /// <summary>Ball spin frames.</summary>
+        public Sprite[] BallFrames { get; private set; }
         public Sprite MeterFrame { get; private set; }
         public Sprite Pixel { get; private set; }
         public Sprite Arrow { get; private set; }
@@ -47,15 +52,26 @@ namespace CallerRetroBall.Gameplay
             }
             art.Court = art.Make(courtCanvas, "court:" + court.id, new Vector2(px, py), ppu);
 
-            var hoop = PropSpriteGenerator.Hoop();
-            art.Hoop = art.Make(hoop, "hoop",
-                new Vector2((PropSpriteGenerator.HoopPivotX + 0.5f) / hoop.Width, (PropSpriteGenerator.HoopPivotY + 0.5f) / hoop.Height), ppu);
+            // Art pass 2: props at 2x detail (two art pixels per court pixel); pivots stay in court pixels.
+            const int k = PropSpriteGenerator.ArtScale;
+            art.HoopFrames = new Sprite[PropSpriteGenerator.NetFrames];
+            art.HoopSideFrames = new Sprite[PropSpriteGenerator.NetFrames];
+            for (int f = 0; f < PropSpriteGenerator.NetFrames; f++)
+            {
+                var hoop = PropSpriteGenerator.Hoop(f);
+                art.HoopFrames[f] = art.Make(hoop, "hoop" + f,
+                    new Vector2((PropSpriteGenerator.HoopPivotX + 0.5f) * k / hoop.Width, (PropSpriteGenerator.HoopPivotY + 0.5f) * k / hoop.Height), ppu * k);
+                var side = PropSpriteGenerator.HoopSide(f);
+                art.HoopSideFrames[f] = art.Make(side, "hoop-side" + f,
+                    new Vector2((PropSpriteGenerator.HoopSidePivotX + 0.5f) * k / side.Width, (PropSpriteGenerator.HoopSidePivotY + 0.5f) * k / side.Height), ppu * k);
+            }
+            art.Hoop = art.HoopFrames[0];
+            art.HoopSide = art.HoopSideFrames[0];
 
-            var side = PropSpriteGenerator.HoopSide();
-            art.HoopSide = art.Make(side, "hoop-side",
-                new Vector2((PropSpriteGenerator.HoopSidePivotX + 0.5f) / side.Width, (PropSpriteGenerator.HoopSidePivotY + 0.5f) / side.Height), ppu);
-
-            art.Ball = art.Make(PropSpriteGenerator.Ball(), "ball", new Vector2(0.5f, 0f), ppu);
+            art.BallFrames = new Sprite[PropSpriteGenerator.BallFrames];
+            for (int f = 0; f < PropSpriteGenerator.BallFrames; f++)
+                art.BallFrames[f] = art.Make(PropSpriteGenerator.Ball(f), "ball" + f, new Vector2(0.5f, 0f), ppu * k);
+            art.Ball = art.BallFrames[0];
             art.Shadow = art.Make(PropSpriteGenerator.Shadow(12, 4), "shadow", new Vector2(0.5f, 0.5f), ppu);
             art.BallShadow = art.Make(PropSpriteGenerator.Shadow(6, 2), "ball-shadow", new Vector2(0.5f, 0.5f), ppu);
             art.Ring = art.Make(PropSpriteGenerator.Ring(16, 6), "ring", new Vector2(0.5f, 0.5f), ppu);
@@ -70,8 +86,8 @@ namespace CallerRetroBall.Gameplay
         /// <summary>Landscape sideline bleachers (pivot bottom-left).</summary>
         public Sprite SidelineStands(PixelCanvas canvas) => Make(canvas, "stands", Vector2.zero, CourtSpace.PixelsPerUnit);
 
-        public Sprite CrowdFan(RgbColor shirt, RgbColor skin, bool armsUp) =>
-            Make(CrowdGenerator.Fan(shirt, skin, armsUp), "fan", Vector2.zero, CourtSpace.PixelsPerUnit);
+        public Sprite CrowdFan(RgbColor shirt, RgbColor skin, bool armsUp, int variant = 0) =>
+            Make(CrowdGenerator.Fan(shirt, skin, armsUp, variant), "fan", Vector2.zero, CourtSpace.PixelsPerUnit * CrowdGenerator.ArtScale);
 
         public Sprite[,] PlayerFrames(PlayerDef player, TeamDef team) => PlayerFrames(player, team.primary, team.secondary, team.accent, null, TeamPattern.Solid);
 

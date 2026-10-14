@@ -168,6 +168,10 @@ namespace CallerRetroBall.Gameplay
         private float _hangU;
         private int _liftAtRimPx;
         private Transform _hoopT, _hoop2T;
+        private SpriteRenderer _hoopSr, _hoop2Sr;
+        /// <summary>When the last basket was made (net swish animation) and whether it went through the second hoop.</summary>
+        private float _netAt = -10f;
+        private bool _netSecond;
         private Vector3 _hoopBase, _hoop2Base;
         private ShotType _leapType;
         /// <summary>How the current dunk looks (Dunks.cs).</summary>
@@ -470,6 +474,7 @@ namespace CallerRetroBall.Gameplay
             hoopSr.sprite = _landscape ? _art.HoopSide : _art.Hoop;
             hoopSr.sortingOrder = CourtSpace.SortingOrder(setup.Court.Hoop, -1);
             _hoopT = hoopGo.transform;
+            _hoopSr = hoopSr;
             _hoopBase = _hoopT.position;
             if (setup.FullCourt)
             {
@@ -484,6 +489,7 @@ namespace CallerRetroBall.Gameplay
                 else hoop2Sr.flipY = true;
                 hoop2Sr.sortingOrder = CourtSpace.SortingOrder(bottomHoop, 1);
                 _hoop2T = hoop2.transform;
+                _hoop2Sr = hoop2Sr;
                 _hoop2Base = _hoop2T.position;
             }
 
@@ -1437,6 +1443,8 @@ namespace CallerRetroBall.Gameplay
                     case MatchEventType.ShotMade:
                         bool swish = _match.Ball.ShotGrade == TimingGrade.Green;
                         bool dunk = _match.Ball.ShotType == ShotType.Dunk;
+                        _netAt = Time.unscaledTime;
+                        _netSecond = AttackingSecondHoop();
                         _hud.Toast((dunk ? Dunks.Name(_dunkStyle) + "  +" : swish ? "SWISH  +" : "+") + e.Value, 1.1f);
                         if (!_reduceMotion) _bursts.Spawn(HoopWorld, swish ? (Color)new Color32(0xFF, 0xD1, 0x66, 255) : Color.white, dunk ? 28 : (swish ? 20 : 12), dunk ? 5f : 4f);
                         if (dunk)
@@ -1573,6 +1581,7 @@ namespace CallerRetroBall.Gameplay
             // The rim is pulled down while someone hangs on it (2 pixels at the slam, then 1).
             if (_reduceMotion) dunk.SwingPx = 0;
             SyncRimDip(dunking && dunk.OnRim ? dunk.RimDipPx : 0);
+            SyncNet(now);
             for (int i = 0; i < _playerViews.Length; i++)
             {
                 _playerViews[i].ClearOverride();
@@ -1662,6 +1671,29 @@ namespace CallerRetroBall.Gameplay
             for (int i = 0; i < _match.Players.Length; i++)
                 if (_match.Players[i].Team != p.Team) best = Mathf.Min(best, Vec2.Distance(_match.Players[i].Position, p.Position));
             return best;
+        }
+
+        /// <summary>True when the basket under attack is the second (bottom / right) hoop on screen.</summary>
+        private bool AttackingSecondHoop()
+        {
+            if (_hoop2T == null) return false;
+            var target = CourtSpace.ToWorld(_match.Setup.Court.Hoop, CourtSpace.RimHeight);
+            return (target - _hoop2Base).sqrMagnitude < (target - _hoopBase).sqrMagnitude;
+        }
+
+        /// <summary>The net kicks (stretches, then flares) for a moment after a make.</summary>
+        private void SyncNet(float now)
+        {
+            if (_hoopSr == null || _art.HoopFrames == null) return;
+            int f = _reduceMotion ? 0 : PropSpriteGenerator.NetFrame(now - _netAt);
+            var frames = _landscape ? _art.HoopSideFrames : _art.HoopFrames;
+            var a = frames[_netSecond ? 0 : f];
+            if (_hoopSr.sprite != a) _hoopSr.sprite = a;
+            if (_hoop2Sr != null)
+            {
+                var b = frames[_netSecond ? f : 0];
+                if (_hoop2Sr.sprite != b) _hoop2Sr.sprite = b;
+            }
         }
 
         private void SyncRimDip(int dipPx)
@@ -2717,12 +2749,13 @@ namespace CallerRetroBall.Gameplay
                 setup.TeamA.primary, setup.TeamA.secondary, setup.TeamB.primary,
                 court.skyBottom.Darken(0.2f), court.paint, court.lines.Darken(0.3f),
             };
-            var sprites = new (Sprite idle, Sprite cheer)[shirts.Length * 2];
+            var sprites = new (Sprite idle, Sprite cheer)[shirts.Length * 4];
             for (int i = 0; i < sprites.Length; i++)
             {
                 var shirt = shirts[i % shirts.Length];
                 var skin = skins[(i * 7) % skins.Length];
-                sprites[i] = (_art.CrowdFan(shirt, skin, false), _art.CrowdFan(shirt, skin, true));
+                int look = (i * 5 + i / shirts.Length) % CrowdGenerator.Variants;
+                sprites[i] = (_art.CrowdFan(shirt, skin, false, look), _art.CrowdFan(shirt, skin, true, look));
             }
 
             var fans = new System.Collections.Generic.List<Fan>();
@@ -2771,12 +2804,13 @@ namespace CallerRetroBall.Gameplay
             var rng = new SeededRandom(StableHash.Of(court.id + ":sideline"));
             var skins = CharacterSpriteGenerator.SkinTones;
             RgbColor[] shirts = { setup.TeamA.primary, setup.TeamA.secondary, setup.TeamB.primary, setup.TeamB.secondary, court.paint, court.lines.Darken(0.3f) };
-            var sprites = new (Sprite idle, Sprite cheer)[shirts.Length * 2];
+            var sprites = new (Sprite idle, Sprite cheer)[shirts.Length * 4];
             for (int i = 0; i < sprites.Length; i++)
             {
                 var shirt = shirts[i % shirts.Length];
                 var skin = skins[(i * 5) % skins.Length];
-                sprites[i] = (_art.CrowdFan(shirt, skin, false), _art.CrowdFan(shirt, skin, true));
+                int look = (i * 5 + i / shirts.Length) % CrowdGenerator.Variants;
+                sprites[i] = (_art.CrowdFan(shirt, skin, false, look), _art.CrowdFan(shirt, skin, true, look));
             }
             var fans = new System.Collections.Generic.List<Fan>();
             var parent = new GameObject("SidelineCrowd").transform;
