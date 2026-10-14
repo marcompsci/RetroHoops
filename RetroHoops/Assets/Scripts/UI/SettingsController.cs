@@ -40,6 +40,8 @@ namespace CallerRetroBall.UI
             UiControls.SliderRow(column, "MUSIC", s.musicVolume, v => { s.musicVolume = v; App.ApplySettings(); });
             UiControls.SliderRow(column, "SFX", s.sfxVolume, v => { s.sfxVolume = v; App.ApplySettings(); });
             UiKit.Button(column, "MUSIC PLAYER", () => MusicPlayer.Open(), ButtonStyle.Secondary, 100f, 36f);
+            // 15 Oct 2026 (Omari): your own background music — MY MIX from your Apple Music songs.
+            UiKit.Button(column, "MY MUSIC (APPLE MUSIC)", () => PhoneScreen.Open(PhoneScreen.App.Music), ButtonStyle.Secondary, 100f, 36f);
 
             Header(column, "FEEL");
             UiControls.ToggleRow(column, "HAPTICS", s.haptics, v => { s.haptics = v; Save(); if (v) Haptics.Light(); });

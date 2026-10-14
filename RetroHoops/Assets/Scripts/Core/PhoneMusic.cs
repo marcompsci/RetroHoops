@@ -28,6 +28,11 @@ namespace CallerRetroBall.Core
         [DllImport("__Internal")] private static extern void RetroMusic_Play(string ids, int start);
         [DllImport("__Internal")] private static extern void RetroMusic_Command(int command);
         [DllImport("__Internal")] private static extern string RetroMusic_NowPlaying();
+        [DllImport("__Internal")] private static extern void RetroMusic_Search(string term);
+        [DllImport("__Internal")] private static extern void RetroMusic_Lookup(string ids);
+        [DllImport("__Internal")] private static extern void RetroMusic_PickFromLibrary();
+        [DllImport("__Internal")] private static extern int RetroMusic_RequestState();
+        [DllImport("__Internal")] private static extern string RetroMusic_RequestResult();
         public static bool Supported => true;
 #else
         private static void RetroMusic_Refresh() { }
@@ -40,11 +45,19 @@ namespace CallerRetroBall.Core
         private static void RetroMusic_Play(string ids, int start) { }
         private static void RetroMusic_Command(int command) { }
         private static string RetroMusic_NowPlaying() => "";
+        private static void RetroMusic_Search(string term) { }
+        private static void RetroMusic_Lookup(string ids) { }
+        private static void RetroMusic_PickFromLibrary() { }
+        private static int RetroMusic_RequestState() => 0;
+        private static string RetroMusic_RequestResult() => "[]";
         /// <summary>Apple Music only works in the iPhone / iPad app.</summary>
         public static bool Supported => false;
 #endif
 
-        public enum Status { Unsupported, NotConnected, Denied, NoSubscription, Loading, NoCleanSongs, Failed, Ready }
+        public enum Status { Unsupported, NotConnected, Denied, NoSubscription, Loading, NoCleanSongs, Failed, Ready, MixEmpty }
+
+        /// <summary>15 Oct 2026: what a MY MIX request is for.</summary>
+        public enum Request { None, Search, Pick, Register, PasteLink }
 
         /// <summary>A playlist song found on Apple Music (clean).</summary>
         [Serializable]
@@ -85,6 +98,18 @@ namespace CallerRetroBall.Core
         public readonly List<Entry> Songs = new List<Entry>();
         /// <summary>Every playlist song found on Apple Music (clean, or explicit when there's no clean one).</summary>
         public readonly List<Entry> Found = new List<Entry>();
+        /// <summary>MY MIX songs Apple Music has found this session (keyed "mix:id"), ready to play.</summary>
+        public readonly List<Entry> MixFound = new List<Entry>();
+        /// <summary>The last in-game Apple Music search's results.</summary>
+        public readonly List<Entry> SearchResults = new List<Entry>();
+        /// <summary>The MY MIX request running now (None = idle).</summary>
+        public Request Busy { get; private set; }
+        /// <summary>A short note for the MUSIC app after a request ("3 SONGS ADDED", "NO SONG LINK FOUND"...).</summary>
+        public string Note { get; private set; }
+        private readonly HashSet<string> _registerFailed = new HashSet<string>();
+
+        public bool MixMode => Data != null && Data.musicSource == 1;
+
         /// <summary>Songs left out because they're explicit and EXPLICIT SONGS is off.</summary>
         public int HiddenExplicit { get; private set; }
         public Status State { get; private set; } = Status.NotConnected;
@@ -151,6 +176,19 @@ namespace CallerRetroBall.Core
             bool allow = Data == null || Data.explicitSongs;
             Songs.Clear();
             HiddenExplicit = 0;
+            if (MixMode)
+            {
+                // MY MIX: the player's songs, in the order they added them, once Apple Music has found them.
+                if (Data.myMix == null) Data.myMix = new List<MixSong>();
+                foreach (var m in Data.myMix)
+                {
+                    var f = MixFound.Find(x => x.id == m.id);
+                    if (f == null) continue;
+                    if (f.@explicit && !allow) { HiddenExplicit++; continue; }
+                    Songs.Add(f);
+                }
+                return;
+            }
             foreach (var f in Found)
             {
                 if (f.@explicit && !allow) { HiddenExplicit++; continue; }
@@ -165,6 +203,12 @@ namespace CallerRetroBall.Core
             Data.explicitSongs = allow;
             App.SaveCareer();
             ApplyFilter();
+            StopForChange();
+            Changed?.Invoke();
+        }
+
+        private void StopForChange()
+        {
             if (_started)
             {
                 RetroMusic_Command(4);
@@ -173,8 +217,150 @@ namespace CallerRetroBall.Core
                 AudioManager.ExternalMusic = false;
                 _lastIndexPlayed = -1;
             }
-            if (State == Status.Ready || State == Status.NoCleanSongs) State = Songs.Count > 0 ? Status.Ready : Status.NoCleanSongs;
+            if (State == Status.Ready || State == Status.NoCleanSongs || State == Status.MixEmpty) State = ListState();
+        }
+
+        private Status ListState() =>
+            Songs.Count > 0 ? Status.Ready : MixMode ? Status.MixEmpty : _resolveFailed ? Status.Failed : Status.NoCleanSongs;
+
+        // ------------------------------------------------------------------ 15 Oct 2026: MY MIX
+
+        /// <summary>0 = the Retro Hoops playlist, 1 = MY MIX. Switching starts the new list.</summary>
+        public void SetSource(int source)
+        {
+            if (Data == null || Data.musicSource == source) return;
+            Data.musicSource = source;
+            App.SaveCareer();
+            Note = null;
+            ApplyFilter();
+            StopForChange();
+            State = ListState();
             Changed?.Invoke();
+        }
+
+        /// <summary>SEARCH: looks for songs on Apple Music (results in <see cref="SearchResults"/>).</summary>
+        public void Search(string term)
+        {
+            term = (term ?? "").Trim();
+            if (term.Length < 2 || Busy != Request.None || !Supported) return;
+            Busy = Request.Search;
+            Note = null;
+            RetroMusic_Search(term.Length > 80 ? term.Substring(0, 80) : term);
+            Changed?.Invoke();
+        }
+
+        /// <summary>ADD FROM MY MUSIC: the iPhone's music picker; the songs picked join MY MIX.</summary>
+        public void PickFromLibrary()
+        {
+            if (Busy != Request.None || !Supported) return;
+            Busy = Request.Pick;
+            Note = null;
+            RetroMusic_PickFromLibrary();
+            Changed?.Invoke();
+        }
+
+        /// <summary>PASTE LINK: adds the song from an Apple Music link on the clipboard (Share ▸ Copy Link in Apple Music).</summary>
+        public void PasteLink()
+        {
+            if (Busy != Request.None || !Supported) return;
+            string id = MyMix.SongIdFromLink(GUIUtility.systemCopyBuffer);
+            if (id == null)
+            {
+                Note = "NO SONG LINK FOUND. IN APPLE MUSIC: SHARE > COPY LINK, THEN COME BACK";
+                Changed?.Invoke();
+                return;
+            }
+            Busy = Request.PasteLink;
+            Note = null;
+            RetroMusic_Lookup(id);
+            Changed?.Invoke();
+        }
+
+        /// <summary>Adds a search result (or any found song) to MY MIX.</summary>
+        public bool AddToMix(Entry e)
+        {
+            if (e == null || Data == null) return false;
+            bool added = MyMix.Add(Data, new MixSong { id = e.id, title = e.title ?? "", artist = e.artist ?? "", album = e.album ?? "", url = e.url ?? "", @explicit = e.@explicit });
+            if (!added) return false;
+            Register(e);
+            App.SaveCareer();
+            ApplyFilter();
+            if (MixMode && State == Status.MixEmpty) State = ListState();
+            Changed?.Invoke();
+            return true;
+        }
+
+        public void RemoveFromMix(string id)
+        {
+            if (Data == null || !MyMix.Remove(Data, id)) return;
+            App.SaveCareer();
+            bool wasPlaying = MixMode && _started;
+            ApplyFilter();
+            if (wasPlaying) StopForChange();
+            else if (MixMode) State = ListState();
+            Changed?.Invoke();
+        }
+
+        private void Register(Entry e)
+        {
+            if (e == null || MixFound.Exists(x => x.id == e.id)) return;
+            e.key = MyMix.Key(e.id);
+            MixFound.Add(e);
+            StartCoroutine(LoadArt(e));
+        }
+
+        private void PollRequest()
+        {
+            if (Busy == Request.None) return;
+            int rs = RetroMusic_RequestState();
+            if (rs == 1) return; // still working (or the picker is still open)
+            var kind = Busy;
+            Busy = Request.None;
+            var items = new List<Entry>();
+            if (rs == 2)
+            {
+                try { items = JsonUtility.FromJson<EntryList>("{\"items\":" + (RetroMusic_RequestResult() ?? "[]") + "}")?.items ?? items; }
+                catch (Exception ex) { Debug.LogWarning("[Retro Hoops] Apple Music request: " + ex.Message); }
+            }
+            foreach (var it in items) it.key = MyMix.Key(it.id);
+            switch (kind)
+            {
+                case Request.Search:
+                    SearchResults.Clear();
+                    SearchResults.AddRange(items);
+                    foreach (var it in items) StartCoroutine(LoadArt(it));
+                    Note = rs == 3 ? "COULDN'T REACH APPLE MUSIC" : items.Count == 0 ? "NO SONGS FOUND" : null;
+                    break;
+                case Request.Pick:
+                case Request.PasteLink:
+                    int added = 0;
+                    foreach (var it in items) if (AddToMix(it)) added++;
+                    Note = rs == 3 ? "COULDN'T REACH APPLE MUSIC"
+                         : added > 0 ? (added == 1 ? "1 SONG ADDED TO MY MIX" : added + " SONGS ADDED TO MY MIX")
+                         : items.Count > 0 ? "ALREADY IN MY MIX"
+                         : kind == Request.Pick ? null : "THAT SONG ISN'T ON APPLE MUSIC";
+                    break;
+                default: // Register (saved MY MIX songs)
+                    foreach (var it in items) Register(it);
+                    if (rs == 3 && Data?.myMix != null) foreach (var m in Data.myMix) if (!MixFound.Exists(x => x.id == m.id)) _registerFailed.Add(m.id);
+                    break;
+            }
+            ApplyFilter();
+            if (State == Status.MixEmpty || State == Status.Ready) State = ListState();
+            Changed?.Invoke();
+        }
+
+        /// <summary>Finds saved MY MIX songs on Apple Music so they can play (once per session).</summary>
+        private void RegisterSavedMix()
+        {
+            if (Busy != Request.None || Data?.myMix == null) return;
+            var ids = new List<string>();
+            foreach (var m in Data.myMix)
+                if (!MixFound.Exists(x => x.id == m.id) && !_registerFailed.Contains(m.id)) ids.Add(m.id);
+            if (ids.Count == 0) return;
+            foreach (var id in ids) _registerFailed.Add(id); // tried once; a later add or retry can find them
+            Busy = Request.Register;
+            RetroMusic_Lookup(string.Join(",", ids));
         }
 
         /// <summary>Plays this song now; the rest of the loop follows in a fresh shuffle.</summary>
@@ -187,7 +373,8 @@ namespace CallerRetroBall.Core
         /// <summary>The + button: opens the song in Apple Music (to add it to your library).</summary>
         public static void OpenInAppleMusic(string key)
         {
-            var entry = _instance != null ? _instance.Found.Find(s => s.key == key) : null;
+            var entry = _instance == null ? null : _instance.Found.Find(s => s.key == key) ?? _instance.MixFound.Find(s => s.key == key)
+                        ?? _instance.SearchResults.Find(s => s.key == key);
             var track = PhonePlaylist.Find(key);
             string url = entry != null && !string.IsNullOrEmpty(entry.url) ? entry.url : track != null ? PhonePlaylist.SearchUrl(track) : null;
             if (!string.IsNullOrEmpty(url)) Application.OpenURL(url);
@@ -204,8 +391,14 @@ namespace CallerRetroBall.Core
             else if (RetroMusic_CanPlay() != 1) State = Status.NoSubscription;
             else if (!_resolving && Found.Count == 0 && RetroMusic_ResolveState() == 0) Resolve();
             else if (_resolving) PollResolve();
-            else State = Songs.Count > 0 ? Status.Ready : _resolveFailed ? Status.Failed : Status.NoCleanSongs;
+            else State = ListState();
 
+            // MY MIX requests (search, picker, pasted links) and finding saved songs.
+            if (auth == 3)
+            {
+                PollRequest();
+                if (MixMode && RetroMusic_CanPlay() == 1) RegisterSavedMix();
+            }
             if (State == Status.Ready) PollPlayback();
             else AudioManager.ExternalMusic = false;
             if (before != State) Changed?.Invoke();
@@ -240,7 +433,8 @@ namespace CallerRetroBall.Core
                 foreach (var f in Found) StartCoroutine(LoadArt(f));
             }
             _resolveFailed = rs == 3;
-            State = Songs.Count > 0 ? Status.Ready : _resolveFailed ? Status.Failed : Status.NoCleanSongs;
+            ApplyFilter();
+            State = ListState();
             Changed?.Invoke();
         }
 

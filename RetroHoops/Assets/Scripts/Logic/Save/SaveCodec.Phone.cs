@@ -17,11 +17,15 @@ namespace CallerRetroBall.Logic
                     ["tag"] = f.tag ?? "", ["likes"] = f.likes, ["rp"] = f.reposts, ["c"] = Strings(f.comments ?? new List<string>()),
                     ["photo"] = f.photo ?? "", ["col"] = f.color ?? "",
                 });
+            var mix = new List<object>();
+            foreach (var m in p.myMix ?? new List<MixSong>())
+                mix.Add(new Dictionary<string, object> { ["id"] = m.id ?? "", ["t"] = m.title ?? "", ["a"] = m.artist ?? "", ["al"] = m.album ?? "", ["u"] = m.url ?? "", ["e"] = m.@explicit });
             return new Dictionary<string, object>
             {
                 ["music"] = p.musicOn, ["explicit"] = p.explicitSongs, ["seed"] = (double)p.shuffleSeed, ["cycle"] = p.cycle,
                 ["agentRead"] = p.agentRead, ["agentReplies"] = Ints(p.agentReplies ?? new List<int>()),
-                ["feed"] = feed, ["feedNew"] = p.feedNew, ["chat"] = p.quickChat,
+                ["feed"] = feed,
+                ["source"] = p.musicSource, ["mix"] = mix, ["feedNew"] = p.feedNew, ["chat"] = p.quickChat,
             };
         }
 
@@ -57,8 +61,25 @@ namespace CallerRetroBall.Logic
             }
             p.feedNew = Math.Max(0, Math.Min(p.feed.Count, Int(o, "feedNew", 0)));
             p.quickChat = Bool(o, "chat", true);
+            p.musicSource = Math.Max(0, Math.Min(1, Int(o, "source", 0)));
+            p.myMix = new List<MixSong>();
+            foreach (var v in Arr(o, "mix"))
+            {
+                if (!(v is Dictionary<string, object> m) || p.myMix.Count >= MyMix.MaxSongs) continue;
+                string url = Str(m, "u", "") ?? "";
+                var song = new MixSong
+                {
+                    id = Str(m, "id", "") ?? "", title = Clip(Str(m, "t", "")), artist = Clip(Str(m, "a", "")), album = Clip(Str(m, "al", "")),
+                    // Only Apple Music links (the + opens it).
+                    url = url.StartsWith("https://music.apple.com/", StringComparison.Ordinal) ? url : "",
+                    @explicit = Bool(m, "e", false),
+                };
+                MyMix.Add(p, song);
+            }
             return p;
         }
+
+        private static string Clip(string s) => s == null ? "" : s.Length > 120 ? s.Substring(0, 120) : s;
 
         /// <summary>A photo name is a plain file name (no folders), so an edited save can't point anywhere else.</summary>
         private static string SafePhoto(string name)

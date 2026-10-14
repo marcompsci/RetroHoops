@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.IO;
 using CallerRetroBall.Core;
@@ -26,6 +27,9 @@ namespace CallerRetroBall.UI
         private readonly TextMeshProUGUI[] _tabLabels = new TextMeshProUGUI[3];
         private readonly List<Texture2D> _photos = new List<Texture2D>();
         private bool _dirty;
+        // 15 Oct 2026: MY MIX search box (kept across rebuilds; no rebuild while typing).
+        private TMP_InputField _search;
+        private string _searchTerm = "", _lastSearched = "";
         private float _rebuildAt;
 
         public static bool IsOpen => _open != null;
@@ -86,7 +90,7 @@ namespace CallerRetroBall.UI
         private void Update()
         {
             // Rebuild the MUSIC app when the song changes (at most twice a second).
-            if (_dirty && Time.unscaledTime >= _rebuildAt)
+            if (_dirty && Time.unscaledTime >= _rebuildAt && !(_search != null && _search.isFocused))
             {
                 _dirty = false;
                 _rebuildAt = Time.unscaledTime + 0.5f;
@@ -246,7 +250,14 @@ namespace CallerRetroBall.UI
             var m = PhoneMusic.Instance;
             var d = Core.App.Career;
             bool on = d == null || d.phone.musicOn;
-            Line("PLAYLIST", 40f, Theme.Pink, 56f, TextAlignmentOptions.Left, true);
+            _search = null;
+            bool mix = m.MixMode;
+
+            // 15 Oct 2026 (Omari): pick the music — the Retro Hoops playlist, or MY MIX (your own Apple Music songs).
+            if (d != null)
+                UiControls.ChoiceRow(_content, "MUSIC", new[] { "RETRO HOOPS", "MY MIX" }, d.phone.musicSource,
+                    v => PhoneMusic.Instance.SetSource(v));
+            Line(mix ? "MY MIX" : "PLAYLIST", 40f, Theme.Pink, 56f, TextAlignmentOptions.Left, true);
 
             switch (m.State)
             {
@@ -254,7 +265,9 @@ namespace CallerRetroBall.UI
                     Line("Apple Music plays here in the iPhone and iPad app.", 28f, Theme.Muted, 80f);
                     break;
                 case PhoneMusic.Status.NotConnected:
-                    Line("Play the Retro Hoops playlist from Apple Music while you play. Full songs need an Apple Music subscription.", 28f, Theme.Cream, 120f);
+                    Line(mix
+                        ? "Play your own songs from Apple Music while you play. Connect to add songs from your library, search Apple Music, or paste a song link. Full songs need an Apple Music subscription."
+                        : "Play the Retro Hoops playlist from Apple Music while you play. Full songs need an Apple Music subscription.", 28f, Theme.Cream, mix ? 160f : 120f);
                     UiKit.Button(_content, "CONNECT APPLE MUSIC", m.Connect, ButtonStyle.Primary, 110f, 40f);
                     break;
                 case PhoneMusic.Status.Denied:
@@ -270,6 +283,12 @@ namespace CallerRetroBall.UI
                     Line("Couldn't reach Apple Music. Check the internet connection.", 28f, Theme.Muted, 80f);
                     UiKit.Button(_content, "TRY AGAIN", m.Retry, ButtonStyle.Secondary, 100f, 36f);
                     break;
+                case PhoneMusic.Status.MixEmpty:
+                    Line(m.HiddenExplicit > 0
+                        ? "Your songs are explicit on Apple Music. Turn on EXPLICIT SONGS below to play them."
+                        : m.Busy == PhoneMusic.Request.Register ? "Finding your songs on Apple Music..."
+                        : "MY MIX is empty. Add songs below and they'll play on shuffle while you play.", 28f, Theme.Muted, 100f);
+                    break;
                 case PhoneMusic.Status.NoCleanSongs:
                     Line(m.HiddenExplicit > 0
                         ? "These songs are explicit on Apple Music. Turn on EXPLICIT SONGS below to play them."
@@ -280,15 +299,19 @@ namespace CallerRetroBall.UI
                     break;
             }
 
-            // The songs: every one listed with credits and a + (open in Apple Music). Tap one that can play to play it.
-            Line("SONGS", 34f, Theme.Gold, 54f, TextAlignmentOptions.Left, true);
-            foreach (var t in PhonePlaylist.Tracks)
+            if (mix) BuildMyMix(m, d);
+            else
             {
-                var playable = m.Songs.Find(s => s.key == t.Key);
-                var found = m.Found.Find(s => s.key == t.Key);
-                SongRow(t, playable, m, found != null && found.@explicit);
+                // The songs: every one listed with credits and a + (open in Apple Music). Tap one that can play to play it.
+                Line("SONGS", 34f, Theme.Gold, 54f, TextAlignmentOptions.Left, true);
+                foreach (var t in PhonePlaylist.Tracks)
+                {
+                    var playable = m.Songs.Find(s => s.key == t.Key);
+                    var found = m.Found.Find(s => s.key == t.Key);
+                    SongRow(t, playable, m, found != null && found.@explicit);
+                }
             }
-            if (m.Found.Count > 0 || m.State == PhoneMusic.Status.NoCleanSongs)
+            if (m.Found.Count > 0 || m.MixFound.Count > 0 || m.State == PhoneMusic.Status.NoCleanSongs || m.HiddenExplicit > 0)
             {
                 var career = Core.App.Career;
                 UiControls.ToggleRow(_content, "EXPLICIT SONGS", career == null || career.phone.explicitSongs, v => PhoneMusic.Instance.SetExplicit(v));
@@ -302,6 +325,8 @@ namespace CallerRetroBall.UI
             var card = Card(new Color32(0x1E, 0x1E, 0x36, 255), 330f);
             var entry = m.Songs.Find(s => s.key == m.NowPlayingKey);
             var track = entry != null ? PhonePlaylist.Find(entry.key) : null;
+            if (track == null && entry != null && !string.IsNullOrEmpty(entry.title))
+                track = new PlaylistTrack { Key = entry.key, Title = entry.title, Artist = entry.artist ?? "" }; // a MY MIX song
             if (entry?.art != null)
             {
                 var art = UiKit.Picture(card, entry.art, "Artwork");
@@ -327,6 +352,100 @@ namespace CallerRetroBall.UI
             var d = Core.App.Career;
             Line("SHUFFLE  ·  LOOP " + ((d?.phone.cycle ?? 0) + 1) + "  ·  New order every loop", 24f, Theme.Cyan, 44f);
             UiControls.ToggleRow(_content, "PLAY THE PLAYLIST", on, v => PhoneMusic.Instance.SetEnabled(v));
+        }
+
+        // ------------------------------------------------------------------ 15 Oct 2026: MY MIX
+
+        private void BuildMyMix(PhoneMusic m, CareerSaveData d)
+        {
+            bool canAdd = m.State != PhoneMusic.Status.Unsupported && m.State != PhoneMusic.Status.NotConnected && m.State != PhoneMusic.Status.Denied;
+            if (canAdd)
+            {
+                Line("ADD SONGS", 34f, Theme.Gold, 54f, TextAlignmentOptions.Left, true);
+                bool idle = m.Busy == PhoneMusic.Request.None;
+                UiKit.Button(_content, "ADD FROM MY MUSIC", () => PhoneMusic.Instance.PickFromLibrary(), ButtonStyle.Primary, 110f, 36f).interactable = idle;
+                UiKit.Button(_content, "PASTE APPLE MUSIC LINK", () => PhoneMusic.Instance.PasteLink(), ButtonStyle.Secondary, 100f, 34f).interactable = idle;
+                Line("Share from Apple Music: on a song tap ••• ► Share ► Copy Link, then come back and tap PASTE.", 22f, Theme.Muted, 64f);
+
+                _search = UiControls.TextField(_content, _searchTerm, 80, v =>
+                {
+                    _searchTerm = v ?? "";
+                    if (_searchTerm.Trim().Length >= 2 && _searchTerm != _lastSearched) DoSearch();
+                }, "Search Apple Music");
+                UiKit.Button(_content, "SEARCH", () => { if (_search != null) _searchTerm = _search.text ?? ""; DoSearch(); }, ButtonStyle.Secondary, 90f, 32f).interactable = idle;
+
+                if (m.Busy != PhoneMusic.Request.None && m.Busy != PhoneMusic.Request.Register)
+                    Line(m.Busy == PhoneMusic.Request.Pick ? "Pick songs from your music..." : "Asking Apple Music...", 26f, Theme.Cyan, 48f);
+                else if (!string.IsNullOrEmpty(m.Note))
+                    Line(m.Note, 26f, Theme.Cyan, 60f);
+
+                if (m.SearchResults.Count > 0)
+                {
+                    Line("RESULTS", 30f, Theme.Gold, 48f, TextAlignmentOptions.Left, true);
+                    foreach (var r in m.SearchResults)
+                    {
+                        bool inMix = d?.phone.myMix != null && d.phone.myMix.Exists(x => x.id == r.id);
+                        MixRow(r.title, r.artist, r.@explicit, r.key, null, m, inMix ? null : (Action)(() => PhoneMusic.Instance.AddToMix(r)), null);
+                    }
+                }
+            }
+
+            int count = d?.phone.myMix?.Count ?? 0;
+            Line("MY SONGS  (" + count + "/" + MyMix.MaxSongs + ")", 34f, Theme.Gold, 54f, TextAlignmentOptions.Left, true);
+            if (count == 0) Line("No songs yet.", 26f, Theme.Muted, 44f);
+            else
+                foreach (var s in d.phone.myMix)
+                {
+                    var playable = m.Songs.Find(x => x.id == s.id);
+                    string id = s.id;
+                    MixRow(s.title, s.artist, s.@explicit, MyMix.Key(s.id), playable, m, null, () => PhoneMusic.Instance.RemoveFromMix(id));
+                }
+        }
+
+        private void DoSearch()
+        {
+            string term = (_searchTerm ?? "").Trim();
+            if (term.Length < 2) return;
+            _lastSearched = _searchTerm;
+            PhoneMusic.Instance.Search(term);
+        }
+
+        /// <summary>A MY MIX song or search result: tap to play (when it can), + to open in Apple Music, ADD or REMOVE.</summary>
+        private void MixRow(string title, string artist, bool isExplicit, string key, PhoneMusic.Entry playable, PhoneMusic m, Action add, Action remove)
+        {
+            bool current = playable != null && playable.key == m.NowPlayingKey;
+            var card = Card(current ? new Color32(0x2A, 0x2A, 0x4A, 255) : new Color32(0x1A, 0x1A, 0x2E, 255), 130f);
+            if (playable != null)
+            {
+                var b = card.gameObject.AddComponent<Button>();
+                var img = card.GetComponent<Image>();
+                img.raycastTarget = true;
+                b.targetGraphic = img;
+                string k0 = playable.key;
+                b.onClick.AddListener(() => { Audio.AudioManager.Click(); PhoneMusic.Instance.PlaySong(k0); });
+            }
+            float right = add != null || remove != null ? 0.6f : 0.8f;
+            CardText(card, (current ? "► " : "") + (title ?? ""), 30f, current ? Theme.Gold : Theme.Cream, new Vector2(0f, 0.5f), new Vector2(right, 0.95f), TextAlignmentOptions.Left, true);
+            CardText(card, (isExplicit ? "[E]  " : "") + (artist ?? ""), 24f, Theme.Muted, new Vector2(0f, 0.08f), new Vector2(right, 0.5f));
+
+            string k = key;
+            var plus = UiKit.Button(card, "+", () => PhoneMusic.OpenInAppleMusic(k), ButtonStyle.Secondary, 90f, 48f);
+            var prt = (RectTransform)plus.transform;
+            prt.anchorMin = prt.anchorMax = new Vector2(1f, 0.5f);
+            prt.pivot = new Vector2(1f, 0.5f);
+            prt.sizeDelta = new Vector2(110f, 100f);
+            prt.anchoredPosition = new Vector2(-16f, 0f);
+
+            if (add != null || remove != null)
+            {
+                var act = UiKit.Button(card, add != null ? "ADD" : "REMOVE", () => { Audio.AudioManager.Click(); (add ?? remove)(); },
+                    add != null ? ButtonStyle.Primary : ButtonStyle.Ghost, 80f, 26f);
+                var art = (RectTransform)act.transform;
+                art.anchorMin = art.anchorMax = new Vector2(1f, 0.5f);
+                art.pivot = new Vector2(1f, 0.5f);
+                art.sizeDelta = new Vector2(190f, 100f);
+                art.anchoredPosition = new Vector2(-140f, 0f);
+            }
         }
 
         private void SongRow(PlaylistTrack t, PhoneMusic.Entry entry, PhoneMusic m, bool isExplicit = false)

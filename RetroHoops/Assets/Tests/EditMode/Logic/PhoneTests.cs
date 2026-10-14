@@ -192,5 +192,62 @@ namespace CallerRetroBall.Tests
             Assert.IsTrue(fresh.phone.explicitSongs, "explicit songs on by default");
             Assert.AreEqual(0, fresh.phone.feed.Count);
         }
+
+        [Test]
+        public void MyMix_ReadsSongIdsFromAppleMusicLinks()
+        {
+            Assert.AreEqual("1440857781", MyMix.SongIdFromLink("https://music.apple.com/us/album/some-album/1440857000?i=1440857781"));
+            Assert.AreEqual("1440857781", MyMix.SongIdFromLink("Listen on Apple Music: https://music.apple.com/us/album/x/1?ls=1&i=1440857781 now"));
+            Assert.AreEqual("1616228595", MyMix.SongIdFromLink("https://music.apple.com/us/song/treehouse/1616228595"));
+            Assert.AreEqual("1616228595", MyMix.SongIdFromLink("https://itunes.apple.com/us/song/treehouse/id1616228595"));
+            Assert.AreEqual("42", MyMix.SongIdFromLink("https://geo.music.apple.com/gb/song/x/42/"));
+            Assert.IsNull(MyMix.SongIdFromLink("https://music.apple.com/us/album/some-album/1440857000"), "an album link isn't a song");
+            Assert.IsNull(MyMix.SongIdFromLink("https://music.apple.com/us/playlist/x/pl.u-abc"));
+            Assert.IsNull(MyMix.SongIdFromLink("https://example.com/song/x/123"));
+            Assert.IsNull(MyMix.SongIdFromLink("https://music.apple.com/us/song/x/12ab"));
+            Assert.IsNull(MyMix.SongIdFromLink(""));
+            Assert.IsNull(MyMix.SongIdFromLink(null));
+        }
+
+        [Test]
+        public void MyMix_AddsWithoutDuplicates_UpToTheCap_AndRemoves()
+        {
+            var phone = new PhoneData();
+            Assert.IsTrue(MyMix.Add(phone, new MixSong { id = "100", title = "A" }));
+            Assert.IsFalse(MyMix.Add(phone, new MixSong { id = "100", title = "A again" }), "no duplicates");
+            Assert.IsFalse(MyMix.Add(phone, new MixSong { id = "i.abc", title = "library-only" }), "catalog ids only");
+            Assert.IsFalse(MyMix.Add(phone, null));
+            for (int i = 0; i < MyMix.MaxSongs + 10; i++) MyMix.Add(phone, new MixSong { id = (1000 + i).ToString() });
+            Assert.AreEqual(MyMix.MaxSongs, phone.myMix.Count, "capped");
+            Assert.IsTrue(MyMix.Remove(phone, "100"));
+            Assert.IsFalse(MyMix.Remove(phone, "100"));
+            Assert.AreEqual(MyMix.MaxSongs - 1, phone.myMix.Count);
+            Assert.AreEqual("mix:77", MyMix.Key("77"));
+        }
+
+        [Test]
+        public void MyMix_SavesAndLoads_AndDropsBadLinks()
+        {
+            var c = DefaultContent.Create();
+            var d = new CareerSaveData();
+            d.phone.musicSource = 1;
+            MyMix.Add(d.phone, new MixSong { id = "1616228595", title = "Treehouse", artist = "3200 Tre", album = "Album", url = "https://music.apple.com/us/song/treehouse/1616228595", @explicit = true });
+            MyMix.Add(d.phone, new MixSong { id = "55", title = "Other", artist = "Someone", url = "javascript:alert(1)" });
+            var back = SaveCodec.Decode(SaveCodec.Encode(d), c, out _);
+            Assert.AreEqual(1, back.phone.musicSource);
+            Assert.AreEqual(2, back.phone.myMix.Count);
+            var t = back.phone.myMix[0];
+            Assert.AreEqual("1616228595", t.id);
+            Assert.AreEqual("Treehouse", t.title);
+            Assert.AreEqual("3200 Tre", t.artist);
+            Assert.AreEqual("Album", t.album);
+            Assert.IsTrue(t.@explicit);
+            Assert.AreEqual("https://music.apple.com/us/song/treehouse/1616228595", t.url);
+            Assert.AreEqual("", back.phone.myMix[1].url, "only Apple Music links are kept");
+
+            var fresh = SaveCodec.Decode(SaveCodec.Encode(new CareerSaveData()), c, out _);
+            Assert.AreEqual(0, fresh.phone.musicSource, "the Retro Hoops playlist by default");
+            Assert.AreEqual(0, fresh.phone.myMix.Count);
+        }
     }
 }

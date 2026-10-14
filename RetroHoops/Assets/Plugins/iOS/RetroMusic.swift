@@ -11,6 +11,8 @@
 // Nothing leaves the phone except Apple's own MusicKit requests. No data comes to us.
 import Foundation
 import MusicKit
+import MediaPlayer
+import UIKit
 
 // Auth codes read by C#: 0 not asked, 1 denied, 2 restricted, 3 authorized.
 // Resolve codes: 0 idle, 1 working, 2 done, 3 failed.
@@ -137,7 +139,118 @@ private final class RetroMusicModel {
 
     /// Keeps the found songs (a plain function, so the lock isn't taken directly inside async code).
     private func store(_ found: [String: Song]) {
-        lock.lock(); songs = found; lock.unlock()
+        lock.lock(); songs.merge(found) { _, new in new }; lock.unlock()
+    }
+
+    // ------------------------------------------------------------------ 15 Oct 2026: MY MIX (each player's own songs)
+    // One request at a time: 1 search the catalog, 2 look up songs by id (saved MY MIX, a pasted link),
+    // 3 pick from the player's own library (the system picker). Codes: 0 idle, 1 working, 2 done, 3 failed.
+
+    private var requestStateValue: Int32 = 0
+    private var requestJson = "[]"
+    var requestState: Int32 { lock.lock(); defer { lock.unlock() }; return requestStateValue }
+    var requestResult: String { lock.lock(); defer { lock.unlock() }; return requestJson }
+
+    private func finish(_ list: [Song], failed: String? = nil) {
+        var out: [[String: Any]] = []
+        var found: [String: Song] = [:]
+        for song in list {
+            found[song.id.rawValue] = song
+            var row: [String: Any] = [
+                "key": "mix:" + song.id.rawValue,
+                "id": song.id.rawValue,
+                "title": song.title,
+                "artist": song.artistName,
+                "album": song.albumTitle ?? "",
+                "seconds": song.duration ?? 0,
+                "explicit": song.contentRating == .explicit,
+            ]
+            if let url = song.url { row["url"] = url.absoluteString }
+            if let art = song.artwork?.url(width: 300, height: 300) { row["artwork"] = art.absoluteString }
+            out.append(row)
+        }
+        store(found)
+        let data = (try? JSONSerialization.data(withJSONObject: out)) ?? Data("[]".utf8)
+        lock.lock()
+        requestJson = String(data: data, encoding: .utf8) ?? "[]"
+        requestStateValue = failed == nil ? 2 : 3
+        if let f = failed { errorValue = f }
+        lock.unlock()
+    }
+
+    private func begin() -> Bool {
+        lock.lock(); defer { lock.unlock() }
+        if requestStateValue == 1 { return false }
+        requestStateValue = 1
+        requestJson = "[]"
+        return true
+    }
+
+    func search(_ term: String) {
+        guard begin() else { return }
+        Task {
+            do {
+                var request = MusicCatalogSearchRequest(term: term, types: [Song.self])
+                request.limit = 25
+                let response = try await request.response()
+                self.finish(Array(response.songs))
+            } catch { self.finish([], failed: "\(error)") }
+        }
+    }
+
+    func lookup(_ idsCsv: String) {
+        guard begin() else { return }
+        let ids = idsCsv.split(separator: ",").map { MusicItemID(String($0)) }
+        Task {
+            do {
+                var all: [Song] = []
+                // In batches (the catalog takes a limited number of ids per request).
+                var i = 0
+                while i < ids.count {
+                    let batch = Array(ids[i..<min(ids.count, i + 25)])
+                    let request = MusicCatalogResourceRequest<Song>(matching: \.id, memberOf: batch)
+                    let response = try await request.response()
+                    all.append(contentsOf: response.items)
+                    i += 25
+                }
+                self.finish(all)
+            } catch { self.finish([], failed: "\(error)") }
+        }
+    }
+
+    private var pickerDelegate: PickerDelegate?
+
+    /// The system music picker over the game: the player picks songs from their own library.
+    func pickFromLibrary() {
+        guard begin() else { return }
+        DispatchQueue.main.async {
+            let picker = MPMediaPickerController(mediaTypes: .music)
+            picker.allowsPickingMultipleItems = true
+            picker.showsCloudItems = true
+            picker.prompt = "Add songs to your Retro Hoops mix"
+            let delegate = PickerDelegate { items in
+                // Songs from Apple Music have a catalog id; songs only on this phone (not on Apple Music) can't play here.
+                let ids = items.compactMap { item -> String? in
+                    let id = item.playbackStoreID
+                    return id.isEmpty || id == "0" ? nil : id
+                }
+                self.lock.lock(); self.requestStateValue = 0; self.lock.unlock()
+                if ids.isEmpty { self.finish([]); return }
+                self.lookup(ids.joined(separator: ","))
+            }
+            self.pickerDelegate = delegate
+            picker.delegate = delegate
+            guard let top = RetroMusicModel.topController() else { self.finish([], failed: "no window"); return }
+            top.present(picker, animated: true)
+        }
+    }
+
+    private static func topController() -> UIViewController? {
+        let scenes = UIApplication.shared.connectedScenes.compactMap { $0 as? UIWindowScene }
+        let window = scenes.flatMap { $0.windows }.first { $0.isKeyWindow } ?? scenes.first?.windows.first
+        var top = window?.rootViewController
+        while let next = top?.presentedViewController { top = next }
+        return top
     }
 
     /// Plays the songs with these catalog ids, in this order, from `start`.
@@ -176,6 +289,19 @@ private final class RetroMusicModel {
         if let entry = player.queue.currentEntry, let item = entry.item, case .song(let s) = item { id = s.id.rawValue }
         let playing = player.state.playbackStatus == .playing ? 1 : 0
         return id + "\t" + String(playing) + "\t" + String(format: "%.1f", player.playbackTime)
+    }
+}
+
+private final class PickerDelegate: NSObject, MPMediaPickerControllerDelegate {
+    private let done: ([MPMediaItem]) -> Void
+    init(done: @escaping ([MPMediaItem]) -> Void) { self.done = done }
+    func mediaPicker(_ mediaPicker: MPMediaPickerController, didPickMediaItems collection: MPMediaItemCollection) {
+        mediaPicker.dismiss(animated: true)
+        done(collection.items)
+    }
+    func mediaPickerDidCancel(_ mediaPicker: MPMediaPickerController) {
+        mediaPicker.dismiss(animated: true)
+        done([])
     }
 }
 
@@ -226,3 +352,25 @@ public func RetroMusic_NowPlaying() -> UnsafeMutablePointer<CChar>? {
     let s = MainActor.assumeIsolated { RetroMusicModel.shared.nowPlaying() }
     return retroCopy(s)
 }
+
+// 15 Oct 2026: MY MIX requests (see the model).
+@_cdecl("RetroMusic_Search")
+public func RetroMusic_Search(_ term: UnsafePointer<CChar>?) {
+    guard let term = term else { return }
+    RetroMusicModel.shared.search(String(cString: term))
+}
+
+@_cdecl("RetroMusic_Lookup")
+public func RetroMusic_Lookup(_ ids: UnsafePointer<CChar>?) {
+    guard let ids = ids else { return }
+    RetroMusicModel.shared.lookup(String(cString: ids))
+}
+
+@_cdecl("RetroMusic_PickFromLibrary")
+public func RetroMusic_PickFromLibrary() { RetroMusicModel.shared.pickFromLibrary() }
+
+@_cdecl("RetroMusic_RequestState")
+public func RetroMusic_RequestState() -> Int32 { return RetroMusicModel.shared.requestState }
+
+@_cdecl("RetroMusic_RequestResult")
+public func RetroMusic_RequestResult() -> UnsafeMutablePointer<CChar>? { return retroCopy(RetroMusicModel.shared.requestResult) }

@@ -79,6 +79,84 @@ namespace CallerRetroBall.Logic
         }
     }
 
+    /// <summary>A song in the player's own MY MIX (an Apple Music catalog song, with its credits).</summary>
+    [Serializable]
+    public class MixSong
+    {
+        public string id = "", title = "", artist = "", album = "", url = "";
+        public bool @explicit;
+    }
+
+    /// <summary>
+    /// 15 Oct 2026 (Omari): each player builds their own background music. MY MIX holds songs they add:
+    /// - from their own library (the system music picker);
+    /// - from an Apple Music search inside the game;
+    /// - or from a link shared out of Apple Music (Share ▸ Copy Link, then PASTE LINK in the game).
+    /// It plays on shuffle like the Retro Hoops playlist. Songs play through Apple Music and need a subscription.
+    /// </summary>
+    public static class MyMix
+    {
+        public const int MaxSongs = 150;
+        public const string KeyPrefix = "mix:";
+
+        public static string Key(string id) => KeyPrefix + id;
+
+        /// <summary>Adds a song (no duplicates, up to <see cref="MaxSongs"/>). True when it was added.</summary>
+        public static bool Add(PhoneData phone, MixSong song)
+        {
+            if (phone == null || song == null || !IsCatalogId(song.id)) return false;
+            if (phone.myMix == null) phone.myMix = new List<MixSong>();
+            if (phone.myMix.Count >= MaxSongs || phone.myMix.Exists(s => s.id == song.id)) return false;
+            phone.myMix.Add(song);
+            return true;
+        }
+
+        public static bool Remove(PhoneData phone, string id) =>
+            phone?.myMix != null && phone.myMix.RemoveAll(s => s.id == id) > 0;
+
+        /// <summary>Apple Music catalog song ids are digits.</summary>
+        public static bool IsCatalogId(string id)
+        {
+            if (string.IsNullOrEmpty(id) || id.Length > 20) return false;
+            foreach (char c in id) if (c < '0' || c > '9') return false;
+            return true;
+        }
+
+        /// <summary>
+        /// The song id in an Apple Music link, or null. It handles the ways Apple Music shares a song:
+        /// - https://music.apple.com/us/album/name/123?i=456 (the song is the i= part);
+        /// - https://music.apple.com/us/song/name/456;
+        /// - the same with geo.music.apple.com or itunes.apple.com.
+        /// Text around the link (like "Listen on Apple Music: ...") is fine.
+        /// </summary>
+        public static string SongIdFromLink(string text)
+        {
+            if (string.IsNullOrEmpty(text)) return null;
+            int at = text.IndexOf("music.apple.com/", StringComparison.OrdinalIgnoreCase);
+            if (at < 0) at = text.IndexOf("itunes.apple.com/", StringComparison.OrdinalIgnoreCase);
+            if (at < 0) return null;
+            int end = at;
+            while (end < text.Length && !char.IsWhiteSpace(text[end]) && text[end] != '"' && text[end] != '>') end++;
+            string url = text.Substring(at, end - at);
+            int q = url.IndexOf('?');
+            string path = q >= 0 ? url.Substring(0, q) : url;
+            if (q >= 0)
+            {
+                foreach (var part in url.Substring(q + 1).Split('&'))
+                    if (part.StartsWith("i=", StringComparison.Ordinal) && IsCatalogId(part.Substring(2))) return part.Substring(2);
+            }
+            var segs = path.TrimEnd('/').Split('/');
+            for (int k = 0; k < segs.Length - 1; k++)
+                if (segs[k] == "song")
+                {
+                    string last = segs[segs.Length - 1];
+                    if (last.StartsWith("id", StringComparison.Ordinal)) last = last.Substring(2);
+                    return IsCatalogId(last) ? last : null;
+                }
+            return null;
+        }
+    }
+
     /// <summary>The phone's saved state: the playlist position, agent texts read and answered, the feed.</summary>
     [Serializable]
     public class PhoneData
@@ -87,6 +165,9 @@ namespace CallerRetroBall.Logic
         public bool musicOn = true;
         /// <summary>15 Oct 2026: play explicit versions when Apple Music has no clean one (on by default; Screen Time still applies).</summary>
         public bool explicitSongs = true;
+        /// <summary>15 Oct 2026: which music plays: 0 = the Retro Hoops playlist, 1 = MY MIX (the player's own songs).</summary>
+        public int musicSource;
+        public List<MixSong> myMix = new List<MixSong>();
         /// <summary>Per-install shuffle seed (0 = not picked yet).</summary>
         public uint shuffleSeed;
         /// <summary>Which loop of the playlist this is (each loop is a new shuffle).</summary>
