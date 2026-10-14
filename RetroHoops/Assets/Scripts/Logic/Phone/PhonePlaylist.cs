@@ -19,8 +19,8 @@ namespace CallerRetroBall.Logic
     /// 14 Oct 2026 (Omari's request): the phone's MUSIC app plays a playlist in the background through
     /// Apple Music.
     /// - The song list comes from Omari's screenshots.
-    /// - Clean versions only: a song plays only if Apple Music has a non-explicit version (checked on the phone by
-    ///   RetroMusic.swift). The rest are left out.
+    /// - The clean version when Apple Music has one; otherwise the explicit one, which plays only with EXPLICIT SONGS on
+    ///   (15 Oct 2026, Omari; on by default, and iPhone Screen Time limits still apply).
     /// - The playlist plays on shuffle. Every time it loops, it's dealt in a new order, and the first song is
     ///   never the one that just played.
     /// - Every song shows its credits and a + that opens it in Apple Music to add to your library.
@@ -85,6 +85,8 @@ namespace CallerRetroBall.Logic
     {
         /// <summary>Play the Apple Music playlist (when allowed and subscribed).</summary>
         public bool musicOn = true;
+        /// <summary>15 Oct 2026: play explicit versions when Apple Music has no clean one (on by default; Screen Time still applies).</summary>
+        public bool explicitSongs = true;
         /// <summary>Per-install shuffle seed (0 = not picked yet).</summary>
         public uint shuffleSeed;
         /// <summary>Which loop of the playlist this is (each loop is a new shuffle).</summary>

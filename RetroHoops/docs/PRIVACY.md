@@ -1,6 +1,6 @@
 # Retro Hoops privacy policy
 
-*Last updated: 14 October 2026*
+*Last updated: 15 October 2026*
 
 Retro Hoops is made by **Omari Bell** (contact: **rodlonbell16@gmail.com**).
 

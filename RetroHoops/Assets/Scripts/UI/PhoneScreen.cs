@@ -271,24 +271,28 @@ namespace CallerRetroBall.UI
                     UiKit.Button(_content, "TRY AGAIN", m.Retry, ButtonStyle.Secondary, 100f, 36f);
                     break;
                 case PhoneMusic.Status.NoCleanSongs:
-                    Line("None of these songs have a clean version on Apple Music right now, so they're left out.", 28f, Theme.Muted, 100f);
+                    Line(m.HiddenExplicit > 0
+                        ? "These songs are explicit on Apple Music. Turn on EXPLICIT SONGS below to play them."
+                        : "Couldn't find these songs on Apple Music. Tap + to look for them there.", 28f, Theme.Muted, 100f);
                     break;
                 default:
                     NowPlaying(m, on);
                     break;
             }
 
-            // The songs: credits and a + each. In the playlist, only the clean versions found on Apple Music.
+            // The songs: every one listed with credits and a + (open in Apple Music). Tap one that can play to play it.
             Line("SONGS", 34f, Theme.Gold, 54f, TextAlignmentOptions.Left, true);
-            if (m.State == PhoneMusic.Status.Ready)
+            foreach (var t in PhonePlaylist.Tracks)
             {
-                foreach (var s in m.Songs) SongRow(PhonePlaylist.Find(s.key), s, m);
-                int left = PhonePlaylist.Tracks.Length - m.Songs.Count;
-                if (left > 0) Line(left + " more left out (no clean version on Apple Music).", 24f, Theme.Muted, 50f);
+                var playable = m.Songs.Find(s => s.key == t.Key);
+                var found = m.Found.Find(s => s.key == t.Key);
+                SongRow(t, playable, m, found != null && found.@explicit);
             }
-            else if (m.State != PhoneMusic.Status.NoCleanSongs)
+            if (m.Found.Count > 0 || m.State == PhoneMusic.Status.NoCleanSongs)
             {
-                foreach (var t in PhonePlaylist.Tracks) SongRow(t, null, m);
+                var d = Core.App.Career;
+                UiControls.ToggleRow(_content, "EXPLICIT SONGS", d == null || d.phone.explicitSongs, v => PhoneMusic.Instance.SetExplicit(v));
+                Line("Explicit songs play only with this on. iPhone Screen Time limits still apply.", 22f, Theme.Muted, 60f);
             }
             Line("Songs play from Apple Music. Retro Hoops doesn't own or include them. Credits as listed on Apple Music.", 22f, Theme.Muted, 80f);
         }
@@ -325,7 +329,7 @@ namespace CallerRetroBall.UI
             UiControls.ToggleRow(_content, "PLAY THE PLAYLIST", on, v => PhoneMusic.Instance.SetEnabled(v));
         }
 
-        private void SongRow(PlaylistTrack t, PhoneMusic.Entry entry, PhoneMusic m)
+        private void SongRow(PlaylistTrack t, PhoneMusic.Entry entry, PhoneMusic m, bool isExplicit = false)
         {
             if (t == null) return;
             bool current = entry != null && entry.key == m.NowPlayingKey;
@@ -341,7 +345,7 @@ namespace CallerRetroBall.UI
                 b.onClick.AddListener(() => { Audio.AudioManager.Click(); PhoneMusic.Instance.PlaySong(key); });
             }
             CardText(card, (current ? "► " : "") + t.DisplayTitle, 30f, current ? Theme.Gold : Theme.Cream, new Vector2(0f, 0.5f), new Vector2(0.8f, 0.95f), TextAlignmentOptions.Left, true);
-            CardText(card, t.Credits, 24f, Theme.Muted, new Vector2(0f, 0.08f), new Vector2(0.8f, 0.5f));
+            CardText(card, (isExplicit ? "[E]  " : "") + t.Credits, 24f, Theme.Muted, new Vector2(0f, 0.08f), new Vector2(0.8f, 0.5f));
             // + : open the song in Apple Music to add it to your library.
             string k = t.Key;
             var plus = UiKit.Button(card, "+", () => PhoneMusic.OpenInAppleMusic(k), ButtonStyle.Secondary, 90f, 48f);

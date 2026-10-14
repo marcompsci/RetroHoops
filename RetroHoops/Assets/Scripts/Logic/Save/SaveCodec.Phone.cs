@@ -19,7 +19,7 @@ namespace CallerRetroBall.Logic
                 });
             return new Dictionary<string, object>
             {
-                ["music"] = p.musicOn, ["seed"] = (double)p.shuffleSeed, ["cycle"] = p.cycle,
+                ["music"] = p.musicOn, ["explicit"] = p.explicitSongs, ["seed"] = (double)p.shuffleSeed, ["cycle"] = p.cycle,
                 ["agentRead"] = p.agentRead, ["agentReplies"] = Ints(p.agentReplies ?? new List<int>()),
                 ["feed"] = feed, ["feedNew"] = p.feedNew, ["chat"] = p.quickChat,
             };
@@ -30,6 +30,7 @@ namespace CallerRetroBall.Logic
             var p = new PhoneData();
             if (o == null) return p;
             p.musicOn = Bool(o, "music", true);
+            p.explicitSongs = Bool(o, "explicit", true);
             double seed = Num(o, "seed", 0);
             p.shuffleSeed = seed > 0 && seed <= uint.MaxValue ? (uint)seed : 0u;
             p.cycle = Math.Max(0, Int(o, "cycle", 0));

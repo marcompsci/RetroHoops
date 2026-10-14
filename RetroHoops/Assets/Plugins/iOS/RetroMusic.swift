@@ -2,7 +2,8 @@
 // Called from C# via [DllImport("__Internal")] through the @_cdecl functions at the bottom.
 //
 // - Asks the player for Apple Music access (NSAppleMusicUsageDescription).
-// - Finds each playlist song in the Apple Music catalog. Clean only (Omari, 14 Oct 2026): a song is kept only
+// - Finds each playlist song in the Apple Music catalog, the clean version first (15 Oct 2026: explicit ones too,
+//   flagged, so the game's EXPLICIT SONGS setting can decide). Before: clean only: a song was kept only
 //   when the catalog has a version that isn't rated explicit.
 // - Plays the queue C# gives it (C# decides the shuffle order) with ApplicationMusicPlayer, which needs an
 //   Apple Music subscription. Without one, C# keeps the game's own soundtrack, and the + buttons still open
@@ -92,17 +93,24 @@ private final class RetroMusicModel {
                 if parts.count < 3 { continue }
                 let key = parts[0], title = parts[1], artist = parts[2]
                 do {
-                    var search = MusicCatalogSearchRequest(term: title + " " + artist, types: [Song.self])
-                    search.limit = 15
-                    let response = try await search.response()
+                    // 15 Oct 2026: the clean version when Apple Music has one, otherwise the explicit one (the
+                    // game's EXPLICIT SONGS setting decides whether those play). Matching is loose on purpose:
+                    // titles often carry "(feat. ...)" and artist names differ in capitals.
                     let wantTitle = RetroMusicModel.norm(title)
                     let wantArtist = RetroMusicModel.norm(artist)
-                    // Clean only: the matching title by the matching artist, not rated explicit.
-                    let match = response.songs.first { s in
-                        s.contentRating != .explicit
-                            && RetroMusicModel.norm(s.title).hasPrefix(wantTitle)
-                            && RetroMusicModel.norm(s.artistName).contains(wantArtist)
+                    func matches(_ s: Song) -> Bool {
+                        let t = RetroMusicModel.norm(s.title), a = RetroMusicModel.norm(s.artistName)
+                        return (t.hasPrefix(wantTitle) || wantTitle.hasPrefix(t)) && (a.contains(wantArtist) || wantArtist.contains(a))
                     }
+                    var candidates: [Song] = []
+                    for term in [title + " " + artist, title] {
+                        var search = MusicCatalogSearchRequest(term: term, types: [Song.self])
+                        search.limit = 25
+                        let response = try await search.response()
+                        candidates = response.songs.filter(matches)
+                        if !candidates.isEmpty { break }
+                    }
+                    let match = candidates.first { $0.contentRating != .explicit } ?? candidates.first
                     guard let song = match else { continue }
                     found[song.id.rawValue] = song
                     var row: [String: Any] = [
@@ -112,6 +120,7 @@ private final class RetroMusicModel {
                         "artist": song.artistName,
                         "album": song.albumTitle ?? "",
                         "seconds": song.duration ?? 0,
+                        "explicit": song.contentRating == .explicit,
                     ]
                     if let url = song.url { row["url"] = url.absoluteString }
                     if let art = song.artwork?.url(width: 300, height: 300) { row["artwork"] = art.absoluteString }

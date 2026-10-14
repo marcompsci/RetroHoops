@@ -52,6 +52,8 @@ namespace CallerRetroBall.Core
         {
             public string key, id, url, artwork, title, artist, album;
             public double seconds;
+            /// <summary>Apple Music lists this version as explicit (there was no clean one).</summary>
+            public bool @explicit;
             [NonSerialized] public Texture2D art;
         }
 
@@ -81,6 +83,10 @@ namespace CallerRetroBall.Core
 
         /// <summary>The clean songs found on Apple Music, in playlist order.</summary>
         public readonly List<Entry> Songs = new List<Entry>();
+        /// <summary>Every playlist song found on Apple Music (clean, or explicit when there's no clean one).</summary>
+        public readonly List<Entry> Found = new List<Entry>();
+        /// <summary>Songs left out because they're explicit and EXPLICIT SONGS is off.</summary>
+        public int HiddenExplicit { get; private set; }
         public Status State { get; private set; } = Status.NotConnected;
         public string NowPlayingKey { get; private set; }
         public bool IsPlaying { get; private set; }
@@ -136,6 +142,41 @@ namespace CallerRetroBall.Core
         public void Next() { if (_started) RetroMusic_Command(2); }
         public void Previous() { if (_started) RetroMusic_Command(3); }
 
+        /// <summary>
+        /// 15 Oct 2026: which found songs can play. An explicit song plays only when EXPLICIT SONGS is on (on by
+        /// default; iPhone Screen Time limits still apply on top).
+        /// </summary>
+        private void ApplyFilter()
+        {
+            bool allow = Data == null || Data.explicitSongs;
+            Songs.Clear();
+            HiddenExplicit = 0;
+            foreach (var f in Found)
+            {
+                if (f.@explicit && !allow) { HiddenExplicit++; continue; }
+                Songs.Add(f);
+            }
+        }
+
+        /// <summary>Settings / MUSIC app: allow explicit songs or not. Restarts the playlist with the new list.</summary>
+        public void SetExplicit(bool allow)
+        {
+            if (Data == null) return;
+            Data.explicitSongs = allow;
+            App.SaveCareer();
+            ApplyFilter();
+            if (_started)
+            {
+                RetroMusic_Command(4);
+                _started = false;
+                IsPlaying = false;
+                AudioManager.ExternalMusic = false;
+                _lastIndexPlayed = -1;
+            }
+            if (State == Status.Ready || State == Status.NoCleanSongs) State = Songs.Count > 0 ? Status.Ready : Status.NoCleanSongs;
+            Changed?.Invoke();
+        }
+
         /// <summary>Plays this song now; the rest of the loop follows in a fresh shuffle.</summary>
         public void PlaySong(string key)
         {
@@ -146,7 +187,7 @@ namespace CallerRetroBall.Core
         /// <summary>The + button: opens the song in Apple Music (to add it to your library).</summary>
         public static void OpenInAppleMusic(string key)
         {
-            var entry = _instance != null ? _instance.Songs.Find(s => s.key == key) : null;
+            var entry = _instance != null ? _instance.Found.Find(s => s.key == key) : null;
             var track = PhonePlaylist.Find(key);
             string url = entry != null && !string.IsNullOrEmpty(entry.url) ? entry.url : track != null ? PhonePlaylist.SearchUrl(track) : null;
             if (!string.IsNullOrEmpty(url)) Application.OpenURL(url);
@@ -161,7 +202,7 @@ namespace CallerRetroBall.Core
             if (auth == 1 || auth == 2) State = Status.Denied;
             else if (auth == 0) State = State == Status.Loading ? Status.Loading : Status.NotConnected;
             else if (RetroMusic_CanPlay() != 1) State = Status.NoSubscription;
-            else if (!_resolving && Songs.Count == 0 && RetroMusic_ResolveState() == 0) Resolve();
+            else if (!_resolving && Found.Count == 0 && RetroMusic_ResolveState() == 0) Resolve();
             else if (_resolving) PollResolve();
             else State = Songs.Count > 0 ? Status.Ready : _resolveFailed ? Status.Failed : Status.NoCleanSongs;
 
@@ -189,12 +230,14 @@ namespace CallerRetroBall.Core
                 try { parsed = JsonUtility.FromJson<EntryList>("{\"items\":" + (RetroMusic_Resolved() ?? "[]") + "}"); }
                 catch (Exception e) { Debug.LogWarning("[Retro Hoops] Apple Music list: " + e.Message); }
                 // Keep the playlist's own order.
+                Found.Clear();
                 foreach (var t in PhonePlaylist.Tracks)
                 {
                     var hit = parsed?.items?.Find(x => x.key == t.Key);
-                    if (hit != null) Songs.Add(hit);
+                    if (hit != null) Found.Add(hit);
                 }
-                foreach (var s in Songs) StartCoroutine(LoadArt(s));
+                ApplyFilter();
+                foreach (var f in Found) StartCoroutine(LoadArt(f));
             }
             _resolveFailed = rs == 3;
             State = Songs.Count > 0 ? Status.Ready : _resolveFailed ? Status.Failed : Status.NoCleanSongs;
@@ -206,6 +249,7 @@ namespace CallerRetroBall.Core
         {
             if (!Supported || _resolving) return;
             Songs.Clear();
+            Found.Clear();
             _resolveFailed = false;
             Resolve();
             Changed?.Invoke();
