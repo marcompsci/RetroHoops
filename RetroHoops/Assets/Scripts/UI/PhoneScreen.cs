@@ -290,8 +290,8 @@ namespace CallerRetroBall.UI
             }
             if (m.Found.Count > 0 || m.State == PhoneMusic.Status.NoCleanSongs)
             {
-                var d = Core.App.Career;
-                UiControls.ToggleRow(_content, "EXPLICIT SONGS", d == null || d.phone.explicitSongs, v => PhoneMusic.Instance.SetExplicit(v));
+                var career = Core.App.Career;
+                UiControls.ToggleRow(_content, "EXPLICIT SONGS", career == null || career.phone.explicitSongs, v => PhoneMusic.Instance.SetExplicit(v));
                 Line("Explicit songs play only with this on. iPhone Screen Time limits still apply.", 22f, Theme.Muted, 60f);
             }
             Line("Songs play from Apple Music. Retro Hoops doesn't own or include them. Credits as listed on Apple Music.", 22f, Theme.Muted, 80f);
