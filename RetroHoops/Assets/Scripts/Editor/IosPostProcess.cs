@@ -30,6 +30,8 @@ namespace CallerRetroBall.EditorTools
             root.SetString("LSApplicationCategoryType", "public.app-category.sports-games");
             // The share sheet's "Save Image" writes highlight GIFs to Photos (add-only access).
             root.SetString("NSPhotoLibraryAddUsageDescription", "Save your Retro Hoops highlights to Photos.");
+            // 14 Oct 2026: the in-game phone plays the Retro Hoops playlist from the player's Apple Music (MusicKit).
+            root.SetString("NSAppleMusicUsageDescription", "Play the Retro Hoops playlist from your Apple Music while you play.");
             // Bluetooth / MFi controllers (Xbox, PlayStation, Switch Pro and similar extended gamepads).
             root.SetBoolean("GCSupportsControllerUserInteraction", true);
             // retrohoops://kit/... (and older retroball://kit/...) links (kit QR codes) open the app straight into the Kit Studio.

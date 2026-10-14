@@ -43,6 +43,10 @@ namespace CallerRetroBall.UI
                 b.interactable = open;
             }
             UiKit.Button(footer, "BACK", ShowPlayMenu, ButtonStyle.Ghost, 130f, 44f);
+            // 14 Oct 2026: your agent Dee texts about every chapter.
+            int unread = App.Career != null ? AgentTexts.Unread(App.Career.phone, App.Career.story) : 0;
+            UiKit.Button(footer, unread > 0 ? "TEXTS (" + unread + ")" : "TEXTS", () => PhoneScreen.Open(PhoneScreen.App.Texts),
+                         unread > 0 ? ButtonStyle.Primary : ButtonStyle.Secondary, 130f, 40f);
         }
 
         private void PlayChapter(StoryChapter ch)

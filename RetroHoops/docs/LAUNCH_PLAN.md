@@ -180,6 +180,7 @@ Add new ideas here, not to the build. Pick from this list only after v1 is live.
   8. **Defense that isn't repetitive:** a TAKE THE CHARGE button and switching onto the shooter (reviewers of 1-on-1 games say defense is the boring half).
   Already in Retro Hoops (keep pointing to them in marketing): cloud save (iCloud), no ads / no pay-to-win, two phones without internet, daily and weekly challenges, create-a-player and team, custom courts and kits, controller support.
 - **Online tester/player profiles + stats server (Omari, 12 Oct):** real sign-up profiles and automatic stats sent to a dashboard he can view. Needs a backend (accounts, storage), a privacy policy update and new App Privacy answers (data collected, linked to the user), plus an account-deletion option (App Review 5.1.1(v)). v1 ships with the TestFlight-only BETA FEEDBACK instead (profile + stats pasted into TestFlight feedback, nothing sent by the game).
+- **Real texting between players (Omari, 14 Oct 2026, chose "both"):** typed messages and a friends list for live users. v1 has quick chat (preset messages over the game's own connection). Real texting needs a backend (accounts, message storage), filtering, report and block tools (App Review 1.2), a privacy policy update and new App Privacy answers.
 - Share created players by QR/link, like kits (every shared player is an ad).
 - Supabase (or other) online backend: accounts, cloud leaderboards. Needs a privacy review first.
 - Cosmetics pass / extra Pro content.

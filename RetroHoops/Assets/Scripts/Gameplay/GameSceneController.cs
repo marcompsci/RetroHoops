@@ -2,6 +2,7 @@ using CallerRetroBall.Controls;
 using CallerRetroBall.Core;
 using CallerRetroBall.Logic;
 using CallerRetroBall.Logic.PixelArt;
+using CallerRetroBall.UI;
 using UnityEngine;
 #if ENABLE_INPUT_SYSTEM
 using UnityEngine.InputSystem;
@@ -427,6 +428,9 @@ namespace CallerRetroBall.Gameplay
             };
             _hud.RematchRequested += Rematch;
             if (_link != null || (_watch != null && !_watch.IsTape)) _hud.SaveTapeRequested += SaveTape;
+            // 14 Oct 2026: the phone from the pause menu, and quick chat with the other player in LIVE / two-phone games.
+            _hud.PhoneRequested += () => PhoneScreen.Open();
+            if (_link != null && (App.Career == null || App.Career.phone.quickChat)) _hud.EnableQuickChat(SendChat);
 
             _myCelebration = Flair.CelebrationFor(App.Career?.equippedCelebration);
             _myMove = Flair.DribbleMoveFor(App.Career?.equippedMove);
@@ -969,6 +973,7 @@ namespace CallerRetroBall.Gameplay
             // After the buzzer, stop at the first hand-shake message: the rematch lobby reads from there on,
             // so the next game's first inputs are never swallowed by this one.
             while ((!_match.IsOver || _link.Control.Count == 0) && _wire.TryReceive(out var msg)) _link.Receive(msg);
+            ShowIncomingChat();
 
             int steps = 0;
             while (steps < MaxStepsPerFrame * 2 && !_match.IsOver && !_linkEnded && _link.TryStep(out var a, out var b))
@@ -2285,6 +2290,9 @@ namespace CallerRetroBall.Gameplay
                     note = string.IsNullOrEmpty(note) ? line : note + "\n" + line;
                     Sfx(SfxId.Fanfare, 0.8f);
                 }
+                // 14 Oct 2026: the phone's FEED posts about the game (titles get the CHAMPIONS post).
+                if (rewarded)
+                    PostToFeed(summary, summary.HumanWon && (title == "CHAMPIONS" || title == "CLASSIC CHAMPS" || title == "SUNBURST CHAMPIONS" || summary.isFinal));
                 App.SaveCareer();
                 App.ReportGameCenter();
             }
@@ -2642,6 +2650,7 @@ namespace CallerRetroBall.Gameplay
             {
                 _oopFinisher = -1;
                 _recorder.OfferBestPlay("ALLEY-OOP!", 95);
+                OfferPhoto("ALLEY-OOP!", 95);
                 _lastHighlight = _recorder.Snapshot(3.5f, "ALLEY-OOP!", 95);
                 if (_link == null) _hud.OfferReplay(3f);
                 return;
@@ -2653,6 +2662,7 @@ namespace CallerRetroBall.Gameplay
             string label = e.Type == MatchEventType.Block ? "BLOCKED!" : e.Type == MatchEventType.Steal ? "STEAL!"
                          : _match.Ball.ShotType == ShotType.Dunk ? "SLAM!" : "SWISH";
             _recorder.OfferBestPlay(label, score);
+            if (score >= 50) OfferPhoto(label, score);
             if (score >= 50)
             {
                 _lastHighlight = _recorder.Snapshot(3.5f, label, score);
@@ -2661,6 +2671,126 @@ namespace CallerRetroBall.Gameplay
         }
 
         private int _oopFinisher = -1;
+
+        // ------------------------------------------------------------------ 14 Oct 2026: quick chat
+
+        private float _chatReadyAt;
+
+        private void SendChat(int id)
+        {
+            string text = QuickChat.Text(id);
+            if (text == null || _link == null || _wire == null || _wire.State != LinkState.Connected) return;
+            if (Time.unscaledTime < _chatReadyAt) { _hud.Toast("ONE MOMENT", 0.6f); return; }
+            _chatReadyAt = Time.unscaledTime + QuickChat.Cooldown;
+            _wire.Send(LinkProtocol.Chat(id));
+            QuickChatLog.Add("YOU", text, true);
+            _hud.ShowChat(Loc.T("YOU") + ": " + Loc.T(text));
+            Sfx(SfxId.Click, 0.6f);
+        }
+
+        private void ShowIncomingChat()
+        {
+            _hud.TickChat();
+            if (_link == null) return;
+            bool on = App.Career == null || App.Career.phone.quickChat;
+            while (_link.Chats.Count > 0)
+            {
+                string text = QuickChat.Text(_link.Chats.Dequeue());
+                if (text == null || !on) continue;
+                string from = string.IsNullOrEmpty(_wire?.PeerName) ? "THEM" : _wire.PeerName.ToUpperInvariant();
+                if (from.Length > 14) from = from.Substring(0, 14);
+                QuickChatLog.Add(from, text, false);
+                _hud.ShowChat(from + ": " + Loc.T(text));
+                Sfx(SfxId.Click, 0.8f, 1.3f);
+                Haptics.Light();
+            }
+        }
+
+        // ------------------------------------------------------------------ 14 Oct 2026: PLAY OF THE GAME photo for the FEED
+
+        private int _photoScore;
+        private string _photoLabel;
+        private byte[] _photoPng;
+
+        /// <summary>Takes a small still of the screen at your best play so far (end of this frame).</summary>
+        private void OfferPhoto(string label, int score)
+        {
+            if (score <= _photoScore || _link != null || _watch != null || Demo || _capturing) return;
+            _photoScore = score;
+            _photoLabel = label;
+            StartCoroutine(CapturePhoto());
+        }
+
+        private System.Collections.IEnumerator CapturePhoto()
+        {
+            // A beat later, so the ball is at the rim.
+            yield return new WaitForSecondsRealtime(0.12f);
+            yield return new WaitForEndOfFrame();
+            RenderTexture screen = null, small = null;
+            Texture2D read = null;
+            try
+            {
+                int w = 360, h = Mathf.Max(1, Mathf.RoundToInt(w * Screen.height / (float)Mathf.Max(1, Screen.width)));
+                screen = new RenderTexture(Screen.width, Screen.height, 0, RenderTextureFormat.ARGB32);
+                small = new RenderTexture(w, h, 0, RenderTextureFormat.ARGB32) { filterMode = FilterMode.Point };
+                ScreenCapture.CaptureScreenshotIntoRenderTexture(screen);
+                // Flip if this platform's capture comes out upside down.
+                if (SystemInfo.graphicsUVStartsAtTop) Graphics.Blit(screen, small, new Vector2(1f, -1f), new Vector2(0f, 1f));
+                else Graphics.Blit(screen, small);
+                // Crop a square around the action: the court sits in the upper middle of the screen.
+                int side = Mathf.Min(w, h);
+                int y0 = Mathf.Clamp(Mathf.RoundToInt(h * 0.42f) - side / 2, 0, h - side);
+                var prev = RenderTexture.active;
+                RenderTexture.active = small;
+                read = new Texture2D(side, side, TextureFormat.RGB24, false);
+                read.ReadPixels(new Rect(0, y0, side, side), 0, 0, false);
+                read.Apply(false);
+                RenderTexture.active = prev;
+                _photoPng = read.EncodeToPNG();
+            }
+            catch (System.Exception e)
+            {
+                Debug.LogWarning("[Retro Hoops] Play-of-the-game photo failed: " + e.Message);
+            }
+            finally
+            {
+                if (screen != null) Destroy(screen);
+                if (small != null) Destroy(small);
+                if (read != null) Destroy(read);
+            }
+        }
+
+        /// <summary>After a game that counts: the FEED's made-up posts about it, with the photo.</summary>
+        private void PostToFeed(MatchSummary summary, bool title)
+        {
+            try
+            {
+                var d = App.Career;
+                if (d == null || _practice != null || _horse != null || _tutorial != null || Demo) return;
+                string photo = null;
+                if (_photoPng != null)
+                {
+                    System.IO.Directory.CreateDirectory(FeedPhotos.Folder);
+                    photo = "potg-" + StableHash.Of(summary.matchId).ToString("x8") + ".png";
+                    System.IO.File.WriteAllBytes(System.IO.Path.Combine(FeedPhotos.Folder, photo), _photoPng);
+                }
+                int chapter = _request.ContextId != null && _request.ContextId.StartsWith(StoryMode.ContextPrefix)
+                    && int.TryParse(_request.ContextId.Substring(StoryMode.ContextPrefix.Length), out int n) ? n : 0;
+                var posts = SocialFeed.PostsFor(summary, new FeedContext
+                {
+                    BestPlay = _photoPng != null ? _photoLabel : null,
+                    Photo = photo,
+                    Fans = d.fans,
+                    StoryChapter = chapter,
+                    Title = title,
+                });
+                FeedPhotos.Delete(SocialFeed.Add(d.phone, posts));
+            }
+            catch (System.Exception e)
+            {
+                Debug.LogWarning("[Retro Hoops] Feed post failed: " + e.Message);
+            }
+        }
 
         private void StartReplay(ReplayClip clip)
         {

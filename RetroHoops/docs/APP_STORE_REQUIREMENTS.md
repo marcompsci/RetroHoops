@@ -32,7 +32,8 @@ This is the checklist for App Review. **Done in code** items are checked by `too
 7. **Metadata:** paste name, subtitle, description, keywords, What's New, Support URL and Privacy Policy URL from `APP_STORE.md`; upload the screenshots from `~/RetroHoops/AppStoreScreenshots`.
 8. **Review notes:** explain Live (needs two Game Center players; offer a sandbox tester note) and that everything else is offline. Template in `SUBMISSION.md`.
 9. **Live server:** v1 ships with it off (ratings kept on each phone). Switching it on later needs your Cloudflare account, the manifest entries back and new App Privacy answers.
-10. **Device test:** play the TestFlight build on a real iPhone and iPad and work through `QA_CHECKLIST.md` before you press Submit for Review.
+10. **MusicKit (14 Oct 2026, the phone's MUSIC app):** in developer.apple.com ▸ Certificates, Identifiers & Profiles ▸ Identifiers ▸ `com.phoronomicstudios.retrohoops` ▸ **App Services**, tick **MusicKit** and save. Without it, the playlist can't find songs on Apple Music. The rest of the game is unaffected. App Privacy stays **Data Not Collected**. Playback is clean versions only, so the 4+ rating stands.
+11. **Device test:** play the TestFlight build on a real iPhone and iPad and work through `QA_CHECKLIST.md` before you press Submit for Review.
 
 ## Not verified yet
 

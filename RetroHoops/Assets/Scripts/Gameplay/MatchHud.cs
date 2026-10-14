@@ -25,6 +25,8 @@ namespace CallerRetroBall.Gameplay
         /// <summary>Make a GIF of the play of the game and share / save it.</summary>
         public event Action ShareRequested;
         public event Action PhotoRequested;
+        /// <summary>14 Oct 2026: PHONE on the pause menu (music, texts, feed).</summary>
+        public event Action PhoneRequested;
 
         private TextMeshProUGUI _teamA, _teamB, _scoreA, _scoreB, _clock, _shotClock, _toast;
         private GameObject _pausePanel;
@@ -177,6 +179,7 @@ namespace CallerRetroBall.Gameplay
             UiKit.Size(UiKit.ShadowLabel(column, "PAUSED", 90f, Theme.Cream, Theme.Pink, 8f).transform.parent.GetComponent<RectTransform>(), 140f);
             UiKit.Button(column, "RESUME", () => ResumeRequested?.Invoke(), ButtonStyle.Primary, 150f);
             UiKit.Button(column, "PHOTO MODE", () => PhotoRequested?.Invoke(), ButtonStyle.Secondary, 130f, 48f);
+            UiKit.Button(column, "PHONE", () => PhoneRequested?.Invoke(), ButtonStyle.Secondary, 130f, 48f);
             UiKit.Button(column, "QUIT TO MENU", () => QuitRequested?.Invoke(), ButtonStyle.Ghost, 130f, 48f);
             _pausePanel.SetActive(false);
         }
@@ -607,6 +610,68 @@ namespace CallerRetroBall.Gameplay
             }
 
             if (_toast.text.Length > 0 && Time.unscaledTime > _toastUntil) _toast.text = "";
+        }
+
+        // ------------------------------------------------------------------ 14 Oct 2026: quick chat (LIVE / two phones)
+
+        private GameObject _chatPanel;
+        private TextMeshProUGUI _chatBubble;
+        private float _chatBubbleUntil;
+
+        /// <summary>Adds a CHAT button under the pause button: preset messages to the other player.</summary>
+        public void EnableQuickChat(Action<int> send)
+        {
+            if (_bar == null || _chatPanel != null) return;
+            var safe = (RectTransform)_bar.parent;
+            var chat = UiKit.Button(safe, "CHAT", () => _chatPanel.SetActive(!_chatPanel.activeSelf), ButtonStyle.Ghost, 80f, 30f);
+            var crt = (RectTransform)chat.transform;
+            crt.anchorMin = crt.anchorMax = new Vector2(0f, 1f);
+            crt.pivot = new Vector2(0f, 1f);
+            crt.sizeDelta = new Vector2(170f, 84f);
+            crt.anchoredPosition = new Vector2(28f, -176f);
+
+            var panel = UiKit.Panel(safe, Color.white, Theme.PanelSprite(), true, "QuickChat");
+            panel.raycastTarget = true;
+            var prt = panel.rectTransform;
+            prt.anchorMin = prt.anchorMax = new Vector2(0f, 1f);
+            prt.pivot = new Vector2(0f, 1f);
+            prt.sizeDelta = new Vector2(760f, 470f);
+            prt.anchoredPosition = new Vector2(28f, -270f);
+            var grid = panel.gameObject.AddComponent<UnityEngine.UI.GridLayoutGroup>();
+            grid.padding = new RectOffset(20, 20, 20, 20);
+            grid.cellSize = new Vector2(350f, 92f);
+            grid.spacing = new Vector2(16f, 16f);
+            for (int i = 0; i < QuickChat.Messages.Length; i++)
+            {
+                int id = i;
+                UiKit.Button(panel.transform, QuickChat.Messages[i], () => { _chatPanel.SetActive(false); send?.Invoke(id); }, ButtonStyle.Secondary, 92f, 26f);
+            }
+            _chatPanel = panel.gameObject;
+            _chatPanel.SetActive(false);
+
+            _chatBubble = UiKit.Label(safe, "", 34f, Theme.Cream, TextAlignmentOptions.Right, true, "ChatBubble");
+            var brt = _chatBubble.rectTransform;
+            brt.anchorMin = brt.anchorMax = new Vector2(1f, 1f);
+            brt.pivot = new Vector2(1f, 1f);
+            brt.sizeDelta = new Vector2(820f, 70f);
+            brt.anchoredPosition = new Vector2(-28f, -180f);
+            UiKit.ApplyTextShadow(_chatBubble);
+        }
+
+        /// <summary>Shows a chat line under the score bar for a few seconds.</summary>
+        public void ShowChat(string line)
+        {
+            if (_chatBubble == null) return;
+            _chatBubble.text = line;
+            _chatBubbleUntil = Time.unscaledTime + 3f;
+            _chatBubble.gameObject.SetActive(true);
+        }
+
+        /// <summary>Hides the chat line when its time is up (call each frame).</summary>
+        public void TickChat()
+        {
+            if (_chatBubble != null && _chatBubble.gameObject.activeSelf && Time.unscaledTime > _chatBubbleUntil)
+                _chatBubble.gameObject.SetActive(false);
         }
     }
 }

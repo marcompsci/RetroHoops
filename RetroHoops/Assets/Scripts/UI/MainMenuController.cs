@@ -73,7 +73,14 @@ namespace CallerRetroBall.UI
             UiKit.Button(column, "RISE MODE", () => SceneFlow.GoTo(SceneNames.Season), ButtonStyle.Secondary, 120f, 52f);
             UiKit.Button(column, "PRACTICE LAB", ShowPractice, ButtonStyle.Secondary, 120f, 52f);
             UiKit.Button(column, "LOCKER ROOM", () => SceneFlow.GoTo(SceneNames.LockerRoom), ButtonStyle.Secondary, 120f, 52f);
-            UiKit.Button(column, "SETTINGS", () => SceneFlow.GoTo(SceneNames.Settings), ButtonStyle.Ghost, 104f, 46f);
+            // 14 Oct 2026: SETTINGS and your player's PHONE (music, texts, feed) side by side.
+            var lowRow = UiKit.Row(column, 20f, "SettingsPhone");
+            UiKit.Size(lowRow, 104f);
+            UiKit.Button(lowRow, "SETTINGS", () => SceneFlow.GoTo(SceneNames.Settings), ButtonStyle.Ghost, 104f, 46f);
+            var phoneButton = UiKit.Button(lowRow, PhoneScreen.ButtonLabel(), () => PhoneScreen.Open(), ButtonStyle.Ghost, 104f, 46f);
+            var phoneLabel = phoneButton.GetComponentInChildren<TMPro.TextMeshProUGUI>();
+            PhoneScreen.Closed += () => { if (phoneLabel != null) phoneLabel.text = Loc.T(PhoneScreen.ButtonLabel()); };
+            PhoneMusic.Wake();
             // TestFlight copies only: BETA FEEDBACK (the report goes out through TestFlight's own feedback).
             if (Beta.IsTestFlight) UiKit.Button(column, "SEND FEEDBACK", BetaFeedbackScreen.SendFeedback, ButtonStyle.Ghost, 104f, 46f);
 

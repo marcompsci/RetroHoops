@@ -168,6 +168,9 @@ namespace CallerRetroBall.Audio
                 }
         }
 
+        /// <summary>14 Oct 2026: Apple Music (the phone's playlist) is playing, so the soundtrack is silent.</summary>
+        public static bool ExternalMusic { get; set; }
+
         public static void StopMusic()
         {
             if (_instance != null) _instance._music.Stop();
@@ -225,7 +228,8 @@ namespace CallerRetroBall.Audio
         private void ApplyLevels()
         {
             if (_music == null) return;
-            _music.volume = _musicVolume * (_ambienceOn ? 0.3f : 0.5f) * _duck;
+            // The phone's Apple Music playlist is playing: the game's own soundtrack steps aside.
+            _music.volume = ExternalMusic ? 0f : _musicVolume * (_ambienceOn ? 0.3f : 0.5f) * _duck;
             _ambience.volume = Mathf.Min(1f, _sfxVolume * 0.22f * _crowd * _crowdDuck);
         }
 

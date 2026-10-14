@@ -120,6 +120,7 @@ namespace CallerRetroBall.Logic
                 ["feel"] = EncodeFeel(d.settings),
                 ["pro"] = EncodePro(d),
                 ["beta"] = EncodeBeta(d.beta),
+                ["phone"] = EncodePhone(d.phone),
                 ["customCup"] = EncodeCustomCup(d.customCup),
                 ["weekly"] = EncodeWeekly(d.weekly),
                 ["pass"] = EncodePass(d.pass),
@@ -578,6 +579,7 @@ namespace CallerRetroBall.Logic
                 DecodeFeel(d.settings, Obj(o, "feel"));
                 DecodePro(d, Obj(o, "pro"));
                 d.beta = DecodeBeta(Obj(o, "beta"));
+                d.phone = DecodePhone(Obj(o, "phone"));
                 d.customCup = DecodeCustomCup(Obj(o, "customCup"));
                 d.weekly = DecodeWeekly(Obj(o, "weekly"));
                 d.pass = DecodePass(Obj(o, "pass"));

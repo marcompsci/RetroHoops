@@ -23,7 +23,8 @@ namespace CallerRetroBall.Logic
     public enum LinkMessage : byte { Setup = 1, Ready = 2, Reject = 3, Start = 4, Inputs = 5, Hash = 6, Bye = 7, /** Live: the guest's team, name and rating. */ Hello = 8,
         /** Host → a watching phone: the game's setup (same text as Setup). */ WatchSetup = 9,
         /** Host → watching phones: both players' inputs for a run of steps. */ Both = 10,
-        /** A saved game tape, in chunks (Phase 31, Tape.cs). */ Tape = 11 }
+        /** A saved game tape, in chunks (Phase 31, Tape.cs). */ Tape = 11,
+        /** 14 Oct 2026: a quick-chat message (one byte: its index in QuickChat.Messages). Older versions ignore it. */ Chat = 12 }
 
     /// <summary>What a player brings to a Live game: their team (as text), their name and rating.</summary>
     public sealed class LiveOffer
@@ -242,6 +243,9 @@ namespace CallerRetroBall.Logic
         }
 
         public static byte[] Simple(LinkMessage type) => new[] { (byte)type };
+
+        /// <summary>A quick-chat message: its index in <see cref="QuickChat.Messages"/>.</summary>
+        public static byte[] Chat(int id) => new[] { (byte)LinkMessage.Chat, (byte)Math.Max(0, Math.Min(255, id)) };
 
         public static byte[] Text(LinkMessage type, string text)
         {
@@ -704,6 +708,9 @@ namespace CallerRetroBall.Logic
                 case LinkMessage.Bye:
                     RemoteLeft = true;
                     break;
+                case LinkMessage.Chat:
+                    if (m.Length >= 2) Chats.Enqueue(m[1]);
+                    break;
                 case LinkMessage.Setup:
                 case LinkMessage.Ready:
                 case LinkMessage.Start:
@@ -714,6 +721,9 @@ namespace CallerRetroBall.Logic
                     break;
             }
         }
+
+        /// <summary>Quick-chat messages from the other phone (indexes into <see cref="QuickChat.Messages"/>).</summary>
+        public readonly Queue<int> Chats = new Queue<int>();
 
         /// <summary>Hand-shake messages received during the game, in order (for a rematch lobby).</summary>
         public readonly Queue<byte[]> Control = new Queue<byte[]>();

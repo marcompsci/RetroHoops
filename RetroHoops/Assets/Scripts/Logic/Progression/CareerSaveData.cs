@@ -295,6 +295,8 @@ namespace CallerRetroBall.Logic
         public bool proOwned, proGranted;
         /// <summary>12 Oct 2026: the TestFlight tester's profile (see <see cref="BetaFeedback"/>).</summary>
         public BetaProfileData beta = new BetaProfileData();
+        /// <summary>14 Oct 2026: the in-game phone (MUSIC playlist, agent texts, FEED).</summary>
+        public PhoneData phone = new PhoneData();
         /// <summary>Tournament Builder: the tournament in progress and titles.</summary>
         public CustomCupSaveData customCup = new CustomCupSaveData();
         /// <summary>This week's Weekly Challenges progress.</summary>
