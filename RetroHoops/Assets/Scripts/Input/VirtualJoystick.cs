@@ -7,6 +7,8 @@ namespace CallerRetroBall.Controls
     /// <summary>
     /// Floating thumbstick: appears wherever the thumb lands inside its zone and tracks one
     /// finger (other touches are ignored, so buttons can be pressed at the same time).
+    /// 14 Oct 2026 (Omari): it follows the thumb. Drag past the edge and the whole stick slides after your thumb, so
+    /// it's always under it. When you let go, the resting ring stays where your thumb was.
     /// </summary>
     public sealed class VirtualJoystick : MonoBehaviour, IPointerDownHandler, IDragHandler, IPointerUpHandler
     {
@@ -25,6 +27,10 @@ namespace CallerRetroBall.Controls
         public bool IsActive => _pointerId != int.MinValue;
         /// <summary>Raised when the stick appears (true) or goes away (false).</summary>
         public event System.Action<bool> Moved;
+        /// <summary>Where the stick was (zone-local) when the thumb lifted.</summary>
+        public event System.Action<Vector2> Lifted;
+        /// <summary>The stick's centre now (zone-local).</summary>
+        public Vector2 Origin => _origin;
 
         public void Init(RectTransform zone, RectTransform baseRing, RectTransform knob)
         {
@@ -53,7 +59,9 @@ namespace CallerRetroBall.Controls
         public void OnPointerUp(PointerEventData e)
         {
             if (e.pointerId != _pointerId) return;
+            var at = _origin;
             Release();
+            Lifted?.Invoke(at);
         }
 
         /// <summary>Drops the stick (e.g. when pausing or losing focus).</summary>
@@ -70,6 +78,15 @@ namespace CallerRetroBall.Controls
         {
             RectTransformUtility.ScreenPointToLocalPointInRectangle(_zone, e.position, e.pressEventCamera, out var local);
             var drag = new Vec2(local.x - _origin.x, local.y - _origin.y);
+            // Follow the thumb: past the edge, the base slides along so the knob stays at the rim under the thumb.
+            var follow = JoystickMath.FollowOrigin(new Vec2(_origin.x, _origin.y), new Vec2(local.x, local.y), Radius);
+            if (follow.x != _origin.x || follow.y != _origin.y)
+            {
+                var r = _zone.rect;
+                _origin = new Vector2(Mathf.Clamp(follow.x, r.xMin, r.xMax), Mathf.Clamp(follow.y, r.yMin, r.yMax));
+                _base.anchoredPosition = _origin;
+                drag = new Vec2(local.x - _origin.x, local.y - _origin.y);
+            }
             Value = JoystickMath.Evaluate(drag, Radius, DeadZone);
             var knob = JoystickMath.KnobOffset(drag, Radius);
             _knob.anchoredPosition = _origin + new Vector2(knob.x, knob.y);

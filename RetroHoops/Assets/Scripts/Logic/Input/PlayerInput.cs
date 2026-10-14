@@ -74,6 +74,19 @@ namespace CallerRetroBall.Logic
     public static class JoystickMath
     {
         /// <summary>
+        /// 14 Oct 2026: a stick that follows the thumb. When the thumb is more than <paramref name="radius"/> from the
+        /// centre, the centre moves toward it so the thumb sits exactly on the rim. Otherwise the centre stays put.
+        /// </summary>
+        public static Vec2 FollowOrigin(Vec2 origin, Vec2 thumb, float radius)
+        {
+            var d = new Vec2(thumb.x - origin.x, thumb.y - origin.y);
+            float len = d.Magnitude;
+            if (radius <= 0f || len <= radius) return origin;
+            float k = (len - radius) / len;
+            return new Vec2(origin.x + d.x * k, origin.y + d.y * k);
+        }
+
+        /// <summary>
         /// Converts a drag offset (screen pixels) into a stick vector. Inside the dead zone the
         /// stick reads zero; beyond it the magnitude is rescaled so it still reaches 0..1 smoothly.
         /// </summary>

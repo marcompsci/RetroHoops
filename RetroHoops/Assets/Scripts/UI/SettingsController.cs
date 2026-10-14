@@ -109,6 +109,8 @@ namespace CallerRetroBall.UI
             UiControls.ToggleRow(column, "LARGE BUTTONS", s.largeButtons, v => { s.largeButtons = v; Save(); });
             // Phase 39: how the stick and haptics feel.
             UiControls.ChoiceRow(column, "STICK SIZE", ControlFeel.SizeNames, s.stickSize, i => { s.stickSize = i; Save(); });
+            UiControls.ChoiceRow(column, "BUTTON OPACITY", ControlFeel.OpacityNames, s.controlsOpacity, i => { s.controlsOpacity = i; Save(); });
+            UiControls.ToggleRow(column, "FILL SCREEN WITH COURT", s.fillScreen, v => { s.fillScreen = v; Save(); });
             UiControls.ChoiceRow(column, "STICK DEAD ZONE", ControlFeel.DeadZoneNames, s.stickDeadZone, i => { s.stickDeadZone = i; Save(); });
             UiControls.ChoiceRow(column, "HAPTICS STRENGTH", ControlFeel.HapticNames, s.hapticStrength, i => { s.hapticStrength = i; Save(); Haptics.Medium(); });
             UiControls.ToggleRow(column, "SMART DIFFICULTY (RISE)", s.smartDifficulty, v => { s.smartDifficulty = v; Save(); });

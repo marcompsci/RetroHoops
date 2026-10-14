@@ -64,6 +64,17 @@ namespace CallerRetroBall.Logic
         /// </summary>
         public static float UiMatch(float aspect) => aspect <= 1080f / 1920f ? 0.35f : 1f;
 
+        /// <summary>
+        /// 14 Oct 2026: the integer zoom at which <paramref name="artHeight"/> (m) fills the screen below a HUD strip of
+        /// <paramref name="hudShare"/> of its height (rounded down, so the court reaches at least to the bottom).
+        /// </summary>
+        public static int FillZoom(int screenHeight, float artHeight, float hudShare, float pixelsPerUnit)
+        {
+            if (screenHeight <= 0 || artHeight <= 0f || pixelsPerUnit <= 0f) return 1;
+            float visible = artHeight / Math.Max(0.5f, 1f - hudShare);
+            return Math.Max(1, (int)Math.Floor(screenHeight / (visible * pixelsPerUnit)));
+        }
+
         /// <summary>Orthographic size (half height in world units) for a given integer zoom.</summary>
         public static float OrthographicSize(int screenHeightPixels, int zoom, float pixelsPerUnit)
         {

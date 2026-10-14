@@ -66,7 +66,8 @@ namespace CallerRetroBall.Logic
         private static object EncodeFeel(SettingsData s)
         {
             s = s ?? new SettingsData();
-            return new Dictionary<string, object> { ["stick"] = s.stickSize, ["dead"] = s.stickDeadZone, ["haptic"] = s.hapticStrength, ["smart"] = s.smartDifficulty };
+            return new Dictionary<string, object> { ["stick"] = s.stickSize, ["dead"] = s.stickDeadZone, ["haptic"] = s.hapticStrength, ["smart"] = s.smartDifficulty,
+                ["opacity"] = s.controlsOpacity, ["fill"] = s.fillScreen };
         }
 
         private static void DecodeFeel(SettingsData s, Dictionary<string, object> o)
@@ -76,6 +77,8 @@ namespace CallerRetroBall.Logic
             s.stickDeadZone = ControlFeel.Clamp(Int(o, "dead", 1));
             s.hapticStrength = ControlFeel.Clamp(Int(o, "haptic", 1));
             s.smartDifficulty = Bool(o, "smart", true);
+            s.controlsOpacity = ControlFeel.ClampOpacity(Int(o, "opacity", ControlFeel.DefaultOpacity));
+            s.fillScreen = Bool(o, "fill", true);
         }
     }
 }

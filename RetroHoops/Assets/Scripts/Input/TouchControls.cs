@@ -75,6 +75,9 @@ namespace CallerRetroBall.Controls
         {
             var canvas = UiKit.CreateScreenCanvas(seat == Seat.Top ? "TouchControlsCanvasP2" : "TouchControlsCanvas", 10);
             var controls = canvas.gameObject.AddComponent<TouchControls>();
+            // 14 Oct 2026: see-through controls (65% by default, Settings ► BUTTON OPACITY) so the court shows underneath.
+            var group = canvas.gameObject.AddComponent<CanvasGroup>();
+            group.alpha = ControlFeel.OpacityFor(Core.App.Career?.settings);
             controls._canvas = canvas;
             controls._buffer = buffer ?? new InputBuffer();
             controls._leftHanded = leftHanded;
@@ -111,9 +114,10 @@ namespace CallerRetroBall.Controls
         private void Build(RectTransform safe)
         {
             // Joystick zone: the lower-left, generous so the thumb never has to aim.
+            // 14 Oct 2026: the whole left half under the score bar, so the stick appears wherever the thumb goes.
             var zone = UiKit.NewRect("JoystickZone", safe);
-            zone.anchorMin = new Vector2(_leftHanded ? 0.55f : 0f, 0f);
-            zone.anchorMax = new Vector2(_leftHanded ? 1f : 0.45f, _seat == Seat.Full ? 0.5f : 0.92f);
+            zone.anchorMin = new Vector2(_leftHanded ? 0.5f : 0f, 0f);
+            zone.anchorMax = new Vector2(_leftHanded ? 1f : 0.5f, _seat == Seat.Full ? 0.8f : 0.92f);
             zone.offsetMin = zone.offsetMax = Vector2.zero;
             var zoneImage = zone.gameObject.AddComponent<Image>();
             zoneImage.color = new Color(0f, 0f, 0f, 0f); // invisible but receives touches
@@ -141,6 +145,12 @@ namespace CallerRetroBall.Controls
             Joystick.Radius = ControlFeel.RadiusFor(settings);
             Joystick.DeadZone = ControlFeel.DeadZoneFor(settings);
             Joystick.Moved += active => _stickRest.gameObject.SetActive(!active);
+            // The resting ring stays where the thumb last was, so it's easy to find again.
+            Joystick.Lifted += at =>
+            {
+                _stickRest.anchorMin = _stickRest.anchorMax = new Vector2(0.5f, 0.5f);
+                _stickRest.anchoredPosition = at;
+            };
 
             var hint = UiKit.Label(_stickRest, "MOVE", 30f, new Color(1f, 1f, 1f, 0.45f), TextAlignmentOptions.Center, true);
             UiKit.Stretch(hint.rectTransform);

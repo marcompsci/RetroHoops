@@ -1672,7 +1672,10 @@ namespace CallerRetroBall.Gameplay
             }
 
             // 2-player and Full Court: follow the ball so nobody is left off screen.
-            var follow = TheaterFollow() ?? (Versus || FullCourtGame || Coaching ? _match.Ball.Position : _match.Controlled.Position);
+            var follow = TheaterFollow() ?? (Versus || FullCourtGame || Coaching ? _match.Ball.Position
+                         // Close camera (fill screen): between you and the ball, so the play stays in view.
+                         : _cameraRig.Fill ? Vec2.Lerp(_match.Controlled.Position, _match.Ball.Position, 0.5f)
+                         : _match.Controlled.Position);
             _cameraRig.Follow(_match.ToWorldCourt(follow), Mathf.Max(dt, Time.unscaledDeltaTime), snapCamera);
             _hud.Sync(_match);
             // The info line builds a string, so refresh it ~10x a second rather than every frame.

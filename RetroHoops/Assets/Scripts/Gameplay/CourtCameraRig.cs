@@ -33,6 +33,13 @@ namespace CallerRetroBall.Gameplay
 
         public int Zoom { get; private set; } = 1;
 
+        /// <summary>
+        /// 14 Oct 2026 (Omari): FILL SCREEN WITH COURT (portrait half court, on by default). The camera comes in so the
+        /// court runs from under the score bar to the bottom of the screen, behind the see-through buttons, and follows
+        /// the play both ways.
+        /// </summary>
+        public bool Fill { get; private set; }
+
         /// <summary>Phase 35 replay theater CLOSE-UP: one zoom step closer, following the play up and down too (portrait only).</summary>
         private bool _closeUp;
 
@@ -65,6 +72,8 @@ namespace CallerRetroBall.Gameplay
         {
             _landscape = landscape;
             _vertical = fullCourt && !landscape;
+            var settings = Core.App.Career?.settings;
+            Fill = !fullCourt && !landscape && (settings == null || settings.fillScreen);
             _camera = GetComponent<Camera>();
             _camera.orthographic = true;
             _camera.clearFlags = CameraClearFlags.SolidColor;
@@ -93,7 +102,7 @@ namespace CallerRetroBall.Gameplay
 
             float halfW = _camera.orthographicSize * _camera.aspect;
             float goalY = _targetY;
-            bool vertical = _vertical || _closeUp;
+            bool vertical = _vertical || _closeUp || Fill;
             if (vertical)
             {
                 // Keep the play a little above the middle (the thumbs cover the bottom of the screen),
@@ -164,6 +173,11 @@ namespace CallerRetroBall.Gameplay
             }
 
             Zoom = CameraMath.IntegerZoom(Screen.width, Screen.height, minVisibleWidth, minVisibleHeight, CourtSpace.PixelsPerUnit) + (_closeUp ? 1 : 0);
+            if (Fill)
+            {
+                float artHeight = _court.depth + CourtGenerator.BaselineMargin + CourtGenerator.TopMargin;
+                Zoom = System.Math.Max(Zoom, CameraMath.FillZoom(Screen.height, artHeight, hudReserve, CourtSpace.PixelsPerUnit)) + (_closeUp ? 1 : 0);
+            }
             _camera.orthographicSize = CameraMath.OrthographicSize(Screen.height, Zoom, CourtSpace.PixelsPerUnit);
 
             // Top of the court art (crowd strip) sits just below the HUD and the notch.
@@ -174,6 +188,8 @@ namespace CallerRetroBall.Gameplay
             // Lowest camera centre: the bottom stands sit just above the thumb area (lower 40% of the screen).
             float courtBottomWorld = -(_court.depth + CourtGenerator.BaselineMargin);
             _minY = Mathf.Min(_targetY, courtBottomWorld + _camera.orthographicSize * 0.2f);
+            // Filling the screen: never scroll past the bottom of the court art (the near side shows only a little).
+            if (Fill) _minY = Mathf.Min(_targetY, -(_court.depth + CourtGenerator.TopMargin) - 1.5f + _camera.orthographicSize);
         }
     }
 }

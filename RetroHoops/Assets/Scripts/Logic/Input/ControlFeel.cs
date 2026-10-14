@@ -19,6 +19,13 @@ namespace CallerRetroBall.Logic
 
         public static int Clamp(int step) => Math.Max(0, Math.Min(2, step));
 
+        /// <summary>14 Oct 2026: touch controls opacity steps; 65% by default so the court shows through.</summary>
+        public static readonly string[] OpacityNames = { "40%", "65%", "85%", "100%" };
+        public static readonly float[] Opacity = { 0.4f, 0.65f, 0.85f, 1f };
+        public const int DefaultOpacity = 1;
+        public static int ClampOpacity(int step) => Math.Max(0, Math.Min(Opacity.Length - 1, step));
+        public static float OpacityFor(SettingsData s) => Opacity[ClampOpacity(s?.controlsOpacity ?? DefaultOpacity)];
+
         public static float RadiusFor(SettingsData s) => StickRadius[Clamp(s?.stickSize ?? 1)];
         public static float DeadZoneFor(SettingsData s) => DeadZone[Clamp(s?.stickDeadZone ?? 1)];
 

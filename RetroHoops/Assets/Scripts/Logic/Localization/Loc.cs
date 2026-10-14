@@ -265,6 +265,8 @@ namespace CallerRetroBall.Logic
             ["Name, number and look can change. Ratings grow with games, age and training like everyone else's."] = "Puedes cambiar nombre, número y aspecto. Sus valoraciones crecen con partidos, edad y entrenamiento como las de todos.",
             ["He's at the end of your bench. Move him UP to #1 on the ROSTER to control him in games."] = "Está al final de tu banquillo. Súbelo al #1 en la PLANTILLA para controlarlo en los partidos.",
             ["PUMP FAKE"] = "AMAGUE",
+            ["BUTTON OPACITY"] = "OPACIDAD DE BOTONES",
+            ["FILL SCREEN WITH COURT"] = "CANCHA A PANTALLA COMPLETA",
             ["PHONE"] = "TELÉFONO",
             ["CHAT"] = "CHAT",
             ["RETRO PHONE"] = "RETRO TELÉFONO",

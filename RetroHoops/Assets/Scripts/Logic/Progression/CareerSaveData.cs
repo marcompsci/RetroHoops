@@ -59,6 +59,10 @@ namespace CallerRetroBall.Logic
         public bool followSystemText = true;
         /// <summary>Phase 39 controls feel: stick size and dead zone (0 small/low, 1 normal, 2 large/high), haptics strength (0 light, 1 normal, 2 strong).</summary>
         public int stickSize = 1, stickDeadZone = 1, hapticStrength = 1;
+        /// <summary>14 Oct 2026 (Omari): how solid the touch buttons and stick are (see ControlFeel.Opacity; default 65%).</summary>
+        public int controlsOpacity = ControlFeel.DefaultOpacity;
+        /// <summary>14 Oct 2026 (Omari): the court fills the whole screen in portrait (closer camera that follows the play).</summary>
+        public bool fillScreen = true;
         /// <summary>Phase 40: Rise opponents ease off after a rough run and sharpen up after blowouts.</summary>
         public bool smartDifficulty = true;
         /// <summary>Phase 34: difficulty per kind of game ("GROUP=difficulty.id", see ModeDifficulty).</summary>
