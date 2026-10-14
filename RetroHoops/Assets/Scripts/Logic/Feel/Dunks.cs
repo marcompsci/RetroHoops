@@ -51,6 +51,21 @@ namespace CallerRetroBall.Logic
             }
         }
 
+        /// <summary>
+        /// The pose while hanging on the rim and dropping (14 Oct 2026). It's steady, so nothing flips or jumps while
+        /// he swings: arms up on the rim, coming down as he drops. A reverse dunker stays facing away the whole time.
+        /// </summary>
+        public static FlairPose HangPose(DunkStyle s, DunkFrame f)
+        {
+            var p = new FlairPose
+            {
+                ArmsUp = f.OnRim || (f.Dropping && f.DropU < 0.35f),
+                FlipOverride = s == DunkStyle.Reverse,
+                OffsetX = f.OnRim ? f.SwingPx : 0,
+            };
+            return p;
+        }
+
         /// <summary>Camera shake when it goes down.</summary>
         public static float Shake(DunkStyle s) => s == DunkStyle.TwoHand ? 0.12f : 0.2f;
 
@@ -122,6 +137,10 @@ namespace CallerRetroBall.Logic
         public int SwingPx;
         /// <summary>How far the rim is pulled down (art pixels): 2 at the slam, 1 while the dunker hangs.</summary>
         public int RimDipPx;
+        /// <summary>Let go of the rim and dropping back to the floor.</summary>
+        public bool Dropping;
+        /// <summary>0..1 through the drop.</summary>
+        public float DropU;
     }
 
     /// <summary>
@@ -161,8 +180,10 @@ namespace CallerRetroBall.Logic
             At(start, hoop, end, u, slamU, -1f, liftAtRimPx, approach);
 
         /// <summary>Swings on the rim: peak sideways swing (art pixels) and how many back-and-forth swings in a full hang.</summary>
-        public const int SwingAmplitudePx = 3;
+        public const int SwingAmplitudePx = 2;
         public const float SwingCycles = 1.5f;
+        /// <summary>Share of the hang spent on the grab itself (the rim yanked furthest down).</summary>
+        public const float GrabShare = 0.14f;
 
         /// <summary>
         /// As above, with <paramref name="hangU"/> = the share of the leap spent hanging on the rim after the slam
@@ -186,27 +207,35 @@ namespace CallerRetroBall.Logic
             }
             else if (u < hangEnd)
             {
+                // 14 Oct 2026 (Omari: "natural, not glitched"): the hands stay glued to the rim. The rim is yanked
+                // down 2 px on the grab, then sits 1 px low while he hangs. The body hangs a pixel below full
+                // reach, and swings as a damped pendulum: smooth, one-way steps, no flicker between poses.
                 f.Ground = meet;
-                // The slam frame is at full reach; hanging sags a pixel.
-                bool slamFrame = u - slamU < 0.04f;
-                f.LiftPx = slamFrame ? liftAtRimPx : liftAtRimPx - 1;
                 f.OnRim = true;
-                f.RimDipPx = slamFrame ? 2 : 1;
-                if (swings)
+                float h = (u - slamU) / Math.Max(0.001f, hangEnd - slamU);
+                bool grab = h < GrabShare;
+                // The slam: hands at full reach, and the rim gives under them a pixel at a time (2 px), then sits
+                // 1 px low while he hangs. The hands ride the rim the whole way.
+                f.RimDipPx = grab ? (h < 0.015f ? 1 : 2) : 1;
+                f.LiftPx = liftAtRimPx - (grab ? f.RimDipPx - 1 : f.RimDipPx);
+                if (swings && !grab)
                 {
-                    // A pendulum under the rim that dies down: out, back, out, then hanging still before the drop.
-                    float h = (u - slamU) / Math.Max(0.001f, hangEnd - slamU);
-                    double swing = Math.Sin(h * SwingCycles * 2.0 * Math.PI) * (1.0 - 0.7 * h);
-                    f.SwingPx = (int)Math.Round(swing * SwingAmplitudePx);
-                    // The body rises a touch at each end of the swing (it's on an arc).
-                    if (!slamFrame && Math.Abs(swing) < 0.35) f.LiftPx = liftAtRimPx - 2;
+                    float sh = (h - GrabShare) / (1f - GrabShare);
+                    double theta = Math.Sin(sh * SwingCycles * 2.0 * Math.PI) * (1.0 - 0.7 * sh);
+                    f.SwingPx = (int)Math.Round(theta * SwingAmplitudePx);
+                    // On a pendulum the body rises at the ends of each swing.
+                    if (theta * theta > 0.45) f.LiftPx += 1;
                 }
             }
             else
             {
                 float q = (u - hangEnd) / (1f - hangEnd);
                 f.Ground = Vec2.Lerp(meet, end, Smooth(q));
-                f.LiftPx = (int)Math.Round((liftAtRimPx - 1) * (1f - q * q));
+                // Let go from where the hands were and fall (slow at first, then faster: gravity).
+                int from = liftAtRimPx - 1;
+                f.LiftPx = (int)Math.Round(from * (1f - q * q));
+                f.Dropping = true;
+                f.DropU = q;
             }
             if (f.LiftPx < 0) f.LiftPx = 0;
             return f;

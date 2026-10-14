@@ -12,8 +12,37 @@ namespace CallerRetroBall.Logic.PixelArt
         public const int ArtScale = 2;
         /// <summary>Spin frames: the seams cover half a turn, which repeats.</summary>
         public const int BallFrames = 8;
-        /// <summary>Net frames: 0 rest, 1 stretched (the ball dropping through), 2 flared (the snap back).</summary>
-        public const int NetFrames = 3;
+        /// <summary>
+        /// Net frames (14 Oct 2026, Omari: "make the net move ... natural"). 0 is at rest. 1-3: the ball drops through
+        /// (the mesh bulges around it, moving down, and stretches). 4: it whips back up, short and flared. 5-9: it
+        /// settles, overshooting and swaying a little less each time.
+        /// </summary>
+        public const int NetFrames = 10;
+
+        /// <summary>The shape of one net frame: length (art px), bottom half-width, the ball's bulge and sideways sway.</summary>
+        public struct NetShape
+        {
+            public float Length, BottomHalf, BulgeAt, Bulge, Sway;
+            public NetShape(float length, float bottomHalf, float bulgeAt = 0f, float bulge = 0f, float sway = 0f)
+            { Length = length; BottomHalf = bottomHalf; BulgeAt = bulgeAt; Bulge = bulge; Sway = sway; }
+        }
+
+        public static readonly NetShape[] NetShapes =
+        {
+            new NetShape(11f, 6f),                        // 0 rest
+            new NetShape(12f, 6.2f, 0.25f, 2.2f),         // 1 ball in the top of the net
+            new NetShape(13f, 5.4f, 0.55f, 2.6f),         // 2 ball halfway: stretched, bulging
+            new NetShape(14f, 4.6f, 0.9f, 2.4f),          // 3 ball at the bottom: longest
+            new NetShape(8.5f, 8.6f, 0f, 0f, 1.6f),       // 4 whips back up and flares
+            new NetShape(10f, 7.6f, 0f, 0f, -1.2f),       // 5
+            new NetShape(12.2f, 5.6f, 0f, 0f, 0.9f),      // 6 drops past rest
+            new NetShape(10.6f, 6.6f, 0f, 0f, -0.6f),     // 7
+            new NetShape(11.4f, 5.8f, 0f, 0f, 0.35f),     // 8
+            new NetShape(10.9f, 6.1f, 0f, 0f, -0.15f),    // 9 nearly still
+        };
+
+        /// <summary>When each net frame ends (seconds after the make); after the last, the net is at rest.</summary>
+        public static readonly float[] NetTimes = { 0f, 0.04f, 0.085f, 0.13f, 0.19f, 0.26f, 0.34f, 0.43f, 0.53f, 0.66f };
 
         private static readonly RgbColor BallHi = RgbColor.FromHex("#FFD3A0");
         private static readonly RgbColor BallLight = RgbColor.FromHex("#F99A55");
@@ -64,9 +93,8 @@ namespace CallerRetroBall.Logic.PixelArt
         public static int NetFrame(float secondsSinceMake)
         {
             if (secondsSinceMake < 0f) return 0;
-            if (secondsSinceMake < 0.10f) return 1;
-            if (secondsSinceMake < 0.22f) return 2;
-            if (secondsSinceMake < 0.32f) return 1;
+            for (int f = 1; f < NetTimes.Length; f++)
+                if (secondsSinceMake < NetTimes[f]) return f;
             return 0;
         }
 
@@ -179,46 +207,47 @@ namespace CallerRetroBall.Logic.PixelArt
                 }
         }
 
-        /// <summary>Diamond-mesh net hanging from <paramref name="topY"/>, shaped by <paramref name="frame"/>.</summary>
+        /// <summary>Diamond-mesh net hanging from <paramref name="topY"/>, shaped by <paramref name="frame"/> (see <see cref="NetShapes"/>).</summary>
         private static void DrawNet(PixelCanvas c, float cx, int topY, float topHalf, int frame)
         {
-            int length; float bottomHalf;
-            switch (Mod(frame, NetFrames))
-            {
-                case 1: length = 16; bottomHalf = 4f; break;   // stretched as the ball drops through
-                case 2: length = 11; bottomHalf = 8.5f; break; // snapping back
-                default: length = 13; bottomHalf = 6f; break;
-            }
-                        var pts = new System.Collections.Generic.List<(int x, int y, bool rim)>();
+            var shape = NetShapes[Mod(frame, NetFrames)];
+            int length = (int)Math.Round(shape.Length);
+            var pts = new System.Collections.Generic.List<(int x, int y, bool rim)>();
             for (int r = 0; r <= length; r++)
             {
                 float u = (float)r / length;
-                float half = topHalf + (bottomHalf - topHalf) * (1f - (1f - u) * (1f - u));
+                // Tapers from the rim to the bottom loop, widens where the ball is, and the lower part swings
+                // further than the top (it hangs from the rim).
+                float half = topHalf + (shape.BottomHalf - topHalf) * (1f - (1f - u) * (1f - u));
+                if (shape.Bulge > 0f)
+                {
+                    float d = (u - shape.BulgeAt) / 0.22f;
+                    half += shape.Bulge * (float)Math.Exp(-d * d);
+                }
+                float mid = cx + shape.Sway * u * u;
                 int y = topY - r;
-                pts.Add(((int)Math.Floor(cx - half), y, true));
-                pts.Add(((int)Math.Floor(cx + half - 0.01f), y, true));
+                int l = (int)Math.Floor(mid - half), rr = (int)Math.Floor(mid + half - 0.01f);
+                pts.Add((l, y, true));
+                pts.Add((rr, y, true));
                 if (r == length)
                 {
-                    for (int x = (int)Math.Floor(cx - half); x <= (int)Math.Floor(cx + half - 0.01f); x++) pts.Add((x, y, true));
+                    for (int x = l; x <= rr; x++) pts.Add((x, y, true));
                     continue;
                 }
-                // Diamond mesh: two families of diagonal strands on a 4-pixel lattice, clipped to the taper,
-                // so the holes stay open all the way down instead of bunching up.
-                int left = (int)Math.Floor(cx - half) + 1, right = (int)Math.Floor(cx + half - 0.01f) - 1;
-                int sway = frame == 2 ? 1 : 0;
-                for (int x = left; x <= right; x++)
+                // Diamond mesh: two families of diagonal strands on a 4-pixel lattice that moves with the net,
+                // clipped to the taper, so the holes stay open all the way down.
+                int shift = (int)Math.Round(mid - cx);
+                for (int x = l + 1; x <= rr - 1; x++)
                 {
-                    int u2 = x - (int)cx;
-                    if (Mod(u2 + r + sway, 4) == 0 || Mod(u2 - r, 4) == 0)
-                        pts.Add((x, y, Math.Abs(x + 0.5f - cx) > half * 0.75f));
+                    int u2 = x - shift - (int)cx;
+                    if (Mod(u2 + r, 4) == 0 || Mod(u2 - r, 4) == 0)
+                        pts.Add((x, y, Math.Abs(x + 0.5f - mid) > half * 0.75f));
                 }
             }
             foreach (var p in pts)
                 if (c.Get(p.x + 1, p.y - 1).a == 0) c.Set(p.x + 1, p.y - 1, NetShadow);
             foreach (var p in pts)
-            {
                 c.Set(p.x, p.y, p.rim ? NetShade : NetCol);
-            }
         }
 
         private static void Mark(PixelCanvas c, bool[] solid, int x, int y, RgbColor col)

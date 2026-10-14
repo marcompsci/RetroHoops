@@ -30,7 +30,7 @@ namespace CallerRetroBall.Tests
         }
 
         [Test]
-        public void Hoops_AreTwiceTheDetailWithThreeNetFrames()
+        public void Hoops_AreTwiceTheDetailWithAnimatedNetFrames()
         {
             var h = PropSpriteGenerator.Hoop(0);
             Assert.AreEqual(64, h.Width);
@@ -52,9 +52,9 @@ namespace CallerRetroBall.Tests
         {
             Assert.AreEqual(0, PropSpriteGenerator.NetFrame(-1f));
             Assert.AreEqual(1, PropSpriteGenerator.NetFrame(0.02f));
-            Assert.AreEqual(2, PropSpriteGenerator.NetFrame(0.15f));
-            Assert.AreEqual(1, PropSpriteGenerator.NetFrame(0.28f));
-            Assert.AreEqual(0, PropSpriteGenerator.NetFrame(0.5f));
+            Assert.AreEqual(4, PropSpriteGenerator.NetFrame(0.15f));
+            Assert.AreEqual(6, PropSpriteGenerator.NetFrame(0.28f));
+            Assert.AreEqual(0, PropSpriteGenerator.NetFrame(0.8f));
         }
 
         [Test]

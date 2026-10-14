@@ -1619,9 +1619,16 @@ namespace CallerRetroBall.Gameplay
                     float leap = Flair.Leap(_leapType, now - _leapStart, _leapDuration);
                     if (_leapType == ShotType.Dunk)
                     {
-                        if (!_reduceMotion) flair = Dunks.Pose(_dunkStyle, (now - _leapStart) / _leapDuration);
-                        flair.ArmsUp = true; // reaching for the rim
-                        if (dunk.OnRim) flair.OffsetX += dunk.SwingPx; // swinging on the rim
+                        if (dunk.OnRim || dunk.Dropping)
+                        {
+                            // Hanging and dropping: one steady pose (no flips mid-swing), swinging under the rim.
+                            flair = Dunks.HangPose(_dunkStyle, dunk);
+                        }
+                        else
+                        {
+                            if (!_reduceMotion) flair = Dunks.Pose(_dunkStyle, Mathf.Min(0.999f, (now - _leapStart) / Mathf.Max(0.01f, _slamU * _leapDuration)));
+                            flair.ArmsUp = true; // reaching for the rim
+                        }
                         _playerViews[i].SetOverride(dunk.Ground, dunk.LiftPx);
                         leap = 1f;
                     }
@@ -1637,7 +1644,7 @@ namespace CallerRetroBall.Gameplay
             if (dunking && dunk.BallInHands)
             {
                 // The ball rides in the dunker's hands up to the rim (windmills and tomahawks swing it around).
-                var pose = _reduceMotion ? FlairPose.None : Dunks.Pose(_dunkStyle, (now - _leapStart) / _leapDuration);
+                var pose = _reduceMotion ? FlairPose.None : Dunks.Pose(_dunkStyle, Mathf.Min(0.999f, (now - _leapStart) / Mathf.Max(0.01f, _slamU * _leapDuration)));
                 int reach = CharacterSpriteGenerator.HandReachPx(_match.Players[_leaper].Def.appearance);
                 var hands = CourtSpace.ToWorldSnapped(dunk.Ground)
                             + new Vector3(pose.BallOffsetX, dunk.LiftPx + reach + 2 + System.Math.Max(0, pose.BallLift), 0f) / CourtSpace.PixelsPerUnit;
