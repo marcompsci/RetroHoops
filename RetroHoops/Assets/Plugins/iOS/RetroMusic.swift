@@ -121,9 +121,14 @@ private final class RetroMusicModel {
                 }
             }
             let data = (try? JSONSerialization.data(withJSONObject: out)) ?? Data("[]".utf8)
-            self.lock.lock(); self.songs = found; self.lock.unlock()
+            self.store(found)
             self.set(resolveState: 2, json: String(data: data, encoding: .utf8) ?? "[]")
         }
+    }
+
+    /// Keeps the found songs (a plain function, so the lock isn't taken directly inside async code).
+    private func store(_ found: [String: Song]) {
+        lock.lock(); songs = found; lock.unlock()
     }
 
     /// Plays the songs with these catalog ids, in this order, from `start`.
