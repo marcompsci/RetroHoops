@@ -719,7 +719,7 @@ namespace CallerRetroBall.Logic
                 if (MustInbound && Ball.IsHeld && i == Ball.HolderIndex) { _desired[i] = Vec2.Zero; continue; }
                 if (i == ControlledIndex && !NoHuman) { _desired[i] = SkillDesired(i, FrameMove(input.Move)); continue; }
                 if (i == SecondControlledIndex) { _desired[i] = SkillDesired(i, FrameMove(_input2.Move)); continue; }
-                _desired[i] = AiDesired(Players[i]);
+                _desired[i] = SkillDesired(i, AiDesired(Players[i]));
             }
             Integrate(dt, freezeAll: false);
 

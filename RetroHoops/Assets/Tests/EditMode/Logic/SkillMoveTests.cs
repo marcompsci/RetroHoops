@@ -311,5 +311,47 @@ namespace CallerRetroBall.Tests
             Assert.IsTrue(SkillMoveInfo.Found(back, SkillMoveKind.Spin));
             Assert.IsFalse(SkillMoveInfo.Found(back, SkillMoveKind.Shake));
         }
+
+        // ------------------------------------------------------------------ AI handlers
+
+        [Test]
+        public void AiHandlers_PutMovesOnAPersonGuardingThem_ButNeverOnTheAi()
+        {
+            int aiMoves = 0;
+            for (uint seed = 1; seed <= 3; seed++)
+            {
+                var m = OneOnOne(seed);
+                int me = m.ControlledIndex;
+                for (int i = 0; i < 60 * 90 && m.Phase != MatchPhase.Final; i++)
+                {
+                    var input = default(PlayerInput);
+                    if (m.Ball.IsHeld && !m.HumanHasBall)
+                    {
+                        // Stay in front of the handler (between him and the rim), tight.
+                        var h = m.Players[m.Ball.HolderIndex].Position;
+                        var spot = h + (m.Setup.Court.Hoop - h).Normalized * 0.9f;
+                        var to = spot - m.Players[me].Position;
+                        if (to.SqrMagnitude > 0.01f) input.Move = to.Magnitude > 1f ? to.Normalized : to;
+                    }
+                    else if (m.HumanHasBall)
+                        input.ShootPressed = i % 90 == 0; // take quick shots to give the ball back
+                    input.ShootHeld = input.ShootPressed;
+                    m.Step(Dt, input);
+                    foreach (var e in m.Events)
+                        if (e.Type == MatchEventType.SkillMove && e.PlayerIndex != me) aiMoves++;
+                }
+            }
+            Assert.Greater(aiMoves, 0, "the AI used moves on a person");
+
+            // AI against AI: no moves (so the difficulty tuning is the same as before).
+            var c = DefaultContent.Create();
+            var r = new MatchRequest { Mode = GameMode.Demo, HomeTeamId = "team.metro_comets", AwayTeamId = "team.harbor_hounds", Seed = 5 };
+            var demo = new MatchSimulation(MatchSetup.FromRequest(r, c));
+            for (int i = 0; i < 60 * 60 && demo.Phase != MatchPhase.Final; i++)
+            {
+                demo.Step(Dt, default);
+                foreach (var e in demo.Events) Assert.AreNotEqual(MatchEventType.SkillMove, e.Type);
+            }
+        }
     }
 }

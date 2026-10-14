@@ -1814,7 +1814,17 @@ namespace CallerRetroBall.Gameplay
         private void OnSkillMove(MatchEvent e, int human)
         {
             var kind = (SkillMoveKind)e.Value;
-            if (!_match.IsHumanControlled(e.PlayerIndex)) return;
+            if (!_match.IsHumanControlled(e.PlayerIndex))
+            {
+                // An AI handler put a move on you: show what it was, so you can learn to read it.
+                int victim = (int)e.Chance;
+                if (victim >= 0 && _match.IsHumanControlled(victim))
+                {
+                    _hud.Toast(SkillToast(kind), 0.6f);
+                    Sfx(SfxId.Squeak, 0.6f, 1.1f);
+                }
+                return;
+            }
             Sfx(SfxId.Squeak, 0.75f, kind == SkillMoveKind.Spin ? 1.25f : 1.05f);
             if (e.PlayerIndex == _match.ControlledIndex)
             {

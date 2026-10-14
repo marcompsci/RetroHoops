@@ -167,6 +167,38 @@ namespace CallerRetroBall.Logic
             if (beat && kind != SkillMoveKind.Shake) Events.Add(new MatchEvent(MatchEventType.DefenderBeaten, me, p.Team, victim));
         }
 
+        /// <summary>Seconds between moves for an AI handler.</summary>
+        public const float AiSkillCooldown = 2.5f;
+
+        /// <summary>
+        /// An AI ball handler guarded closely by a person sometimes puts a move on him: more often on harder
+        /// difficulties and for better handlers. Drivers spin and hesi, shooters jab and step back. Only against a
+        /// person, so AI-vs-AI games (and their tuning) don't change. The handler still makes his normal decision
+        /// afterwards (drive, shoot or pass), so this always returns false.
+        /// </summary>
+        private bool TryAiSkillMove(PlayerRuntimeState p, DifficultyDef profile, float distToHoop)
+        {
+            if (Coaching || IsHumanControlled(p.Index) || ChargingIndex >= 0 || MustClear || MustInbound) return false;
+            EnsureSkillState();
+            if (Time < _skillReadyAt[p.Index]) return false;
+            int d = SkillTarget(p);
+            if (d < 0 || !IsHumanControlled(d) || Vec2.Distance(Players[d].Position, p.Position) > 1.8f) return false;
+            float quality = profile != null ? Math.Max(0f, Math.Min(1f, profile.decisionQuality)) : 0.5f;
+            float chance = (0.04f + 0.12f * quality) * (0.3f + p.Def.attributes.playmaking / 100f);
+            if (_rng.NextFloat() >= chance) return false;
+            var tend = p.Tendencies;
+            SkillMoveKind kind;
+            float roll = _rng.NextFloat();
+            if (distToHoop > 5.5f && tend.shoot >= tend.drive) kind = roll < 0.55f ? SkillMoveKind.StepBack : SkillMoveKind.Jab;
+            else kind = roll < 0.5f ? SkillMoveKind.Spin : roll < 0.85f ? SkillMoveKind.Hesi : SkillMoveKind.Shake;
+            DoSkillMove(p.Index, kind);
+            if (SkillMoveOf(p.Index) == SkillMoveKind.None) return false;
+            _skillReadyAt[p.Index] = Time + AiSkillCooldown;
+            // After the move, attack: the next decision comes after it's done.
+            _ai[p.Index].NextDecision = Time + 0.3f;
+            return false;
+        }
+
         private void Burst(int me, float factor, float seconds)
         {
             _burstFactor[me] = factor;

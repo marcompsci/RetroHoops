@@ -60,6 +60,7 @@ namespace CallerRetroBall.Logic
                         int scorer = e.Team;
                         if (scorer == _runTeam) _runPoints += Math.Max(1, e.Value);
                         else { _runTeam = scorer; _runPoints = Math.Max(1, e.Value); }
+                        if (m.Ball.ShotBank) Offer(2, Pick("glass", who + " OFF THE GLASS!", "KISSED IT OFF THE BOARD! " + who + "!", "GLASS! " + who + " BANKS IT IN!"));
                         if (shot == ShotType.Dunk) Offer(3, Pick("dunk", who + " THROWS IT DOWN!", "OH, " + who + " WITH THE HAMMER!", "SOMEBODY CHECK THE RIM, " + who + " JUST BENT IT!", who + " FLUSHES IT!"));
                         else if (e.Value >= 2 && !m.Setup.FullCourt || e.Value >= 3) Offer(2, Pick("deep", who + " FROM DOWNTOWN!", "BANG! " + who + " FROM DEEP!", who + " LETS IT FLY... GOT IT!"));
                         if (_runPoints >= RunSize(m)) Offer(2, Pick("run", team + " ON A " + _runPoints + "-0 RUN!", "SOMEBODY CALL A TIMEOUT, " + team + " ARE ROLLING!", team + " CAN'T MISS RIGHT NOW!"));
@@ -92,6 +93,9 @@ namespace CallerRetroBall.Logic
                     case MatchEventType.Trap:
                         string star = e.Value >= 0 && names != null ? Cap(names(e.Value)) : "";
                         Offer(2, Pick("trap", "THEY'RE SENDING TWO AT " + star + "!", "DOUBLE TEAM ON " + star + "!", "TOO HOT TO GUARD ONE ON ONE: HERE COMES THE TRAP!"));
+                        break;
+                    case MatchEventType.DefenderBeaten:
+                        Offer(2, Pick("beat", "WHAT A MOVE BY " + who + "!", who + " LEAVES HIM STANDING!", "TOO QUICK! " + who + " IS PAST HIM!"));
                         break;
                     case MatchEventType.EuroStep:
                         Offer(2, Pick("euro", who + " WITH THE EURO STEP!", "SIDE STEP, " + who + "! BEAUTIFUL!"));
