@@ -91,16 +91,21 @@ namespace CallerRetroBall.UI
             fit.aspectMode = AspectRatioFitter.AspectMode.FitInParent;
             fit.aspectRatio = logoTex.width / (float)logoTex.height;
 
-            var column = UiKit.Column(Body, 24f, null, "Modes");
-            UiKit.Band(column, 0.23f, 0.71f, 110f);
+            var column = UiKit.Column(Body, 20f, null, "Modes");
+            UiKit.Band(column, 0.21f, 0.708f, 110f);
             column.GetComponent<VerticalLayoutGroup>().childAlignment = TextAnchor.MiddleCenter;
 
             UiKit.Button(column, "PLAY", ShowPlayMenu, ButtonStyle.Primary, 150f, 64f);
+
+            // 15 Oct 2026 (Omari): THE STREETS, up top next to RISE MODE.
+            var topRow = UiKit.Row(column, 20f, "StreetsRise");
+            UiKit.Size(topRow, 124f);
+            UiKit.Button(topRow, "THE STREETS", ShowStreets, ButtonStyle.Primary, 124f, 50f);
+            UiKit.Button(topRow, "RISE MODE", () => SceneFlow.GoTo(SceneNames.Season), ButtonStyle.Secondary, 124f, 50f);
             // In season (October, December, Easter week, early July): a shortcut to that Holiday Game.
             var season = Holidays.InSeason(System.DateTime.Now);
             if (season != HolidayTheme.None)
                 UiKit.Button(column, Holidays.Get(season).Name, () => ShowHolidays(season), ButtonStyle.Secondary, 110f, 44f);
-            UiKit.Button(column, "RISE MODE", () => SceneFlow.GoTo(SceneNames.Season), ButtonStyle.Secondary, 120f, 52f);
             UiKit.Button(column, "PRACTICE LAB", ShowPractice, ButtonStyle.Secondary, 120f, 52f);
             UiKit.Button(column, "LOCKER ROOM", () => SceneFlow.GoTo(SceneNames.LockerRoom), ButtonStyle.Secondary, 120f, 52f);
             // 14 Oct 2026: SETTINGS and your player's PHONE (music, texts, feed) side by side.
@@ -178,6 +183,11 @@ namespace CallerRetroBall.UI
             {
                 App.OpenClutchOnMenu = false;
                 ShowClutch();
+            }
+            else if (App.OpenStreetsOnMenu)
+            {
+                App.OpenStreetsOnMenu = false;
+                ShowStreets();
             }
             else if (App.OpenParkOnMenu)
             {
@@ -501,6 +511,10 @@ namespace CallerRetroBall.UI
             Mode(column, "LIVE", Loc.T("Play people online, free. Rating") + " " + (career.live?.rating ?? LiveMode.StartRating) + "  ·  " + LiveMode.Tier(career.live?.rating ?? LiveMode.StartRating), ShowLive, ButtonStyle.Secondary);
             Mode(column, "RETRO HOOPS PRO", ProStore.Owned ? Loc.T("Unlocked. Thanks for supporting Retro Hoops!")
                 : Loc.T("One-time unlock: FRANCHISE, Rise seasons 2+ and every Hoops Pass item.") + " " + ProStore.Price, () => ShowPro(ShowPlayMenu), ButtonStyle.Ghost);
+
+            Section(column, "THE STREETS");
+            Mode(column, "THE STREETS", "3 on 3 street ball to 21. Tricks, combos and SHOWSTOPPERS. Record " + (career.streets?.wins ?? 0) + "-" + (career.streets?.losses ?? 0) + ".",
+                 ShowStreets, ButtonStyle.Primary);
 
             Section(column, "PLAY NOW");
             Mode(column, "QUICK CALL", "Pick a team and an opponent. One game. Score and it's still your ball.", ShowQuickCall, ButtonStyle.Primary);

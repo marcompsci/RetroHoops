@@ -33,6 +33,8 @@ namespace CallerRetroBall.Controls
         public static readonly Color CallColor = new Color32(0xB8, 0xB4, 0xD8, 255);
         public static readonly Color StealColor = new Color32(0xFF, 0xD1, 0x66, 255);
         public static readonly Color OopColor = new Color32(0xFF, 0xE0, 0x66, 255);
+        /// <summary>15 Oct 2026: THE STREETS' TRICK button (it takes the CALL button's place).</summary>
+        public static readonly Color TrickColor = new Color32(0xC7, 0x4D, 0xFF, 255);
 
         public VirtualJoystick Joystick { get; private set; }
         public TouchActionButton Shoot { get; private set; }
@@ -276,6 +278,18 @@ namespace CallerRetroBall.Controls
             b.SetIconSprite(IconSprite(ControlIconGenerator.For(which, _defense, _oop)));
             b.SetSprites(Face(ring, false), Face(ring, true));
         }
+
+        private bool _street;
+
+        /// <summary>THE STREETS: there are no plays to call, so CALL becomes TRICK.</summary>
+        public void SetStreet()
+        {
+            _street = true;
+            Call.SetLabel("TRICK");
+            Call.SetSprites(Face(TrickColor, false), Face(TrickColor, true));
+        }
+
+        public bool Street => _street;
 
         /// <summary>Labels for a button (e.g. SHOOT/CLEAR/WAIT).</summary>
         public void SetLabels(string shoot, string pass, string dunk)

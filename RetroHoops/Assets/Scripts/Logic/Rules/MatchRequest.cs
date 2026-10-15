@@ -39,6 +39,8 @@ namespace CallerRetroBall.Logic
         CustomCup = 18,
         /// <summary>Phase 37 CLUTCH: a late-game scenario that starts from a set score and clock.</summary>
         Clutch = 19,
+        /// <summary>15 Oct 2026: THE STREETS: 3-on-3 street ball to 21 with tricks, the STREET METER and SHOWSTOPPERs.</summary>
+        Streets = 20,
     }
 
     /// <summary>

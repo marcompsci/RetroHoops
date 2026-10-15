@@ -291,6 +291,8 @@ namespace CallerRetroBall.Logic
         public LegacySaveData legacy = new LegacySaveData();
         /// <summary>The Park: street rep and who you've beaten.</summary>
         public StreetSaveData street = new StreetSaveData();
+        /// <summary>15 Oct 2026: THE STREETS record.</summary>
+        public StreetsSaveData streets = new StreetsSaveData();
         /// <summary>Phase 37 CLUTCH scenarios: best stars.</summary>
         public ClutchSaveData clutch = new ClutchSaveData();
         /// <summary>Phase 39 welcome-back bonus: last day claimed, days in a row, best run.</summary>

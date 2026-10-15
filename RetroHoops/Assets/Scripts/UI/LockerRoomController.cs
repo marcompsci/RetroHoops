@@ -675,6 +675,8 @@ namespace CallerRetroBall.UI
                 case GameMode.OneOnOne: return "1-ON-1";
                 case GameMode.Cup: return "CUP";
                 case GameMode.Clutch: return "CLUTCH";
+                case GameMode.Streets: return "STREETS";
+                case GameMode.Street: return "PARK";
                 default: return "QUICK";
             }
         }

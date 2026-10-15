@@ -9,7 +9,7 @@ namespace CallerRetroBall.Logic
     /// </summary>
     public static class ModeDifficulty
     {
-        public static readonly string[] Groups = { "QUICK CALL", "RISE", "FRANCHISE", "THE PARK", "EVENTS", "LEGACY" };
+        public static readonly string[] Groups = { "QUICK CALL", "RISE", "FRANCHISE", "THE PARK", "THE STREETS", "EVENTS", "LEGACY" };
 
         /// <summary>Which group a mode belongs to (null = not adjustable: practice, 2 Player, Live, the demo, the All-Star Game).</summary>
         public static string GroupOf(GameMode mode)
@@ -20,6 +20,7 @@ namespace CallerRetroBall.Logic
                 case GameMode.Rise: case GameMode.Rival: return "RISE";
                 case GameMode.Franchise: return "FRANCHISE";
                 case GameMode.Street: return "THE PARK";
+                case GameMode.Streets: return "THE STREETS";
                 case GameMode.Tournament: case GameMode.King: case GameMode.Arcade: case GameMode.Cup: case GameMode.CustomCup: case GameMode.Clutch: return "EVENTS";
                 case GameMode.Legacy: return "LEGACY";
                 default: return null;

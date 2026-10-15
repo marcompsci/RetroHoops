@@ -78,6 +78,8 @@ namespace CallerRetroBall.Logic
         public bool OneOnOne;
         /// <summary>Street rules: sharp crossovers near a defender can break their ankles (they stumble).</summary>
         public bool StreetRules;
+        /// <summary>THE STREETS: tricks, combos, the STREET METER and the SHOWSTOPPER (see StreetStyle.cs).</summary>
+        public bool StyleMeter;
         /// <summary>Full Court 5-on-5: both hoops, the picture turns when possession changes (see <see cref="FullCourt"/>).</summary>
         public bool FullCourt;
         /// <summary>Players per side: 3 (half court) or 5 (Full Court).</summary>
@@ -111,10 +113,12 @@ namespace CallerRetroBall.Logic
                 Rules = c.Find(c.Rules, rulesId) ?? new GameRulesDef(),
                 FullCourt = full,
                 TeamSize = full ? Logic.FullCourt.TeamSize : (request.TeamSize >= 2 && request.TeamSize <= 4 ? request.TeamSize : MatchSimulation.PlayersPerTeam),
-                StreetRules = request.StreetRules,
+                StreetRules = request.StreetRules || request.Mode == GameMode.Streets,
+                StyleMeter = request.Mode == GameMode.Streets && !full,
                 Court = full ? Logic.FullCourt.Geometry() : CourtGeometry.Default,
                 // Half-court 3-on-3 is winners' ball; Full Court and 1-on-1 alternate possessions.
-                WinnersBall = !full && !drills && request.Mode != GameMode.OneOnOne,
+                // THE STREETS: the ball changes hands after a bucket.
+                WinnersBall = !full && !drills && request.Mode != GameMode.OneOnOne && request.Mode != GameMode.Streets,
                 ArchetypeLookup = c.ArchetypeById,
                 Difficulty = c.Difficulty(request.DifficultyId),
                 Seed = request.Seed != 0 ? request.Seed : 1,
@@ -329,6 +333,21 @@ namespace CallerRetroBall.Logic
         DefenderBeaten = 40,
         /// <summary>A bank shot kissed the glass (PlayerIndex = shooter).</summary>
         BankKiss = 41,
+        // 15 Oct 2026: THE STREETS (see StreetStyle.cs).
+        /// <summary>A trick (PlayerIndex = handler, Value = <see cref="StreetTrick"/>, Chance = style points it added to the combo).</summary>
+        StreetTrick = 42,
+        /// <summary>A bucket banked the combo into the STREET METER (Value = points banked).</summary>
+        StyleBanked = 43,
+        /// <summary>A team lost its unbanked combo (Value = points lost).</summary>
+        ComboLost = 44,
+        /// <summary>A team's meter reached a SHOWSTOPPER level (Value = level now ready).</summary>
+        BreakerReady = 45,
+        /// <summary>A team called its SHOWSTOPPER (Value = level).</summary>
+        BreakerOn = 46,
+        /// <summary>A SHOWSTOPPER bucket (Value = level: that many extra points, and that many off the other team).</summary>
+        BreakerScored = 47,
+        /// <summary>A SHOWSTOPPER was wasted (missed, or the ball was lost).</summary>
+        BreakerEnded = 48,
     }
 
     public struct MatchEvent
@@ -660,6 +679,12 @@ namespace CallerRetroBall.Logic
         /// <summary>Two-player step: <paramref name="input2"/> drives player 2 (ignored unless SecondHuman).</summary>
         public void Step(float dt, PlayerInput input, PlayerInput input2)
         {
+            StepCore(dt, input, input2);
+            ProcessStreetEvents();
+        }
+
+        private void StepCore(float dt, PlayerInput input, PlayerInput input2)
+        {
             _input2 = SecondControlledIndex >= 0 ? input2 : default;
             Events.Clear();
             if (dt <= 0f) return;
@@ -844,7 +869,10 @@ namespace CallerRetroBall.Logic
                 return;
             }
             if (input.CallPlay != PlayCall.None) StartPlay(team, input.CallPlay, me);
+            // THE STREETS: SHOWSTOPPER (anyone on the team can call it) and tricks (the ball handler).
+            if (input.BreakerPressed) CallBreaker(team);
             bool hasBall = Ball.IsHeld && Ball.HolderIndex == me;
+            if (input.TrickPressed && hasBall && DoTrick(me, TrickFor(me, FrameMove(input.Move)))) return;
             bool teamHasBall = Ball.IsHeld && Players[Ball.HolderIndex].Team == team;
             // Skill moves come from the stick alone (no button this step).
             FeedSkillMoves(me, input, hasBall && ChargingIndex < 0
@@ -965,8 +993,8 @@ namespace CallerRetroBall.Logic
                 Stamina01 = p.Stamina,
                 LateGame = Setup.Rules.useGameClock && GameClock <= Setup.Flow.lateGameSeconds,
                 Bank = type == ShotType.Layup && IsBankAngle(p.Position, court.Hoop),
-                Bonus = Setup.HumanSpotBonus != null && IsHumanControlled(shooter) && shooter == ControlledIndex
-                    ? Setup.HumanSpotBonus[(int)ShotZones.SpotOf(p.Position, court)] : 0f,
+                Bonus = (Setup.HumanSpotBonus != null && IsHumanControlled(shooter) && shooter == ControlledIndex
+                    ? Setup.HumanSpotBonus[(int)ShotZones.SpotOf(p.Position, court)] : 0f) + BreakerBonusFor(shooter),
             };
         }
 

@@ -114,6 +114,8 @@ namespace CallerRetroBall.Core
 
         /// <summary>After a street challenge or a Tournament Builder game: open those again on the menu.</summary>
         public static bool OpenParkOnMenu { get; set; }
+        /// <summary>15 Oct 2026: back to THE STREETS after a game there.</summary>
+        public static bool OpenStreetsOnMenu { get; set; }
         public static bool OpenCustomCupOnMenu { get; set; }
         /// <summary>Phase 37: after a CLUTCH scenario, open the scenario list again.</summary>
         public static bool OpenClutchOnMenu { get; set; }

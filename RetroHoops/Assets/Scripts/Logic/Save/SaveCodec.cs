@@ -115,6 +115,7 @@ namespace CallerRetroBall.Logic
                 ["courts"] = EncodeCourts(d.courts),
                 ["legacy"] = EncodeLegacy(d.legacy),
                 ["street"] = EncodeStreet(d.street),
+                ["streets"] = EncodeStreets(d.streets),
                 ["clutch"] = EncodeClutch(d.clutch),
                 ["login"] = EncodeLogin(d),
                 ["feel"] = EncodeFeel(d.settings),
@@ -574,6 +575,7 @@ namespace CallerRetroBall.Logic
                 d.courts = DecodeCourts(Arr(o, "courts"));
                 d.legacy = DecodeLegacy(Obj(o, "legacy"));
                 d.street = DecodeStreet(Obj(o, "street"));
+                d.streets = DecodeStreets(Obj(o, "streets"));
                 d.clutch = DecodeClutch(Obj(o, "clutch"));
                 DecodeLogin(d, Obj(o, "login"));
                 DecodeFeel(d.settings, Obj(o, "feel"));

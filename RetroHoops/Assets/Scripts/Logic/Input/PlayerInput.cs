@@ -34,6 +34,10 @@ namespace CallerRetroBall.Logic
         public bool LayupPressed;
         /// <summary>Play chosen from the CALL menu this frame (offense only).</summary>
         public PlayCall CallPlay;
+        /// <summary>THE STREETS: TRICK pressed (the stick picks the trick).</summary>
+        public bool TrickPressed;
+        /// <summary>THE STREETS: SHOWSTOPPER called.</summary>
+        public bool BreakerPressed;
 
         public static PlayerInput None => default;
     }

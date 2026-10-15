@@ -26,6 +26,8 @@ namespace CallerRetroBall.Logic
         public int heatUps;
         /// <summary>Street rules: defenders sent stumbling.</summary>
         public int ankleBreakers;
+        /// <summary>THE STREETS: tricks done with the TRICK button.</summary>
+        public int tricks;
         /// <summary>Phase 35: where every shot came from (made / attempted per spot).</summary>
         public ShotChartData chart = new ShotChartData();
 

@@ -258,6 +258,7 @@ namespace CallerRetroBall.Logic
             var tend = p.Tendencies;
             float dist = court.DistanceToHoop(p.Position);
             if (TryAiSkillMove(p, profile, dist)) return;
+            if (TryAiTrick(p, profile)) return;
             if ((p.Team != Setup.HumanTeam || Coaching) && ShotClock > 4f && TryPostMove(p, s, dist)) return;
             float urgency = ShotClock < 3f && Setup.Rules.shotClockSeconds < 99f ? 1f : 0f;
 

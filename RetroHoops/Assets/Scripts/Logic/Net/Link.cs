@@ -128,7 +128,7 @@ namespace CallerRetroBall.Logic
         public const string ServiceType = "retrohoops";
         public const int InputBytes = 4;
 
-        private const byte ShootPressedBit = 1, ShootHeldBit = 2, PassBit = 4, DefenseBit = 8, DunkBit = 16, LayupBit = 32;
+        private const byte ShootPressedBit = 1, ShootHeldBit = 2, PassBit = 4, DefenseBit = 8, DunkBit = 16, LayupBit = 32, TrickBit = 64, BreakerBit = 128;
 
         // ------------------------------------------------------------------ inputs
 
@@ -143,6 +143,8 @@ namespace CallerRetroBall.Logic
             if (input.DefensePressed) f |= DefenseBit;
             if (input.DunkPressed) f |= DunkBit;
             if (input.LayupPressed) f |= LayupBit;
+            if (input.TrickPressed) f |= TrickBit;
+            if (input.BreakerPressed) f |= BreakerBit;
             buffer[offset + 2] = f;
             buffer[offset + 3] = (byte)input.CallPlay;
         }
@@ -160,6 +162,8 @@ namespace CallerRetroBall.Logic
                 DefensePressed = (f & DefenseBit) != 0,
                 DunkPressed = (f & DunkBit) != 0,
                 LayupPressed = (f & LayupBit) != 0,
+                TrickPressed = (f & TrickBit) != 0,
+                BreakerPressed = (f & BreakerBit) != 0,
                 CallPlay = call <= (byte)PlayCall.PostUp ? (PlayCall)call : PlayCall.None,
             };
         }

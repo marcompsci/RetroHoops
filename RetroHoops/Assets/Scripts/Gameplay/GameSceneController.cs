@@ -159,6 +159,10 @@ namespace CallerRetroBall.Gameplay
         private bool _tapToShoot;
         private TapShoot _tap;
         private bool _shootTapped;
+        /// <summary>15 Oct 2026: THE STREETS (meters, combo, SHOWSTOPPER button); null in other modes.</summary>
+        private StreetsHud _streetsHud;
+        private bool _breakerTapped;
+        private int _bestBank;
         private int _leaper = -1;
         private float _leapStart;
         private float _leapDuration;
@@ -377,6 +381,13 @@ namespace CallerRetroBall.Gameplay
             _controls.Call.UnavailableHint = "OFFENSE";
             _hud = MatchHud.Create(setup.TeamA, setup.TeamB);
             _hud.PlayChosen += play => _pendingCall = play;
+            if (_match.StyleOn)
+            {
+                _controls.SetStreet();
+                _controls.Call.UnavailableHint = "NO BALL";
+                _streetsHud = StreetsHud.Create(setup.TeamA, setup.TeamB, setup.HumanTeam, settings != null && settings.leftHanded);
+                _streetsHud.BreakerTapped += () => _breakerTapped = true;
+            }
             // Tip-off card with tonight's court and both starting lineups (real games only; quick and skippable).
             if (!Demo && _practice == null && _tutorial == null && _horse == null && _request.Mode != GameMode.Practice && _request.Mode != GameMode.Tutorial)
             {
@@ -729,7 +740,10 @@ namespace CallerRetroBall.Gameplay
             if (_watch != null || Coaching) visible = false; // watching or coaching: nothing to steer
             _controls.SetVisible(visible);
             if (_controls2 != null) _controls2.SetVisible(visible);
+            _touchShown = visible;
         }
+
+        private bool _touchShown = true;
 
         private void UpdatePadMode()
         {
@@ -788,6 +802,7 @@ namespace CallerRetroBall.Gameplay
                 if (kb.kKey.wasPressedThisFrame) _buffer.Press(ActionButton.Shoot, Time.unscaledTime);
                 if (kb.lKey.wasPressedThisFrame) _buffer.Press(ActionButton.Defense, Time.unscaledTime);
                 if (kb.cKey.wasPressedThisFrame) _buffer.Press(ActionButton.Call, Time.unscaledTime);
+                if (kb.vKey.wasPressedThisFrame) _breakerTapped = true; // THE STREETS: SHOWSTOPPER
                 shootHeld |= kb.kKey.isPressed;
                 if (kb.kKey.wasPressedThisFrame) _shootTapped = true;
 #if UNITY_EDITOR || DEBUG
@@ -806,6 +821,7 @@ namespace CallerRetroBall.Gameplay
                 if (pad.buttonWest.wasPressedThisFrame) _buffer.Press(ActionButton.Pass, Time.unscaledTime);
                 if (pad.buttonEast.wasPressedThisFrame) _buffer.Press(ActionButton.Defense, Time.unscaledTime);
                 if (pad.buttonNorth.wasPressedThisFrame) _buffer.Press(ActionButton.Call, Time.unscaledTime);
+                if (pad.leftTrigger.wasPressedThisFrame) _breakerTapped = true; // THE STREETS: SHOWSTOPPER
                 shootHeld |= pad.buttonSouth.isPressed;
                 if (pad.buttonSouth.wasPressedThisFrame) _shootTapped = true;
             }
@@ -840,7 +856,12 @@ namespace CallerRetroBall.Gameplay
                 if (canFinish && _buffer.Consume(ActionButton.Layup, now)) input.LayupPressed = true;
                 if (!_match.HumanHasBall) { _buffer.Consume(ActionButton.Dunk, now); _buffer.Consume(ActionButton.Layup, now); }
                 _buffer.Consume(ActionButton.Defense, now);
-                if (_buffer.Consume(ActionButton.Call, now) && CanCall()) _hud.ShowCallMenu(!_hud.CallMenuOpen);
+                if (_match.StyleOn)
+                {
+                    // THE STREETS: CALL is TRICK (the stick picks which one).
+                    if (_buffer.Consume(ActionButton.Call, now) && _match.Phase == MatchPhase.Live && _match.HumanHasBall) input.TrickPressed = true;
+                }
+                else if (_buffer.Consume(ActionButton.Call, now) && CanCall()) _hud.ShowCallMenu(!_hud.CallMenuOpen);
                 if (_pendingCall != PlayCall.None)
                 {
                     input.CallPlay = _pendingCall;
@@ -859,6 +880,11 @@ namespace CallerRetroBall.Gameplay
                 if (liveOnly && _buffer.Consume(ActionButton.Dunk, now)) input.DefensePressed = true;
                 _buffer.Consume(ActionButton.Layup, now);
                 _buffer.Consume(ActionButton.Call, now);
+            }
+            if (_breakerTapped)
+            {
+                _breakerTapped = false;
+                if (_match.StyleOn) input.BreakerPressed = true;
             }
             return input;
         }
@@ -1388,6 +1414,52 @@ namespace CallerRetroBall.Gameplay
                     case MatchEventType.SkillMove:
                         OnSkillMove(e, human);
                         break;
+                    // 15 Oct 2026: THE STREETS.
+                    case MatchEventType.StreetTrick:
+                        OnStreetTrick(e, human);
+                        break;
+                    case MatchEventType.StyleBanked:
+                        if (e.Team == human || Versus) _hud.Toast(Loc.T("STYLE BANKED") + "  +" + e.Value, 1.1f);
+                        if (e.Team == human) _bestBank = Mathf.Max(_bestBank, e.Value);
+                        break;
+                    case MatchEventType.ComboLost:
+                        if (e.Team == human && e.Value >= 150) _hud.Toast(Loc.T("COMBO LOST") + "  -" + e.Value, 1f);
+                        break;
+                    case MatchEventType.BreakerReady:
+                        if (_streetsHud != null)
+                        {
+                            bool mine = e.Team == human;
+                            _streetsHud.Banner(e.Value >= 2 ? (mine ? "SHOWSTOPPER II READY" : "THEY'RE AT LEVEL II") : (mine ? "SHOWSTOPPER READY" : "THEY CAN BREAK IT"),
+                                               mine ? Theme.Gold : Theme.Pink, 1.3f);
+                            Sfx(mine ? SfxId.OnFire : SfxId.CrowdOooh, 0.8f);
+                            if (mine) Haptics.Heavy();
+                        }
+                        break;
+                    case MatchEventType.BreakerOn:
+                        if (_streetsHud != null) _streetsHud.Banner(e.Value >= 2 ? "SHOWSTOPPER II!" : "SHOWSTOPPER!", e.Team == human ? Theme.Gold : Theme.Pink, 1.4f);
+                        Sfx(SfxId.Stinger, 1f);
+                        Audio.AudioManager.Voice("SHOWSTOPPER!");
+                        SetCrowd(CrowdMood.Cheer, 1.4f);
+                        if (e.Team == human) Haptics.Heavy();
+                        break;
+                    case MatchEventType.BreakerScored:
+                        if (_streetsHud != null)
+                            _streetsHud.Banner(Loc.T("SHOWSTOPPER") + "\n+" + e.Value + " / -" + e.Value, e.Team == human ? Theme.Gold : Theme.Pink, 2f);
+                        if (!_reduceMotion)
+                        {
+                            _bursts.Spawn(HoopWorld, new Color32(0xFF, 0xD1, 0x66, 255), 40, 6f, 0.9f);
+                            _bursts.Spawn(HoopWorld, new Color32(0xC7, 0x4D, 0xFF, 255), 30, 5f, 0.8f);
+                        }
+                        _cameraRig.Shake(0.35f);
+                        Sfx(SfxId.Fanfare, 1f);
+                        SetCrowd(e.Team == human || Versus ? CrowdMood.Cheer : CrowdMood.Groan, 2.2f);
+                        if (e.Team == human) Haptics.Success();
+                        break;
+                    case MatchEventType.BreakerEnded:
+                        if (e.Team == human) _hud.Toast("SHOWSTOPPER WASTED", 1.2f);
+                        else _hud.Toast("STOPPED THE SHOWSTOPPER", 1.2f);
+                        Sfx(e.Team == human ? SfxId.Error : SfxId.CrowdCheer, 0.7f);
+                        break;
                     case MatchEventType.DefenderBeaten:
                         if (e.Team == human || Versus)
                         {
@@ -1685,6 +1757,7 @@ namespace CallerRetroBall.Gameplay
                          : _match.Controlled.Position);
             _cameraRig.Follow(_match.ToWorldCourt(follow), Mathf.Max(dt, Time.unscaledDeltaTime), snapCamera);
             _hud.Sync(_match);
+            if (_streetsHud != null) _streetsHud.Sync(_match, _touchShown && !_paused && _match.Phase != MatchPhase.Final);
             // The info line builds a string, so refresh it ~10x a second rather than every frame.
             if (Time.unscaledTime >= _nextInfoAt)
             {
@@ -1826,6 +1899,20 @@ namespace CallerRetroBall.Gameplay
         /// speed and handling come from the simulation, not from this).
         /// </summary>
         /// <summary>A skill move: a toast and a squeak, the dribble pose for your player, and secret moves get found.</summary>
+        /// <summary>THE STREETS: a trick's name and points, a little flash, and the crowd.</summary>
+        private void OnStreetTrick(MatchEvent e, int human)
+        {
+            var trick = (StreetTrick)e.Value;
+            bool ours = e.Team == human || Versus;
+            if (ours) _hud.Toast(Loc.T(MatchSimulation.TrickName(trick)) + "  +" + Mathf.RoundToInt(e.Chance), 0.9f);
+            else if (trick == StreetTrick.OffTheHead) _hud.Toast("OFF YOUR HEAD!", 0.9f);
+            if (!_reduceMotion && e.PlayerIndex >= 0)
+                _bursts.Spawn(CourtSpace.ToWorldSnapped(_match.Players[e.PlayerIndex].Position, 0.8f), new Color32(0xC7, 0x4D, 0xFF, 255),
+                              trick == StreetTrick.OffTheHead ? 14 : 6, 2.4f, 0.35f);
+            Sfx(trick == StreetTrick.OffTheHead ? SfxId.CrowdOooh : SfxId.Squeak, trick == StreetTrick.OffTheHead ? 0.9f : 0.5f);
+            if (_match.IsHumanControlled(e.PlayerIndex)) Haptics.Light();
+        }
+
         private void OnSkillMove(MatchEvent e, int human)
         {
             var kind = (SkillMoveKind)e.Value;
@@ -1912,8 +1999,9 @@ namespace CallerRetroBall.Gameplay
             return Flair.DribbleMove(_myMove, now - _moveStart);
         }
 
-        private bool CanCall() =>
-            _practice == null && _horse == null && _match.OffenseTeam == _match.Setup.HumanTeam && _match.HumanTeamHasBall
+        private bool CanCall() => _match.StyleOn
+            ? _match.Phase == MatchPhase.Live && _match.HumanHasBall
+            : _practice == null && _horse == null && _match.OffenseTeam == _match.Setup.HumanTeam && _match.HumanTeamHasBall
             && !_match.MustClear && _match.Phase == MatchPhase.Live && _match.ActivePlay == PlayCall.None;
 
         private string InfoLine()
@@ -2167,6 +2255,17 @@ namespace CallerRetroBall.Gameplay
                             }
                         }
                     }
+                }
+                if (rewarded && _request.Mode == GameMode.Streets)
+                {
+                    // 15 Oct 2026: THE STREETS record.
+                    int hTeam = _match.Setup.HumanTeam;
+                    int tricks = 0;
+                    foreach (var pl in _match.Players) if (pl.Team == hTeam) tricks += _match.Stats[pl.Index].tricks;
+                    var st = App.Career.streets ?? (App.Career.streets = new StreetsSaveData());
+                    note = Streets.ApplyResult(st, summary.HumanWon, _match.BreakersScored[hTeam], tricks, _bestBank);
+                    title = summary.HumanWon ? "YOU OWN THESE STREETS" : "TAKEN TO SCHOOL";
+                    App.OpenStreetsOnMenu = true;
                 }
                 var street = Street.FromContext(_request.ContextId);
                 if (rewarded && street != null)
@@ -3194,6 +3293,7 @@ namespace CallerRetroBall.Gameplay
             if (_photo != null || !_paused || Demo) return;
             _hud.ShowPause(false);
             _hud.SetHudVisible(false);
+            if (_streetsHud != null) _streetsHud.SetVisible(false);
             SetTouchVisible(false);
             var s = _match.Setup;
             string caption = (s.TeamA?.abbreviation ?? "HOME") + " " + _match.Score[0] + "-" + _match.Score[1] + " " + (s.TeamB?.abbreviation ?? "AWAY")
@@ -3202,6 +3302,7 @@ namespace CallerRetroBall.Gameplay
             {
                 _photo = null;
                 _hud.SetHudVisible(true);
+                if (_streetsHud != null) _streetsHud.SetVisible(true);
                 _hud.ShowPause(true);
             });
         }
