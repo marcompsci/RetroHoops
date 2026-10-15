@@ -100,6 +100,21 @@ namespace CallerRetroBall.Logic
                     case MatchEventType.EuroStep:
                         Offer(2, Pick("euro", who + " WITH THE EURO STEP!", "SIDE STEP, " + who + "! BEAUTIFUL!"));
                         break;
+                    // 15 Oct 2026: THE STREETS.
+                    case MatchEventType.StreetTrick:
+                        if (e.Value == (int)StreetTrick.OffTheHead) Offer(5, Pick("head", "OFF HIS HEAD! " + who + " IS DISRESPECTFUL!", "BOUNCED IT OFF HIS DOME! " + who + "!", "SOMEBODY CHECK ON HIM! " + who + " USED HIS HEAD!"));
+                        else if (e.Value == (int)StreetTrick.OffTheGlass) Offer(4, Pick("selfoop", who + " OFF THE GLASS TO HIMSELF!", "HE DOESN'T NEED A PASSER! " + who + "!"));
+                        else if (e.Chance >= 150f) Offer(2, Pick("trick", who + " IS PUTTING ON A SHOW!", "LOOK AT THE HANDLE ON " + who + "!", who + " WITH THE WHOLE BAG!"));
+                        break;
+                    case MatchEventType.BreakerOn:
+                        Offer(5, Pick("breakeron", team + " CALLED THE SHOWSTOPPER!", "HERE IT COMES! SHOWSTOPPER FOR " + team + "!", "EVERYBODY STAND UP! " + team + " WANT THE SHOWSTOPPER!"));
+                        break;
+                    case MatchEventType.BreakerScored:
+                        Offer(6, Pick("breaker", "SHOWSTOPPER! " + team + " TAKE " + e.Value + " OFF THE BOARD!", "THAT'S A SHOWSTOPPER! THE GAME JUST FLIPPED!", "OH MY! " + team + " BROKE IT WIDE OPEN!"));
+                        break;
+                    case MatchEventType.BreakerEnded:
+                        Offer(4, Pick("breakerend", "SHOWSTOPPER STOPPED!", "THEY WASTED THE SHOWSTOPPER!"));
+                        break;
                     case MatchEventType.GameOver:
                         bool buzzer = m.Setup.Rules != null && m.Setup.Rules.useGameClock && m.GameClock <= 0.5f;
                         int w = m.Winner;

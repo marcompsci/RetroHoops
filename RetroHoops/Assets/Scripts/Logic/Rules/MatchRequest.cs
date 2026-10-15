@@ -93,6 +93,8 @@ namespace CallerRetroBall.Logic
         public int StartWithBall = -1;
         /// <summary>Phase 40 SMART DIFFICULTY: added to the opponents' release accuracy (-0.05..+0.05; 0 = off).</summary>
         public float AiEdge;
+        /// <summary>15 Oct 2026: THE STREETS' style rules (tricks, meter, SHOWSTOPPER) in a 2-player, TWO PHONES or LIVE game.</summary>
+        public bool StreetsStyle;
 
         public static MatchRequest QuickCallDefault(ContentCatalog c)
         {

@@ -497,6 +497,7 @@ namespace CallerRetroBall.UI
         /// <summary>PLAY: every way to start a game.</summary>
         private void ShowPlayMenu()
         {
+            _streetsStyle = false;
             var column = OpenOverlay("PLAY", out var footer);
             var career = App.Career;
 
@@ -740,7 +741,8 @@ namespace CallerRetroBall.UI
             var mineTeam = c.Team(CustomTeams.TeamId);
             if (mineTeam != null) league.Insert(0, mineTeam);
             int p1 = 0, p2 = 1;
-            var column = OpenOverlay("2 PLAYER", out var footer);
+            bool streets = _streetsStyle;
+            var column = OpenOverlay(streets ? "STREETS: 2 PLAYER" : "2 PLAYER", out var footer);
             TextMeshProUGUI p1Label = null, p2Label = null;
             UiKit.Size(UiKit.Label(column, "PLAYER 1", 34f, Theme.Gold, TextAlignmentOptions.Center, true), 50f);
             p1Label = UiKit.Label(column, "", 40f, Theme.Cream, TextAlignmentOptions.Center, true);
@@ -758,7 +760,7 @@ namespace CallerRetroBall.UI
                 "Controllers: with two, P1 gets the first; with one, it's P2's (P1 uses touch).\n" +
                 "Keyboard: P1 WASD · K J L C, P2 arrows · Num1 Num2 Num3 Num0.",
                 26f, Theme.Muted), 170f);
-            UiKit.Button(footer, "BACK", ShowPlayMenu, ButtonStyle.Ghost, 130f, 44f);
+            UiKit.Button(footer, "BACK", () => { if (streets) ShowStreets(); else ShowPlayMenu(); }, ButtonStyle.Ghost, 130f, 44f);
             UiKit.Button(footer, "TIP OFF", () =>
             {
                 var home = league[p1];
@@ -770,6 +772,16 @@ namespace CallerRetroBall.UI
                     CourtId = home.homeCourtId,
                     DifficultyId = App.Career.settings.difficultyId,
                 };
+                if (streets)
+                {
+                    var r = App.PendingMatch;
+                    r.StreetsStyle = true;
+                    r.StreetRules = true;
+                    r.RulesId = Streets.RulesId;
+                    r.TeamSize = Streets.TeamSize;
+                    var courts = Streets.CourtList(c);
+                    if (courts.Count > 0) r.CourtId = courts[(int)((uint)System.Environment.TickCount % (uint)courts.Count)].id;
+                }
                 SceneFlow.GoTo(SceneNames.Game);
             }, ButtonStyle.Primary, 130f);
 

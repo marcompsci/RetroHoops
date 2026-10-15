@@ -16,6 +16,8 @@ namespace CallerRetroBall.Logic
         Halo = 4,
         /// <summary>Stick at the rim, nobody in the way: roll it down the arm and go.</summary>
         RollTheArm = 5,
+        /// <summary>Phase 2: driving at the rim from close range: throw it off the backboard and finish your own alley-oop.</summary>
+        OffTheGlass = 6,
     }
 
     /// <summary>
@@ -51,6 +53,7 @@ namespace CallerRetroBall.Logic
                 case StreetTrick.OffTheHead: return "OFF THE HEAD!";
                 case StreetTrick.Halo: return "HALO";
                 case StreetTrick.RollTheArm: return "ROLL THE ARM";
+                case StreetTrick.OffTheGlass: return "OFF THE GLASS!";
                 default: return "";
             }
         }
@@ -65,6 +68,7 @@ namespace CallerRetroBall.Logic
                 case StreetTrick.OffTheHead: return 240;
                 case StreetTrick.Halo: return 110;
                 case StreetTrick.RollTheArm: return 90;
+                case StreetTrick.OffTheGlass: return 260;
                 default: return 0;
             }
         }
@@ -132,6 +136,7 @@ namespace CallerRetroBall.Logic
                     var toD = Players[d].Position - p.Position;
                     if (toD.SqrMagnitude > 0.0001f && Vec2.Dot(toD.Normalized, h) > 0.3f) return StreetTrick.OffTheHead;
                 }
+                if (CanGlassToss(me)) return StreetTrick.OffTheGlass;
                 return StreetTrick.RollTheArm;
             }
             return StreetTrick.BehindBack;
@@ -152,8 +157,13 @@ namespace CallerRetroBall.Logic
             _trickReadyAt[me] = Time + TrickCooldown;
 
             int victim = SkillTarget(p);
+            if (trick == StreetTrick.OffTheGlass && !CanGlassToss(me)) trick = StreetTrick.RollTheArm;
+            StartTrickBall(me, trick, victim);
             switch (trick)
             {
+                case StreetTrick.OffTheGlass:
+                    GlassToss(me);
+                    break;
                 case StreetTrick.BehindBack: DoSkillMove(me, SkillMoveKind.Hesi); break;
                 case StreetTrick.ThroughLegs: DoSkillMove(me, SkillMoveKind.Jab); break;
                 case StreetTrick.RollTheArm: DoSkillMove(me, SkillMoveKind.Spin); break;
@@ -176,7 +186,7 @@ namespace CallerRetroBall.Logic
             int repeats = _trickRepeats[(int)trick]++;
             int team = p.Team;
             float pts = TrickPoints(trick) * (1f + 0.25f * Math.Min(ComboCount[team], 8)) / (1 << Math.Min(repeats, 3));
-            if (trick != StreetTrick.Halo && victim < 0) pts *= 0.6f; // nobody to show up
+            if (trick != StreetTrick.Halo && trick != StreetTrick.OffTheGlass && victim < 0) pts *= 0.6f; // nobody to show up
             int add = Math.Max(5, (int)pts);
             ComboPoints[team] += add;
             ComboCount[team]++;
@@ -202,6 +212,8 @@ namespace CallerRetroBall.Logic
             float roll = _rng.NextFloat();
             var trick = roll < 0.3f ? StreetTrick.BehindBack : roll < 0.55f ? StreetTrick.ThroughLegs : roll < 0.75f ? StreetTrick.RollTheArm
                       : roll < 0.9f ? StreetTrick.Halo : StreetTrick.OffTheHead;
+            // Near the rim with a finisher: sometimes off the glass to himself.
+            if (CanGlassToss(p.Index) && Setup.Court.DistanceToHoop(p.Position) < 4.5f && _rng.NextFloat() < 0.3f) trick = StreetTrick.OffTheGlass;
             DoTrick(p.Index, trick);
             return false;
         }
@@ -329,6 +341,168 @@ namespace CallerRetroBall.Logic
                 }
             }
             if (Phase == MatchPhase.Live) TryAiBreaker();
+        }
+    
+        // ------------------------------------------------------------------ phase 2: off the glass, and the ball in tricks
+
+        public const float GlassMinDistance = 1.8f, GlassMaxDistance = 6.2f;
+        private bool _glassToss, _glassHit;
+        private float[] _trickBallStart;
+        private StreetTrick[] _trickBallKind;
+        private int[] _trickBallVictim;
+
+        /// <summary>True while an OFF THE GLASS toss is in the air.</summary>
+        public bool GlassTossInFlight => _glassToss && Ball.Phase == BallPhase.Pass;
+
+        /// <summary>Close enough (but not under the rim), on the move, and able to finish above it.</summary>
+        public bool CanGlassToss(int me)
+        {
+            if (!StyleOn || me < 0 || me >= Players.Length) return false;
+            var p = Players[me];
+            if (MustClear || MustInbound || Setup.TeammatesOnlyPass) return false;
+            float d = Setup.Court.DistanceToHoop(p.Position);
+            return d >= GlassMinDistance && d <= GlassMaxDistance && p.Def.attributes.finishing >= Setup.Pass.alleyOopMinFinishing;
+        }
+
+        /// <summary>Throws it off the backboard: the ball flies to the glass, kisses it, and comes back to the thrower.</summary>
+        private void GlassToss(int me)
+        {
+            var p = Players[me];
+            CancelCharge();
+            CancelDrive();
+            Ball.Phase = BallPhase.Pass;
+            Ball.HolderIndex = -1;
+            Ball.PasserIndex = me;
+            Ball.TargetIndex = me;
+            Ball.PassType = PassType.Chest;
+            Ball.FlightFrom = p.Position;
+            Ball.FlightTo = Setup.Court.Hoop;
+            Ball.FlightTime = 0f;
+            Ball.Position = p.Position;
+            Ball.Height = 1.8f;
+            _alleyOop = true;
+            _oopToRunner = false;
+            _glassToss = true;
+            _glassHit = false;
+            Events.Add(new MatchEvent(MatchEventType.PassThrown, me, p.Team, (int)PassType.Chest));
+        }
+
+        private void StepGlassToss(float dt)
+        {
+            const float speed = 10f;
+            int me = Ball.TargetIndex;
+            var p = Players[me];
+            Ball.FlightTime += dt;
+            float top = RimHeight + 0.9f;
+            if (!_glassHit)
+            {
+                var glass = Setup.Court.Hoop;
+                Ball.Position = Vec2.MoveTowards(Ball.Position, glass, speed * dt);
+                float total = Math.Max(0.1f, Vec2.Distance(Ball.FlightFrom, glass));
+                float progress = Math.Min(1f, Vec2.Distance(Ball.FlightFrom, Ball.Position) / total);
+                Ball.Height = 1.8f + (top - 1.8f) * progress;
+                if (Vec2.Distance(Ball.Position, glass) <= 0.05f)
+                {
+                    _glassHit = true;
+                    Ball.FlightFrom = Ball.Position;
+                    Events.Add(new MatchEvent(MatchEventType.BankKiss, me, p.Team));
+                }
+            }
+            else
+            {
+                Ball.Position = Vec2.MoveTowards(Ball.Position, p.Position, speed * 0.85f * dt);
+                Ball.Height = Math.Max(Setup.Pass.alleyOopCatchHeight, Ball.Height - 1.2f * dt);
+                if (Vec2.Distance(Ball.Position, p.Position) <= Setup.Pass.catchRadius)
+                {
+                    _glassToss = false;
+                    _lastCatcher = me;
+                    _lastCatchTime = Time;
+                    // Still at the rim and on your feet: throw it down in the air. Otherwise you just catch it.
+                    if (Time >= p.StunnedUntil && Setup.Court.DistanceToHoop(p.Position) <= Setup.Pass.alleyOopRange + 1.2f)
+                    {
+                        FinishAlleyOop(me, -1);
+                        return;
+                    }
+                    _alleyOop = false;
+                    GiveBall(me, announce: false, fromCheck: false);
+                    return;
+                }
+            }
+            if (Ball.FlightTime > 2.5f)
+            {
+                _glassToss = false;
+                _alleyOop = false;
+                Ball.Phase = BallPhase.Loose;
+                Ball.Velocity = (p.Position - Ball.Position).Normalized * 2f;
+                Ball.VerticalVelocity = 0f;
+                Events.Add(new MatchEvent(MatchEventType.BallLoose, -1, -1));
+            }
+        }
+
+        private void StartTrickBall(int me, StreetTrick trick, int victim)
+        {
+            if (_trickBallStart == null)
+            {
+                _trickBallStart = new float[Players.Length];
+                _trickBallKind = new StreetTrick[Players.Length];
+                _trickBallVictim = new int[Players.Length];
+                for (int i = 0; i < Players.Length; i++) _trickBallStart[i] = -99f;
+            }
+            _trickBallStart[me] = Time;
+            _trickBallKind[me] = trick;
+            _trickBallVictim[me] = victim;
+        }
+
+        public const float TrickBallSeconds = 0.5f;
+
+        /// <summary>The trick the holder's ball is doing right now (None when it's a normal dribble).</summary>
+        public StreetTrick TrickBallOf(int player) =>
+            _trickBallStart != null && player >= 0 && player < Players.Length && Time - _trickBallStart[player] < TrickBallSeconds
+                ? _trickBallKind[player] : StreetTrick.None;
+
+        /// <summary>Where the ball is during a trick (around the back, between the legs, off the defender's head...).</summary>
+        private bool TrickBall(PlayerRuntimeState holder)
+        {
+            var kind = TrickBallOf(holder.Index);
+            if (kind == StreetTrick.None || kind == StreetTrick.OffTheGlass) return false;
+            float t = Math.Min(1f, (Time - _trickBallStart[holder.Index]) / TrickBallSeconds);
+            var toHoop = Setup.Court.Hoop - holder.Position;
+            var fwd = toHoop.SqrMagnitude > 0.0001f ? toHoop.Normalized : new Vec2(0f, -1f);
+            var side = new Vec2(-fwd.y, fwd.x);
+            float pi = (float)Math.PI;
+            float sin = (float)Math.Sin(pi * t), cos = (float)Math.Cos(pi * t);
+            switch (kind)
+            {
+                case StreetTrick.BehindBack:
+                    Ball.Position = holder.Position + side * (0.45f * cos) - fwd * (0.4f * sin);
+                    Ball.Height = 0.85f;
+                    break;
+                case StreetTrick.ThroughLegs:
+                    Ball.Position = holder.Position + side * (0.35f * cos) + fwd * (0.05f * sin);
+                    Ball.Height = 0.9f - 0.65f * sin;
+                    break;
+                case StreetTrick.Halo:
+                {
+                    float a = 2f * pi * t;
+                    Ball.Position = holder.Position + side * (0.45f * (float)Math.Cos(a)) + fwd * (0.45f * (float)Math.Sin(a));
+                    Ball.Height = 1.05f;
+                    break;
+                }
+                case StreetTrick.OffTheHead:
+                {
+                    int v = _trickBallVictim[holder.Index];
+                    var target = v >= 0 ? Players[v].Position : holder.Position + fwd * 0.9f;
+                    Ball.Position = holder.Position + (target - holder.Position) * sin;
+                    Ball.Height = 1.1f + 1.3f * sin;
+                    break;
+                }
+                default: // RollTheArm: up the arm, across the shoulders, down the other
+                    Ball.Position = holder.Position + side * (0.4f * cos) + fwd * 0.15f;
+                    Ball.Height = 1.2f + 0.55f * sin;
+                    break;
+            }
+            Ball.Velocity = holder.Motion.velocity;
+            return true;
         }
     }
 }

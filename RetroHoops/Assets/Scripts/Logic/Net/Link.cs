@@ -31,6 +31,8 @@ namespace CallerRetroBall.Logic
     {
         public string AppVersion = "", Name = "", TeamData = "", CourtId = "";
         public int Rating = LiveMode.StartRating;
+        /// <summary>15 Oct 2026: "" for a normal game, <see cref="LinkSetup.StreetsStyle"/> for LIVE STREETS.</summary>
+        public string Style = "";
     }
 
     /// <summary>What the host picked; both phones build the same match from it.</summary>
@@ -59,6 +61,10 @@ namespace CallerRetroBall.Logic
         /// <summary>Couch Cup on two phones: the host's cup game ("couch:3"), and the two entrants' names. Empty otherwise.</summary>
         public string Cup = "", HomeLabel = "", AwayLabel = "";
         public bool IsCup => !string.IsNullOrEmpty(Cup);
+        /// <summary>15 Oct 2026: "streets" = a THE STREETS game (to 21, tricks, meter, SHOWSTOPPER).</summary>
+        public string Style = "";
+        public const string StreetsStyle = "streets";
+        public bool IsStreets => Style == StreetsStyle;
 
         public const string HomeId = "team.link.home", AwayId = "team.link.away";
 
@@ -101,10 +107,13 @@ namespace CallerRetroBall.Logic
             HomeTeamId = HomeId,
             AwayTeamId = AwayId,
             CourtId = CourtId,
-            RulesId = string.IsNullOrEmpty(RulesId) ? DefaultContent.DefaultRulesId : RulesId,
+            RulesId = IsStreets ? Streets.RulesId : string.IsNullOrEmpty(RulesId) ? DefaultContent.DefaultRulesId : RulesId,
             DifficultyId = string.IsNullOrEmpty(DifficultyId) ? DefaultContent.DefaultDifficultyId : DifficultyId,
             Seed = Seed == 0 ? 1u : Seed,
             ContextId = "link",
+            StreetsStyle = IsStreets,
+            StreetRules = IsStreets,
+            TeamSize = IsStreets ? Streets.TeamSize : 0,
         };
     }
 
@@ -286,18 +295,21 @@ namespace CallerRetroBall.Logic
             Kv("awayname", s.AwayLabel);
             Kv("homedata", s.HomeTeamData);
             Kv("awaydata", s.AwayTeamData);
+            Kv("style", s.Style);
             return Text(LinkMessage.Setup, sb.ToString());
         }
 
         public static byte[] HelloMessage(LiveOffer o) =>
-            Text(LinkMessage.Hello, (o.AppVersion ?? "").Replace('\n', ' ') + "\n" + (o.Name ?? "").Replace('\n', ' ') + "\n" + o.Rating + "\n" + (o.TeamData ?? "").Replace('\n', ' '));
+            Text(LinkMessage.Hello, (o.AppVersion ?? "").Replace('\n', ' ') + "\n" + (o.Name ?? "").Replace('\n', ' ') + "\n" + o.Rating + "\n" + (o.TeamData ?? "").Replace('\n', ' ')
+                 + "\n" + (o.Style ?? ""));
 
         public static LiveOffer ReadHello(byte[] m)
         {
             if (m == null || m.Length < 1 || m[0] != (byte)LinkMessage.Hello) return null;
             var parts = ReadText(m).Split('\n');
             if (parts.Length < 4) return null;
-            return new LiveOffer { AppVersion = parts[0], Name = parts[1], Rating = int.TryParse(parts[2], out int r) ? r : LiveMode.StartRating, TeamData = parts[3] };
+            return new LiveOffer { AppVersion = parts[0], Name = parts[1], Rating = int.TryParse(parts[2], out int r) ? r : LiveMode.StartRating, TeamData = parts[3],
+                                   Style = parts.Length > 4 && parts[4] == LinkSetup.StreetsStyle ? parts[4] : "" };
         }
 
         /// <summary>The setup as sent to a watching phone (a different message type, so a watcher never answers it as a player).</summary>
@@ -339,6 +351,7 @@ namespace CallerRetroBall.Logic
                     case "awayname": s.AwayLabel = v; break;
                     case "homedata": s.HomeTeamData = v; break;
                     case "awaydata": s.AwayTeamData = v; break;
+                    case "style": s.Style = v == LinkSetup.StreetsStyle ? v : ""; break;
                 }
             }
             return s;
@@ -587,6 +600,8 @@ namespace CallerRetroBall.Logic
                             HomeTeamData = _live.TeamData, AwayTeamData = guest.TeamData,
                             Delay = LiveMode.InputDelay, HostRating = Math.Max(1, _live.Rating), GuestRating = Math.Max(1, guest.Rating),
                             Session = LinkProtocol.NewSession(),
+                            // LIVE STREETS players only meet each other (their own Game Center group), so the host's style is both.
+                            Style = _live.Style == LinkSetup.StreetsStyle ? LinkSetup.StreetsStyle : "",
                         };
                         t.Send(LinkProtocol.SetupMessage(Setup));
                         _sentSetup = true;

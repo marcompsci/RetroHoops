@@ -113,12 +113,12 @@ namespace CallerRetroBall.Logic
                 Rules = c.Find(c.Rules, rulesId) ?? new GameRulesDef(),
                 FullCourt = full,
                 TeamSize = full ? Logic.FullCourt.TeamSize : (request.TeamSize >= 2 && request.TeamSize <= 4 ? request.TeamSize : MatchSimulation.PlayersPerTeam),
-                StreetRules = request.StreetRules || request.Mode == GameMode.Streets,
-                StyleMeter = request.Mode == GameMode.Streets && !full,
+                StreetRules = request.StreetRules || request.Mode == GameMode.Streets || request.StreetsStyle,
+                StyleMeter = (request.Mode == GameMode.Streets || request.StreetsStyle) && !full,
                 Court = full ? Logic.FullCourt.Geometry() : CourtGeometry.Default,
                 // Half-court 3-on-3 is winners' ball; Full Court and 1-on-1 alternate possessions.
                 // THE STREETS: the ball changes hands after a bucket.
-                WinnersBall = !full && !drills && request.Mode != GameMode.OneOnOne && request.Mode != GameMode.Streets,
+                WinnersBall = !full && !drills && request.Mode != GameMode.OneOnOne && request.Mode != GameMode.Streets && !request.StreetsStyle,
                 ArchetypeLookup = c.ArchetypeById,
                 Difficulty = c.Difficulty(request.DifficultyId),
                 Seed = request.Seed != 0 ? request.Seed : 1,
@@ -584,6 +584,7 @@ namespace CallerRetroBall.Logic
             if (Phase == MatchPhase.Final || player < 0 || player >= Players.Length || _finalPending) return;
             CancelCharge();
             _alleyOop = false;
+            _glassToss = false;
             _reboundable = false;
             _lastShotWasMiss = false;
             OffenseTeam = Players[player].Team;
@@ -630,6 +631,7 @@ namespace CallerRetroBall.Logic
                     if (IsBenched(p.Index)) p.Motion = new MotionState(BenchSpot(p), Facing8.S);
             CancelCharge();
             _alleyOop = false;
+            _glassToss = false;
             EndPlay();
             ResetMatchups();
             GiveBall(Index(offenseTeam, 0), announce: false, fromCheck: true);
@@ -654,6 +656,7 @@ namespace CallerRetroBall.Logic
         {
             CancelCharge();
             _alleyOop = false;
+            _glassToss = false;
             _nextOffense = nextOffense;
             Phase = MatchPhase.DeadBall;
             PhaseTimer = seconds;
@@ -1251,10 +1254,16 @@ namespace CallerRetroBall.Logic
             Ball.Height = Ball.HolderIndex == ChargingIndex
                 ? 1.6f + 0.6f * Math.Min(1f, ChargeMeter)
                 : BallPhysics.DribbleHeight(Ball.DribbleTime, Setup.Ball);
+            if (StyleOn && Ball.HolderIndex != ChargingIndex) TrickBall(holder);
         }
 
         private void StepPass(float dt)
         {
+            if (_glassToss)
+            {
+                StepGlassToss(dt);
+                return;
+            }
             var t = Setup.Pass;
             float speed = PassModel.Speed(Ball.PassType, t);
             Ball.FlightTime += dt;
@@ -1294,6 +1303,7 @@ namespace CallerRetroBall.Logic
                     }
                 }
                 _alleyOop = false;
+            _glassToss = false;
                 GiveBall(Ball.TargetIndex, announce: false, fromCheck: false);
                 return;
             }
@@ -1302,6 +1312,7 @@ namespace CallerRetroBall.Logic
             {
                 // Safety: a pass that never connects becomes a loose ball.
                 _alleyOop = false;
+            _glassToss = false;
                 Ball.Phase = BallPhase.Loose;
                 Ball.Velocity = (goal - Ball.Position).Normalized * 2f;
                 Ball.VerticalVelocity = 0f;

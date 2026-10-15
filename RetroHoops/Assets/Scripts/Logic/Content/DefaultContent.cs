@@ -682,7 +682,7 @@ namespace CallerRetroBall.Logic
                 beyondArcPoints = 3,
             });
             // 15 Oct 2026: THE STREETS (first to 21, win by two, no clock).
-            c.Rules.Add(Streets.Rules());
+            foreach (var r in Streets.AllRules()) c.Rules.Add(r);
             c.Rules.Add(new GameRulesDef
             {
                 // The Park: first to 15 by 1s and 2s, win by two, make it take it.

@@ -108,6 +108,12 @@ namespace CallerRetroBall.Gameplay
             var points = LivePoints.Record(live, System.DateTime.UtcNow, outcome != Backend.Outcome.Quit, won, live.rating, theirRating,
                                            _match.Score[LocalTeam], _match.Time);
             string pointsLine = "\n" + Loc.T("LIVE POINTS") + " " + LivePoints.Total(live) + " (+" + points.Total + ")  ·  " + points.Describe();
+            if (_liveSetup.IsStreets && outcome != Backend.Outcome.Quit)
+            {
+                var st = App.Career.streets ?? (App.Career.streets = new StreetsSaveData());
+                if (won) st.liveWins++; else st.liveLosses++;
+                pointsLine += "\n" + Loc.T("LIVE STREETS") + " " + st.liveWins + "-" + st.liveLosses;
+            }
             if (_serverMatchKey != null)
             {
                 // Rated on the Retro Hoops Live server: it changes ratings only when both phones' reports agree.
@@ -385,7 +391,10 @@ namespace CallerRetroBall.Gameplay
             {
                 _controls.SetStreet();
                 _controls.Call.UnavailableHint = "NO BALL";
-                _streetsHud = StreetsHud.Create(setup.TeamA, setup.TeamB, setup.HumanTeam, settings != null && settings.leftHanded);
+                // The guest phone in TWO PHONES / LIVE plays team B.
+                int streetsTeam = _link != null && _link.Seat == 1 ? 1 : setup.HumanTeam;
+                _streetsHud = StreetsHud.Create(setup.TeamA, setup.TeamB, streetsTeam, settings != null && settings.leftHanded);
+                if (_controls2 != null) _controls2.SetStreet();
                 _streetsHud.BreakerTapped += () => _breakerTapped = true;
             }
             // Tip-off card with tonight's court and both starting lineups (real games only; quick and skippable).
@@ -947,7 +956,16 @@ namespace CallerRetroBall.Gameplay
                 if (finish && _buffer2.Consume(ActionButton.Dunk, now)) input.DunkPressed = true;
                 if (finish && _buffer2.Consume(ActionButton.Layup, now)) input.LayupPressed = true;
                 _buffer2.Consume(ActionButton.Defense, now);
-                if (callPressed && teamHasBall && _match.Phase == MatchPhase.Live && _match.ActivePlay == PlayCall.None) input.CallPlay = PlayCall.PickAndRoll;
+                if (_match.StyleOn)
+                {
+                    // Player 2 has no SHOWSTOPPER button: TRICK calls it when their meter is full.
+                    if (callPressed && _match.Phase == MatchPhase.Live)
+                    {
+                        if (_match.CanCallBreaker(team)) input.BreakerPressed = true;
+                        else if (hasBall) input.TrickPressed = true;
+                    }
+                }
+                else if (callPressed && teamHasBall && _match.Phase == MatchPhase.Live && _match.ActivePlay == PlayCall.None) input.CallPlay = PlayCall.PickAndRoll;
             }
             else if (_match.Phase == MatchPhase.Live)
             {
@@ -981,6 +999,8 @@ namespace CallerRetroBall.Gameplay
                 _linkCarry.DefensePressed |= local.DefensePressed;
                 _linkCarry.DunkPressed |= local.DunkPressed;
                 _linkCarry.LayupPressed |= local.LayupPressed;
+                _linkCarry.TrickPressed |= local.TrickPressed;
+                _linkCarry.BreakerPressed |= local.BreakerPressed;
                 if (local.CallPlay != PlayCall.None) _linkCarry.CallPlay = local.CallPlay;
 
                 _accumulator += Mathf.Min(Time.unscaledDeltaTime, FixedStep * MaxStepsPerFrame);
@@ -988,6 +1008,7 @@ namespace CallerRetroBall.Gameplay
                 {
                     _link.QueueLocal(_linkCarry);
                     _linkCarry.ShootPressed = _linkCarry.PassPressed = _linkCarry.DefensePressed = _linkCarry.DunkPressed = _linkCarry.LayupPressed = false;
+                    _linkCarry.TrickPressed = _linkCarry.BreakerPressed = false;
                     _linkCarry.CallPlay = PlayCall.None;
                     _accumulator -= FixedStep;
                 }
@@ -1325,7 +1346,8 @@ namespace CallerRetroBall.Gameplay
                 if (finish && _buffer.Consume(ActionButton.Dunk, now)) input.DunkPressed = true;
                 if (finish && _buffer.Consume(ActionButton.Layup, now)) input.LayupPressed = true;
                 _buffer.Consume(ActionButton.Defense, now);
-                if (callPressed && teamHasBall && _match.Phase == MatchPhase.Live && _match.ActivePlay == PlayCall.None) input.CallPlay = PlayCall.PickAndRoll;
+                if (_match.StyleOn) { if (callPressed && hasBall && _match.Phase == MatchPhase.Live) input.TrickPressed = true; }
+                else if (callPressed && teamHasBall && _match.Phase == MatchPhase.Live && _match.ActivePlay == PlayCall.None) input.CallPlay = PlayCall.PickAndRoll;
             }
             else if (_match.Phase == MatchPhase.Live)
             {
@@ -1334,6 +1356,11 @@ namespace CallerRetroBall.Gameplay
                 if (_buffer.Consume(ActionButton.Pass, now)) input.PassPressed = true;
                 if (_buffer.Consume(ActionButton.Dunk, now)) input.DefensePressed = true;
                 _buffer.Consume(ActionButton.Layup, now);
+            }
+            if (_breakerTapped)
+            {
+                _breakerTapped = false;
+                if (_match.StyleOn) input.BreakerPressed = true;
             }
             return input;
         }
@@ -1352,7 +1379,7 @@ namespace CallerRetroBall.Gameplay
             else _controls.SetLabels("BLOCK", "SWITCH", "STEAL");
             bool canShoot = !offense || (hasBall && !_match.MustClear);
             _controls.SetAvailability(canShoot, true, canShoot, canShoot, offense);
-            _controls.Call.SetLabel("P&R");
+            _controls.Call.SetLabel(_match.StyleOn ? "TRICK" : "P&R");
         }
 
         private Commentary _mic;
@@ -1379,6 +1406,7 @@ namespace CallerRetroBall.Gameplay
             }
             int human = _match.Setup.HumanTeam;
             float stop = 0f;
+            int streetsTeam = _link != null && _link.Seat == 1 ? 1 : human; // THE STREETS: the guest phone is team B
             foreach (var e in _match.Events)
             {
                 NoteHighlight(e);
@@ -1416,19 +1444,19 @@ namespace CallerRetroBall.Gameplay
                         break;
                     // 15 Oct 2026: THE STREETS.
                     case MatchEventType.StreetTrick:
-                        OnStreetTrick(e, human);
+                        OnStreetTrick(e, streetsTeam);
                         break;
                     case MatchEventType.StyleBanked:
-                        if (e.Team == human || Versus) _hud.Toast(Loc.T("STYLE BANKED") + "  +" + e.Value, 1.1f);
-                        if (e.Team == human) _bestBank = Mathf.Max(_bestBank, e.Value);
+                        if (e.Team == streetsTeam || Versus) _hud.Toast(Loc.T("STYLE BANKED") + "  +" + e.Value, 1.1f);
+                        if (e.Team == streetsTeam) _bestBank = Mathf.Max(_bestBank, e.Value);
                         break;
                     case MatchEventType.ComboLost:
-                        if (e.Team == human && e.Value >= 150) _hud.Toast(Loc.T("COMBO LOST") + "  -" + e.Value, 1f);
+                        if (e.Team == streetsTeam && e.Value >= 150) _hud.Toast(Loc.T("COMBO LOST") + "  -" + e.Value, 1f);
                         break;
                     case MatchEventType.BreakerReady:
                         if (_streetsHud != null)
                         {
-                            bool mine = e.Team == human;
+                            bool mine = e.Team == streetsTeam;
                             _streetsHud.Banner(e.Value >= 2 ? (mine ? "SHOWSTOPPER II READY" : "THEY'RE AT LEVEL II") : (mine ? "SHOWSTOPPER READY" : "THEY CAN BREAK IT"),
                                                mine ? Theme.Gold : Theme.Pink, 1.3f);
                             Sfx(mine ? SfxId.OnFire : SfxId.CrowdOooh, 0.8f);
@@ -1436,15 +1464,15 @@ namespace CallerRetroBall.Gameplay
                         }
                         break;
                     case MatchEventType.BreakerOn:
-                        if (_streetsHud != null) _streetsHud.Banner(e.Value >= 2 ? "SHOWSTOPPER II!" : "SHOWSTOPPER!", e.Team == human ? Theme.Gold : Theme.Pink, 1.4f);
+                        if (_streetsHud != null) _streetsHud.Banner(e.Value >= 2 ? "SHOWSTOPPER II!" : "SHOWSTOPPER!", e.Team == streetsTeam ? Theme.Gold : Theme.Pink, 1.4f);
                         Sfx(SfxId.Stinger, 1f);
                         Audio.AudioManager.Voice("SHOWSTOPPER!");
                         SetCrowd(CrowdMood.Cheer, 1.4f);
-                        if (e.Team == human) Haptics.Heavy();
+                        if (e.Team == streetsTeam) Haptics.Heavy();
                         break;
                     case MatchEventType.BreakerScored:
                         if (_streetsHud != null)
-                            _streetsHud.Banner(Loc.T("SHOWSTOPPER") + "\n+" + e.Value + " / -" + e.Value, e.Team == human ? Theme.Gold : Theme.Pink, 2f);
+                            _streetsHud.Banner(Loc.T("SHOWSTOPPER") + "\n+" + e.Value + " / -" + e.Value, e.Team == streetsTeam ? Theme.Gold : Theme.Pink, 2f);
                         if (!_reduceMotion)
                         {
                             _bursts.Spawn(HoopWorld, new Color32(0xFF, 0xD1, 0x66, 255), 40, 6f, 0.9f);
@@ -1452,13 +1480,13 @@ namespace CallerRetroBall.Gameplay
                         }
                         _cameraRig.Shake(0.35f);
                         Sfx(SfxId.Fanfare, 1f);
-                        SetCrowd(e.Team == human || Versus ? CrowdMood.Cheer : CrowdMood.Groan, 2.2f);
-                        if (e.Team == human) Haptics.Success();
+                        SetCrowd(e.Team == streetsTeam || Versus ? CrowdMood.Cheer : CrowdMood.Groan, 2.2f);
+                        if (e.Team == streetsTeam) Haptics.Success();
                         break;
                     case MatchEventType.BreakerEnded:
-                        if (e.Team == human) _hud.Toast("SHOWSTOPPER WASTED", 1.2f);
+                        if (e.Team == streetsTeam) _hud.Toast("SHOWSTOPPER WASTED", 1.2f);
                         else _hud.Toast("STOPPED THE SHOWSTOPPER", 1.2f);
-                        Sfx(e.Team == human ? SfxId.Error : SfxId.CrowdCheer, 0.7f);
+                        Sfx(e.Team == streetsTeam ? SfxId.Error : SfxId.CrowdCheer, 0.7f);
                         break;
                     case MatchEventType.DefenderBeaten:
                         if (e.Team == human || Versus)
@@ -1880,7 +1908,9 @@ namespace CallerRetroBall.Gameplay
             bool canCall = CanCall();
 
             int state = (offense ? 1 : 0) | (_match.HumanHasBall ? 2 : 0) | (_match.MustClear ? 4 : 0) | (_match.HumanTeamHasBall ? 8 : 0) | (canCall ? 16 : 0)
-                        | (oop ? 32 : 0) | (_match.MustInbound ? 64 : 0);
+                        | (oop ? 32 : 0) | (_match.MustInbound ? 64 : 0)
+                        | (_controls2 != null && _match.StyleOn && _match.SecondControlledIndex >= 0
+                           && _match.CanCallBreaker(_match.Players[_match.SecondControlledIndex].Team) ? 128 : 0);
             if (state == _lastLabelState) return;
             _lastLabelState = state;
             _controls.SetRole(!offense, oop);
@@ -1890,7 +1920,7 @@ namespace CallerRetroBall.Gameplay
             {
                 bool p2Offense = _match.SecondControlledIndex >= 0 && _match.OffenseTeam == _match.Players[_match.SecondControlledIndex].Team;
                 _controls2.SetRole(!p2Offense, false);
-                _controls2.Call.SetLabel("P&R");
+                _controls2.Call.SetLabel(!_match.StyleOn ? "P&R" : (state & 128) != 0 ? "SHOW" : "TRICK");
             }
         }
 
@@ -2266,6 +2296,20 @@ namespace CallerRetroBall.Gameplay
                     note = Streets.ApplyResult(st, summary.HumanWon, _match.BreakersScored[hTeam], tricks, _bestBank);
                     title = summary.HumanWon ? "YOU OWN THESE STREETS" : "TAKEN TO SCHOOL";
                     App.OpenStreetsOnMenu = true;
+                    var stop = StreetsTour.FromContext(_request.ContextId);
+                    if (stop != null)
+                    {
+                        int margin = _match.Score[hTeam] - _match.Score[1 - hTeam];
+                        var tr = StreetsTour.Apply(st, App.Career, stop, summary.HumanWon, _match.BreakersScored[hTeam], margin);
+                        title = summary.HumanWon ? (tr.TourCleared ? "KING OF THE STREETS" : tr.CityCleared ? stop.City + " IS YOURS" : stop.Crew + " DOWN") : stop.Leader + " WINS";
+                        note = Loc.T("STARS") + " " + tr.Stars + "/3  ·  +" + tr.Rep + " " + Loc.T("REP")
+                               + (tr.Sp > 0 ? "  ·  +" + tr.Sp + " SP" : "")
+                               + (tr.Recruit != null ? "\n" + tr.Recruit + " " + Loc.T("joins your street pool") : "")
+                               + (tr.CityCleared && stop.Tier + 1 < StreetsTour.Cities.Length ? "\n" + Loc.T("NEXT CITY OPEN:") + " " + StreetsTour.Cities[stop.Tier + 1]
+                                  : tr.CityCleared ? "\n" + Loc.T("THE CROWN is waiting.") : "")
+                               + "\n" + note;
+                        if (tr.FirstWin) Sfx(SfxId.Fanfare);
+                    }
                 }
                 var street = Street.FromContext(_request.ContextId);
                 if (rewarded && street != null)

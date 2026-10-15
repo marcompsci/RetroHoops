@@ -158,6 +158,18 @@ namespace CallerRetroBall.Core
                 // Your recruited crew (or the original First Callers).
                 request.HumanTeammates = CrewEngine.TeammateDefs(Career, Catalog);
             }
+            // 15 Oct 2026 THE STREETS: your STREETS CREW recruits run with you.
+            if (request.Mode == GameMode.Streets && CustomTeams.IsYours(request.HomeTeamId) && Career.streets != null)
+            {
+                var crew = StreetsTour.CrewDefs(Catalog, Career.streets);
+                if (request.HumanTeammates == null) request.HumanTeammates = new System.Collections.Generic.List<PlayerDef> { null, null };
+                for (int i = 0; i < crew.Count; i++)
+                {
+                    if (crew[i] == null) continue;
+                    while (request.HumanTeammates.Count <= i) request.HumanTeammates.Add(null);
+                    request.HumanTeammates[i] = crew[i];
+                }
+            }
             // Secret code ALWAYS HOT (not in practice, the tutorial, 2-player, or the demo).
             if (Secrets.IsOn(Career.secrets, Secrets.AlwaysHeat) && request.Mode != GameMode.Practice && request.Mode != GameMode.Tutorial
                 && request.Mode != GameMode.Versus && request.Mode != GameMode.Demo)

@@ -156,23 +156,23 @@ namespace CallerRetroBall.Core
         public static LiveLink Current { get; private set; }
 
         /// <summary>Asks Game Center for an opponent on this game version.</summary>
-        public static LiveLink Find(string appVersion)
+        public static LiveLink Find(string appVersion, bool streets = false)
         {
             Stop();
             Current = new LiveLink();
 #if UNITY_IOS && !UNITY_EDITOR
-            RetroLive_Find(LiveMode.PlayerGroup(appVersion));
+            RetroLive_Find(LiveMode.PlayerGroup(appVersion, streets));
 #endif
             return Current;
         }
 
         /// <summary>Phase 33: INVITE A FRIEND — Apple's Game Center invite screen, for a Live game with a friend.</summary>
-        public static LiveLink Invite(string appVersion)
+        public static LiveLink Invite(string appVersion, bool streets = false)
         {
             Stop();
             Current = new LiveLink();
 #if UNITY_IOS && !UNITY_EDITOR
-            RetroLive_Invite(LiveMode.PlayerGroup(appVersion));
+            RetroLive_Invite(LiveMode.PlayerGroup(appVersion, streets));
 #endif
             return Current;
         }

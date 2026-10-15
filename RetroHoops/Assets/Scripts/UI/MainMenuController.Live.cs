@@ -25,7 +25,11 @@ namespace CallerRetroBall.UI
             var paid = LiveSeason.Settle(career, c);
             if (paid != null) App.SaveCareer();
 
-            var column = OpenOverlay("LIVE", out var footer);
+            bool streets = _streetsStyle;
+            var column = OpenOverlay(streets ? "LIVE STREETS" : "LIVE", out var footer);
+            if (streets)
+                UiKit.Size(UiKit.Label(column, "THE STREETS online: 3 on 3 to 21 with tricks and SHOWSTOPPERS. You only meet other LIVE STREETS players. It counts for your Live rating.",
+                                       28f, Theme.Gold), 100f);
             if (paid != null)
                 UiKit.Size(UiKit.Label(column, "SEASON " + LiveSeason.MonthName(paid.Month) + " FINISHED " + paid.Tier + ": +" + paid.SignalPoints + " SP"
                                                + (paid.CosmeticId != null ? "  ·  LIVE SEASON STAR BANNER" : ""), 30f, Theme.Cyan, TextAlignmentOptions.Center, true), 60f);
@@ -71,7 +75,7 @@ namespace CallerRetroBall.UI
                     ("CANCEL", ButtonStyle.Ghost, null)), ButtonStyle.Ghost, 80f, 28f);
 
             Button find = null, invite = null;
-            UiKit.Button(footer, "BACK", () => { LiveLink.Stop(); ShowPlayMenu(); }, ButtonStyle.Ghost, 130f, 44f);
+            UiKit.Button(footer, "BACK", () => { LiveLink.Stop(); if (streets) ShowStreets(); else ShowPlayMenu(); }, ButtonStyle.Ghost, 130f, 44f);
             // Phase 33: FIND A GAME (anyone) or INVITE A FRIEND (Game Center friends), or an invite you accepted outside the game.
             void Go(int how)
             {
@@ -84,7 +88,13 @@ namespace CallerRetroBall.UI
                 string me = LiveLink.LocalName;
                 if (string.IsNullOrEmpty(me)) me = "Player"; // only the Game Center name is shown to opponents (no typed names online)
                 var offer = new LiveOffer { AppVersion = App.Version, Name = me, Rating = live.rating, TeamData = LinkTeams.Write(c, team), CourtId = team.homeCourtId };
-                var link = how == 0 ? LiveLink.Find(App.Version) : how == 1 ? LiveLink.Invite(App.Version) : LiveLink.AdoptInvite();
+                if (streets)
+                {
+                    offer.Style = LinkSetup.StreetsStyle;
+                    var courts = Streets.CourtList(c);
+                    if (courts.Count > 0) offer.CourtId = courts[(int)((uint)System.Environment.TickCount % (uint)courts.Count)].id;
+                }
+                var link = how == 0 ? LiveLink.Find(App.Version, streets) : how == 1 ? LiveLink.Invite(App.Version, streets) : LiveLink.AdoptInvite();
                 if (how > 0) status.text = how == 1 ? "Pick a friend in Game Center's invite screen…" : "Joining your friend's game…";
                 LivePoller.Attach(column, link, offer, status, () => { if (find != null) find.interactable = true; if (invite != null) invite.interactable = true; });
             }

@@ -181,6 +181,10 @@ namespace CallerRetroBall.Logic
         public static int PlayerGroup(string appVersion) =>
             (int)(StableHash.Of("live:" + LinkProtocol.Version + ":" + (appVersion ?? "")) % 1000000u) + 1;
 
+        /// <summary>15 Oct 2026: LIVE STREETS players get their own group, so a STREETS player always meets another one.</summary>
+        public static int PlayerGroup(string appVersion, bool streets) =>
+            !streets ? PlayerGroup(appVersion) : (int)(StableHash.Of("live-streets:" + LinkProtocol.Version + ":" + (appVersion ?? "")) % 1000000u) + 1;
+
         /// <summary>Host (seat 0) is the player whose Game Center id sorts first; both phones agree without talking.</summary>
         public static int Seat(string myPlayerId, string theirPlayerId) =>
             string.CompareOrdinal(myPlayerId ?? "", theirPlayerId ?? "") <= 0 ? 0 : 1;

@@ -13,6 +13,14 @@ namespace CallerRetroBall.Logic
         public int streak, bestStreak;
         /// <summary>The last pickup game's choices (so the hub opens where you left it).</summary>
         public string lastOpponent = "", lastCourt = "";
+        /// <summary>Phase 2 STREET TOUR: crews beaten, stars ("id=n"), street rep, leaders recruited, and your STREETS CREW (2 spots).</summary>
+        public List<string> tourBeaten = new List<string>();
+        public List<string> tourStars = new List<string>();
+        public int rep;
+        public List<string> recruits = new List<string>();
+        public List<string> crew = new List<string>();
+        /// <summary>Phase 2: LIVE STREETS record (the rating is your LIVE rating).</summary>
+        public int liveWins, liveLosses;
     }
 
     /// <summary>
@@ -28,6 +36,24 @@ namespace CallerRetroBall.Logic
         public const string RulesId = "rules.streets";
         public const int TeamSize = 3;
         public const string PickupContext = "streets:pickup";
+        public const string TourPrefix = "streets:tour:";
+
+        /// <summary>The rules for a game to 11, 16 or 21 (all win by two, no clock).</summary>
+        public static string RulesFor(int target) => target <= 11 ? RulesId + ".11" : target <= 16 ? RulesId + ".16" : RulesId;
+
+        /// <summary>Every STREETS rules set (21, plus the shorter tour games).</summary>
+        public static IEnumerable<GameRulesDef> AllRules()
+        {
+            yield return Rules();
+            var r11 = Rules();
+            r11.id = RulesId + ".11";
+            r11.targetScore = 11;
+            yield return r11;
+            var r16 = Rules();
+            r16.id = RulesId + ".16";
+            r16.targetScore = 16;
+            yield return r16;
+        }
 
         /// <summary>The street courts, in the order the hub offers them.</summary>
         public static readonly string[] Courts =
@@ -135,6 +161,7 @@ namespace CallerRetroBall.Logic
             "3 ON 3 TO 21: 1s inside, 2s from deep, win by two. No clock, no fouls. The ball changes hands after every bucket.",
             "TRICK: tap TRICK with the ball. The stick picks it: still for a HALO, sideways BEHIND THE BACK, back THROUGH THE LEGS, at the rim ROLL THE ARM, and OFF THE HEAD when he's right in your face.",
             "COMBOS: chain tricks (stick moves count) and the combo grows. The same trick twice is worth less. Score to bank it into your STREET METER. Lose the ball and it's gone.",
+            "OFF THE GLASS: driving at the rim from a few steps out, tap TRICK with the stick at the rim. You throw it off the backboard and finish your own alley-oop.",
             "DEFENSE: blocks and steals go straight into your meter.",
             "SHOWSTOPPER: fill the meter, then tap SHOWSTOPPER on offense. Score and you get +1 and they lose 1. Fill it twice before you use it for +2 / -2. Miss and it's wasted.",
         };

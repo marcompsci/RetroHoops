@@ -19,7 +19,7 @@ namespace CallerRetroBall.UI
 
         private void ShowLinkMenu()
         {
-            var column = OpenOverlay("TWO PHONES", out var footer);
+            var column = OpenOverlay(_streetsStyle ? "STREETS: TWO PHONES" : "TWO PHONES", out var footer);
             FirstVisit(Tours.TwoPhones);
             UiKit.Size(UiKit.Label(column,
                 "Play head to head, each on your own iPhone or iPad. Both phones need Retro Hoops (the same version) and to be near each other with Wi-Fi or Bluetooth on. No internet, no account.",
@@ -35,7 +35,7 @@ namespace CallerRetroBall.UI
                 Mode(column, "WATCH A GAME", "Watch two friends' game live on this phone (up to 3 watchers).", ShowLinkWatch, ButtonStyle.Secondary);
                 UiKit.Size(UiKit.Label(column, "The first time, iOS asks to find devices on your local network: tap Allow on both phones.", 26f, Theme.Muted), 90f);
             }
-            UiKit.Button(footer, "BACK", ShowVersus, ButtonStyle.Ghost, 130f, 44f);
+            UiKit.Button(footer, "BACK", () => { if (_streetsStyle) ShowStreets(); else ShowVersus(); }, ButtonStyle.Ghost, 130f, 44f);
         }
 
         private static int _linkHome, _linkAway = 1;
@@ -70,6 +70,13 @@ namespace CallerRetroBall.UI
                 var home = teams[_linkHome];
                 uint seed = (uint)Environment.TickCount | 1u;
                 var setup = LinkSetup.From(c, home.id, teams[_linkAway].id, home.homeCourtId, App.Career.settings.difficultyId, seed, App.Version, LinkName());
+                if (_streetsStyle)
+                {
+                    // THE STREETS on two phones: street rules on a street court.
+                    setup.Style = LinkSetup.StreetsStyle;
+                    var courts = Streets.CourtList(c);
+                    if (courts.Count > 0) setup.CourtId = courts[(int)(seed % (uint)courts.Count)].id;
+                }
                 var link = NearbyLink.Start(true, LinkName());
                 var lobby = new LinkLobby(true, setup, App.Version, LinkProtocol.ContentFingerprint(c), c);
                 LinkPoller.Attach(column, link, lobby, status, "Waiting for your friend to join…\nOn their phone: 2 PLAYER ► TWO PHONES ► JOIN A GAME.", 0);
