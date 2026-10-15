@@ -95,6 +95,9 @@ namespace CallerRetroBall.Logic
         public float AiEdge;
         /// <summary>15 Oct 2026: THE STREETS' style rules (tricks, meter, SHOWSTOPPER) in a 2-player, TWO PHONES or LIVE game.</summary>
         public bool StreetsStyle;
+        /// <summary>THE STREETS phase 3: the home side's STREET METER at tip-off and its extra meter gain (HOMECOURT perks, crew chemistry).</summary>
+        public int StartMeterA;
+        public float StyleBoostA;
 
         public static MatchRequest QuickCallDefault(ContentCatalog c)
         {

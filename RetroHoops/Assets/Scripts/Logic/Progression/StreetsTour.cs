@@ -132,12 +132,10 @@ namespace CallerRetroBall.Logic
             team.nickname = s.Crew;
             string abbr = s.Crew.Replace("THE ", "").Replace(" ", "");
             team.abbreviation = abbr.Substring(0, Math.Min(3, abbr.Length));
-            team.primary = CustomTeams.Palette[h % 16];
-            team.secondary = CustomTeams.Palette[(h / 16 + 5) % 16];
+            Colors(s, out team.primary, out team.secondary, out team.pattern);
             team.accent = RgbColor.FromHex("#1A1A1F");
             team.logoShape = (LogoShape)(h % 5);
             team.logoMotif = (LogoMotif)((h / 5) % 10);
-            team.pattern = (TeamPattern)(1 + (h / 50) % 7);
             team.homeCourtId = c.Court(s.CourtId) != null ? s.CourtId : "court.overpass_park";
             team.motto = s.Trash;
             team.rosterPlayerIds.Clear();
@@ -166,6 +164,15 @@ namespace CallerRetroBall.Logic
                 team.rosterPlayerIds.Add(pid);
             }
             return team;
+        }
+
+        /// <summary>A crew's colours and pattern (their team, and the STREET GEAR you win from them).</summary>
+        public static void Colors(TourStop s, out RgbColor primary, out RgbColor secondary, out TeamPattern pattern)
+        {
+            uint h = StableHash.Of("tour." + s.Id);
+            primary = CustomTeams.Palette[h % 16];
+            secondary = CustomTeams.Palette[(h / 16 + 5) % 16];
+            pattern = (TeamPattern)(1 + (h / 50) % 7);
         }
 
         /// <summary>The tour game: your crew vs theirs on their court, to their target.</summary>

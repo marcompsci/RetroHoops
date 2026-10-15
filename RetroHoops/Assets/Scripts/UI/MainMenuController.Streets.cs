@@ -11,6 +11,7 @@ namespace CallerRetroBall.UI
     /// <summary>
     /// 15 Oct 2026 (Omari): THE STREETS hub, from the main menu's own button and from PLAY.
     /// Phase 1: PICKUP GAME. Phase 2: the STREET TOUR, your STREETS CREW, and PLAY A FRIEND (LIVE, TWO PHONES, SAME PHONE).
+    /// Phase 3: HOMECOURT, STREET GEAR, SIGNATURE SHOWSTOPPER and crew chemistry (MainMenuController.StreetsHome.cs).
     /// </summary>
     public sealed partial class MainMenuController
     {
@@ -62,7 +63,7 @@ namespace CallerRetroBall.UI
             }
         }
 
-        /// <summary>Phase 3 adds HOMECOURT here.</summary>
+        /// <summary>Phase 3's rows (HOMECOURT, STREET GEAR, SIGNATURE): MainMenuController.StreetsHome.cs.</summary>
         partial void StreetsPhase3Rows(RectTransform column);
 
         // ------------------------------------------------------------------ pickup
@@ -209,7 +210,11 @@ namespace CallerRetroBall.UI
                     return Loc.T("USUAL") + ": " + (u != null ? (u.firstName + " " + u.lastName).Trim().ToUpperInvariant() : "-");
                 }
                 var p = c.Player(id);
-                return p == null ? "-" : (p.firstName + " " + p.lastName).Trim().ToUpperInvariant() + "  " + p.attributes.Overall + " OVR";
+                if (p == null) return "-";
+                int toNext = StreetsChem.ToNext(s, id);
+                return (p.firstName + " " + p.lastName).Trim().ToUpperInvariant() + "  " + p.attributes.Overall + " OVR"
+                       + "\n<size=24><color=#FFD166>" + Loc.T("CHEMISTRY") + " " + Loc.T("LV") + " " + StreetsChem.Level(s, id) + "/" + StreetsChem.MaxLevel
+                       + (toNext > 0 ? "</color><color=#8D99AE>  ·  " + toNext + " " + Loc.T("to next") : "") + "</color></size>";
             }
 
             for (int slot = 0; slot < 2; slot++)
@@ -217,7 +222,7 @@ namespace CallerRetroBall.UI
                 int k = slot;
                 UiKit.Size(UiKit.Label(column, Loc.T("SPOT") + " " + (slot + 1), 32f, Theme.Cyan, TextAlignmentOptions.Left, true), 50f);
                 var label = UiKit.Label(column, Name(s.crew[slot], slot), 36f, Theme.Cream, TextAlignmentOptions.Center, true);
-                UiKit.Size(label, 60f);
+                UiKit.Size(label, 96f);
                 var b = UiKit.Button(column, "CHANGE", () =>
                 {
                     int at = Mathf.Max(0, options.IndexOf(s.crew[k]));
@@ -237,6 +242,11 @@ namespace CallerRetroBall.UI
             }
             if (pool.Count == 0)
                 UiKit.Size(UiKit.Label(column, "No recruits yet: win on the STREET TOUR.", 28f, Theme.Muted, TextAlignmentOptions.Center), 60f);
+            // Phase 3: CREW CHEMISTRY.
+            int crewChem = StreetsChem.CrewLevel(s);
+            UiControls.Stat(column, "CHEMISTRY", crewChem + "/" + (StreetsChem.MaxLevel * 2) + "  ·  +" + crewChem + "% " + Loc.T("METER"));
+            UiKit.Size(UiKit.Label(column, "Every game a recruit plays with you builds chemistry (a win counts double). Chemistry makes your crew sharper and fills your meter faster.",
+                                   24f, Theme.Muted), 80f);
             UiKit.Button(footer, "BACK", ShowStreets, ButtonStyle.Ghost, 130f, 44f);
         }
 

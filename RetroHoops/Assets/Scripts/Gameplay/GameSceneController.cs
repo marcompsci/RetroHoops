@@ -538,6 +538,13 @@ namespace CallerRetroBall.Gameplay
                 var other = kitTeam == 0 ? setup.TeamB : setup.TeamA;
                 myKit = Kits.ForMatch(career.kits, other.primary, filter, out bool toAway);
                 if (myKit != null && toAway && !Demo) _kitNote = "AWAY KIT ON: COLORS CLASHED";
+                // THE STREETS phase 3: your STREET GEAR (unless it clashes with the other crew).
+                var gear = _request.Mode == GameMode.Streets ? StreetsGear.Kit(StreetsGear.Worn(career.streets)) : null;
+                if (gear != null)
+                {
+                    if (!ColorAccess.KitsClash(Kits.Unpack(gear.jersey), other.primary, filter)) { myKit = gear; _kitNote = null; }
+                    else _kitNote = "STREET GEAR CLASHED: USUAL KIT ON";
+                }
                 if (myKit != null && kitTeam == 0) homeJersey = Kits.Unpack(myKit.jersey);
             }
             var awayJersey = setup.TeamB.primary;
@@ -1397,6 +1404,44 @@ namespace CallerRetroBall.Gameplay
             Sfx(SfxId.ClapChant, 0.5f);
         }
 
+        // ------------------------------------------------------------------ THE STREETS: SHOWSTOPPER cinema
+
+        private float _cineUntil;
+        private int _cinePlayer = -1;
+
+        /// <summary>
+        /// A SHOWSTOPPER dunk: the camera comes in close on the dunker and the rim, letterbox bars slide in, and the
+        /// dunk's name goes up. (Reduce Motion, landscape and two-phone games just get the name.)
+        /// </summary>
+        private void StartCinema(int player)
+        {
+            if (_streetsHud != null) _streetsHud.Banner(Dunks.Name(_dunkStyle), Theme.Gold, 1.2f);
+            if (_reduceMotion || _landscape || _link != null || Theater) return;
+            _cinePlayer = player;
+            _cineUntil = Time.unscaledTime + _leapDuration + 0.9f;
+            _cameraRig.SetCloseUp(true);
+            if (_streetsHud != null) _streetsHud.Cinema(true);
+        }
+
+        /// <summary>Where the SHOWSTOPPER camera looks (between the dunker and the rim), or null when it's off.</summary>
+        private Vec2? CinemaFollow()
+        {
+            if (_cinePlayer < 0) return null;
+            if (Time.unscaledTime < _cineUntil && !_paused && _match.Phase != MatchPhase.Final)
+                return Vec2.Lerp(_match.Players[_cinePlayer].Position, _match.Setup.Court.Hoop, 0.5f);
+            EndCinema();
+            return null;
+        }
+
+        private void EndCinema()
+        {
+            if (_cinePlayer < 0) return;
+            _cinePlayer = -1;
+            _cineUntil = 0f;
+            _cameraRig.SetCloseUp(false);
+            if (_streetsHud != null) _streetsHud.Cinema(false);
+        }
+
         private void HandleEvents()
         {
             if (_mic != null && _match.Events.Count > 0)
@@ -1541,11 +1586,20 @@ namespace CallerRetroBall.Gameplay
                                 _dunkStyle = Mine(e.PlayerIndex) && !Demo
                                     ? Dunks.ForCosmetic(App.Career?.equippedDunk)
                                     : Dunks.ForAi(_match.Players[e.PlayerIndex].Def.attributes.finishing, Random.value);
+                                // THE STREETS phase 3: a SHOWSTOPPER dunk is your SIGNATURE (the AI throws its best), and the camera comes in.
+                                bool showstopper = _match.StyleOn && _match.BreakerTeam >= 0 && _match.BreakerTeam == _match.Players[e.PlayerIndex].Team;
+                                if (showstopper)
+                                {
+                                    var sig = Mine(e.PlayerIndex) && !Demo ? StreetsSignature.Chosen(App.Career?.streets) : null;
+                                    if (sig.HasValue) _dunkStyle = sig.Value;
+                                    else if (!Mine(e.PlayerIndex)) _dunkStyle = Dunks.ForAi(_match.Players[e.PlayerIndex].Def.attributes.finishing, 0.999f);
+                                }
                                 // Rise to the rim with the ball (it meets the rim when the simulation's ball does), hang, drop.
                                 float flight = Mathf.Max(0.2f, _match.Ball.FlightDuration);
                                 // A made dunk hangs and swings on the rim as long as the simulation holds the dunker there.
                                 float hang = _match.Ball.ShotWillScore ? _match.Setup.Flow.rimHangSeconds : 0f;
                                 _leapDuration = flight + 0.45f + (Dunks.LiftScale(_dunkStyle) - 1f) * 0.4f + hang;
+                                if (showstopper) StartCinema(e.PlayerIndex);
                                 _slamU = flight / _leapDuration;
                                 _hangU = hang / _leapDuration;
                                 _leapFrom = _match.Players[e.PlayerIndex].Position;
@@ -1779,7 +1833,7 @@ namespace CallerRetroBall.Gameplay
             }
 
             // 2-player and Full Court: follow the ball so nobody is left off screen.
-            var follow = TheaterFollow() ?? (Versus || FullCourtGame || Coaching ? _match.Ball.Position
+            var follow = TheaterFollow() ?? CinemaFollow() ?? (Versus || FullCourtGame || Coaching ? _match.Ball.Position
                          // Close camera (fill screen): between you and the ball, so the play stays in view.
                          : _cameraRig.Fill ? Vec2.Lerp(_match.Controlled.Position, _match.Ball.Position, 0.5f)
                          : _match.Controlled.Position);
@@ -2309,6 +2363,28 @@ namespace CallerRetroBall.Gameplay
                                   : tr.CityCleared ? "\n" + Loc.T("THE CROWN is waiting.") : "")
                                + "\n" + note;
                         if (tr.FirstWin) Sfx(SfxId.Fanfare);
+                    }
+                    // Phase 3: HOMECOURT.
+                    if (StreetsHome.IsHome(_request))
+                    {
+                        var hr = StreetsHome.Apply(st, App.Career, StreetsHome.ChallengerOf(_request.ContextId), summary.HumanWon);
+                        string court = StreetsHome.Name(st);
+                        title = hr.Retaken ? court + " IS BACK" : hr.Defended ? court + " DEFENDED" : hr.Taken ? court + " TAKEN" : title;
+                        note = (hr.Defended ? Loc.T("DEFENSES") + " " + st.homeDefenses + "  ·  " + Loc.T("STREAK") + " " + st.homeStreak + "  ·  " : "")
+                               + (hr.Rep > 0 ? "+" + hr.Rep + " " + Loc.T("REP") : "") + (hr.Sp > 0 ? "  ·  +" + hr.Sp + " SP" : "")
+                               + (hr.NewPerk != null ? "\n" + Loc.T("NEW PERK:") + " " + Loc.T(hr.NewPerk) : "")
+                               + (hr.Taken ? Loc.T("Win TAKE IT BACK to get your perks back.") : "")
+                               + "\n" + note;
+                        if (hr.NewPerk != null || hr.Retaken) Sfx(SfxId.Fanfare);
+                    }
+                    // Phase 3: CREW CHEMISTRY (only when your own crew played).
+                    if (CustomTeams.IsYours(_request.HomeTeamId) && hTeam == 0)
+                    {
+                        foreach (var id in StreetsChem.AddGame(st, summary.HumanWon))
+                        {
+                            var pd = App.Catalog.Player(id);
+                            if (pd != null) note += "\n" + Loc.T("CHEMISTRY UP:") + " " + pd.DisplayName.ToUpperInvariant() + " " + Loc.T("LV") + " " + StreetsChem.Level(st, id);
+                        }
                     }
                 }
                 var street = Street.FromContext(_request.ContextId);

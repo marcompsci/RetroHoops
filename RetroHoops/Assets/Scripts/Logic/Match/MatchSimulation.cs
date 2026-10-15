@@ -89,6 +89,9 @@ namespace CallerRetroBall.Logic
         /// <summary>Full Court: two players on each bench (tired AI players sub out at dead balls).</summary>
         /// <summary>Phase 37 CLUTCH: the score and game clock the match starts from (0 clock = the rules' own).</summary>
         public int StartScoreA, StartScoreB;
+        /// <summary>THE STREETS phase 3 (HOMECOURT, crew chemistry): team A's STREET METER at tip-off, and its extra meter gain (0.1 = +10%).</summary>
+        public int StartMeterA;
+        public float StyleBoostA;
         public float StartClock;
         /// <summary>Phase 40 SMART DIFFICULTY: added to the opponents' release accuracy.</summary>
         public float AiEdge;
@@ -135,6 +138,8 @@ namespace CallerRetroBall.Logic
                 HumanStartsHeated = request.StartHeated,
                 OneOnOne = request.Mode == GameMode.OneOnOne,
                 StartScoreA = Math.Max(0, request.StartScoreA),
+                StartMeterA = Math.Max(0, Math.Min(MatchSimulation.MeterLevel - 1, request.StartMeterA)),
+                StyleBoostA = Math.Max(0f, Math.Min(0.5f, request.StyleBoostA)),
                 StartScoreB = Math.Max(0, request.StartScoreB),
                 StartClock = Math.Max(0f, request.StartClock),
                 AiEdge = Math.Max(-Adaptive.MaxEdge, Math.Min(Adaptive.MaxEdge, request.AiEdge)),
@@ -462,6 +467,7 @@ namespace CallerRetroBall.Logic
             InitBench();
             GameClock = setup.Rules.useGameClock ? (setup.StartClock > 0f ? setup.StartClock : setup.Rules.gameClockSeconds) : 0f;
             Score[0] = Math.Max(0, setup.StartScoreA);
+            if (setup.StyleMeter) StyleMeter[0] = setup.StartMeterA;
             Score[1] = Math.Max(0, setup.StartScoreB);
             ShotClock = setup.Rules.shotClockSeconds;
             ControlledIndex = Index(setup.HumanTeam, 0);

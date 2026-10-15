@@ -236,6 +236,7 @@ namespace CallerRetroBall.Logic
         private void AddMeter(int team, int points)
         {
             if (team < 0 || team > 1 || points <= 0) return;
+            if (team == 0 && Setup.StyleBoostA > 0f) points = (int)Math.Round(points * (1f + Setup.StyleBoostA));
             int before = StyleMeter[team];
             StyleMeter[team] = Math.Min(MeterLevel * MaxBreakerLevel, before + points);
             if (before / MeterLevel < StyleMeter[team] / MeterLevel)

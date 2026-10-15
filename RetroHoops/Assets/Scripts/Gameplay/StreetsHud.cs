@@ -209,5 +209,48 @@ namespace CallerRetroBall.Gameplay
         }
 
         public void SetVisible(bool visible) => gameObject.SetActive(visible);
+
+        // ------------------------------------------------------------------ SHOWSTOPPER cinema bars
+
+        private RectTransform _barTop, _barBottom;
+        private bool _cinema;
+        private float _cinemaAt;
+
+        /// <summary>Letterbox bars for a SHOWSTOPPER dunk (they slide in and out).</summary>
+        public void Cinema(bool on)
+        {
+            if (_barTop == null)
+            {
+                var canvas = (RectTransform)transform;
+                _barTop = Bar(canvas, 1f);
+                _barBottom = Bar(canvas, 0f);
+                _barTop.SetAsFirstSibling();
+                _barBottom.SetAsFirstSibling();
+            }
+            if (on == _cinema) return;
+            _cinema = on;
+            _cinemaAt = Time.unscaledTime;
+        }
+
+        private static RectTransform Bar(RectTransform canvas, float y)
+        {
+            var img = UiKit.Panel(canvas, Color.black, null, false, y > 0.5f ? "CinemaTop" : "CinemaBottom");
+            var rt = img.rectTransform;
+            rt.anchorMin = new Vector2(0f, y);
+            rt.anchorMax = new Vector2(1f, y);
+            rt.pivot = new Vector2(0.5f, y);
+            rt.sizeDelta = new Vector2(0f, 0f);
+            img.raycastTarget = false;
+            return rt;
+        }
+
+        private void LateUpdate()
+        {
+            if (_barTop == null) return;
+            float t = Mathf.Clamp01((Time.unscaledTime - _cinemaAt) / 0.25f);
+            float h = (_cinema ? t : 1f - t) * Screen.height * 0.09f / Mathf.Max(0.01f, ((RectTransform)transform).lossyScale.y);
+            _barTop.sizeDelta = new Vector2(0f, h);
+            _barBottom.sizeDelta = new Vector2(0f, h);
+        }
     }
 }

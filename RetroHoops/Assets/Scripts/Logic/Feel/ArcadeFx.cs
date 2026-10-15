@@ -14,6 +14,8 @@ namespace CallerRetroBall.Logic
         public const float AlleyOop = 0.11f;
         public const float Block = 0.07f;
         public const float GameWinner = 0.16f;
+        /// <summary>THE STREETS: a SHOWSTOPPER bucket holds a little longer.</summary>
+        public const float Showstopper = 0.14f;
         public const float Max = 0.2f;
 
         /// <summary>Freeze length for an event (0 = none). Reduce Motion turns it off.</summary>
@@ -26,6 +28,7 @@ namespace CallerRetroBall.Logic
                 case MatchEventType.AlleyOop: return AlleyOop;
                 case MatchEventType.Block: return Block;
                 case MatchEventType.GameOver: return GameWinner;
+                case MatchEventType.BreakerScored: return Showstopper;
                 default: return 0f;
             }
         }

@@ -21,6 +21,15 @@ namespace CallerRetroBall.Logic
         public List<string> crew = new List<string>();
         /// <summary>Phase 2: LIVE STREETS record (the rating is your LIVE rating).</summary>
         public int liveWins, liveLosses;
+        /// <summary>Phase 3 HOMECOURT: the court (id), its name (index into StreetsHome.Names), defenses, the streak, and who took it.</summary>
+        public string homeCourt = "";
+        public int homeName, homeDefenses, homeStreak, homeBest, homeLosses;
+        public bool homeTaken;
+        public string homeTaker = "";
+        /// <summary>Phase 3: CREW CHEMISTRY ("playerId=points"), STREET GEAR worn ("" = your usual kit), SIGNATURE SHOWSTOPPER (-1 = your dunk package).</summary>
+        public List<string> chem = new List<string>();
+        public string gear = "";
+        public int signature = -1;
     }
 
     /// <summary>
@@ -164,6 +173,7 @@ namespace CallerRetroBall.Logic
             "OFF THE GLASS: driving at the rim from a few steps out, tap TRICK with the stick at the rim. You throw it off the backboard and finish your own alley-oop.",
             "DEFENSE: blocks and steals go straight into your meter.",
             "SHOWSTOPPER: fill the meter, then tap SHOWSTOPPER on offense. Score and you get +1 and they lose 1. Fill it twice before you use it for +2 / -2. Miss and it's wasted.",
+            "HOMECOURT: clear SOUTHSIDE and claim a court. Crews come to take it; every defense builds your perks. Lose and you have to take it back.",
         };
     }
 }

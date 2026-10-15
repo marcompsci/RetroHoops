@@ -169,6 +169,11 @@ namespace CallerRetroBall.Core
                     while (request.HumanTeammates.Count <= i) request.HumanTeammates.Add(null);
                     request.HumanTeammates[i] = crew[i];
                 }
+                // Phase 3: crew chemistry, and your HOMECOURT perks in a home game.
+                bool home = StreetsHome.IsHome(request);
+                request.ChemistryBonus = StreetsChem.Bonus(Career.streets);
+                request.StyleBoostA = StreetsChem.Boost(Career.streets) + (home ? StreetsHome.Boost(Career.streets) : 0f);
+                request.StartMeterA = home ? StreetsHome.StartMeter(Career.streets) : 0;
             }
             // Secret code ALWAYS HOT (not in practice, the tutorial, 2-player, or the demo).
             if (Secrets.IsOn(Career.secrets, Secrets.AlwaysHeat) && request.Mode != GameMode.Practice && request.Mode != GameMode.Tutorial
