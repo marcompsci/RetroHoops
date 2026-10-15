@@ -164,8 +164,55 @@ namespace CallerRetroBall.Core
             RetroMusic_Command(IsPlaying ? 0 : 1);
         }
 
-        public void Next() { if (_started) RetroMusic_Command(2); }
-        public void Previous() { if (_started) RetroMusic_Command(3); }
+        /// <summary>NEXT: skips, starts the next loop on the last song, or says why it can't (see <see cref="PhonePlaylist.Next"/>).</summary>
+        public void Next()
+        {
+            Note = null;
+            if (!_started)
+            {
+                if (Songs.Count > 0) StartLoop(-1);
+                else Changed?.Invoke();
+                return;
+            }
+            switch (PhonePlaylist.Next(Songs.Count, OrderIndexNow(), Order.Length))
+            {
+                case PhonePlaylist.NextStep.Explain:
+                    Note = PhonePlaylist.OnlyOneSong(HiddenExplicit);
+                    break;
+                case PhonePlaylist.NextStep.NewLoop:
+                    Data.cycle++;
+                    StartLoop(-1);
+                    return;
+                default:
+                    _userPaused = false;
+                    RetroMusic_Command(2);
+                    break;
+            }
+            Changed?.Invoke();
+        }
+
+        public void Previous()
+        {
+            Note = null;
+            if (!_started) { if (Songs.Count > 0) StartLoop(-1); return; }
+            _userPaused = false;
+            RetroMusic_Command(3);
+        }
+
+        /// <summary>Where the song playing now is in this loop's order (-1 when unknown).</summary>
+        private int OrderIndexNow()
+        {
+            for (int i = 0; i < Order.Length; i++)
+                if (Order[i] >= 0 && Order[i] < Songs.Count && Songs[Order[i]].key == NowPlayingKey) return i;
+            return -1;
+        }
+
+        /// <summary>Tapping an [E] song: turns EXPLICIT SONGS on and plays it.</summary>
+        public void AllowExplicitAndPlay(string key)
+        {
+            SetExplicit(true);
+            PlaySong(key);
+        }
 
         /// <summary>
         /// 15 Oct 2026: which found songs can play. An explicit song plays only when EXPLICIT SONGS is on (on by

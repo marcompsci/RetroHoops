@@ -351,6 +351,10 @@ namespace CallerRetroBall.UI
 
             var d = Core.App.Career;
             Line("SHUFFLE  ·  LOOP " + ((d?.phone.cycle ?? 0) + 1) + "  ·  New order every loop", 24f, Theme.Cyan, 44f);
+            if (!string.IsNullOrEmpty(m.Note) && !m.MixMode) Line(m.Note, 26f, Theme.Pink, 90f);
+            else if (m.HiddenExplicit > 0)
+                Line(m.HiddenExplicit + (m.HiddenExplicit == 1 ? " EXPLICIT SONG IS" : " EXPLICIT SONGS ARE") + " SKIPPED. Turn on EXPLICIT SONGS below (or tap an [E] song) to play "
+                     + (m.HiddenExplicit == 1 ? "it." : "them."), 24f, Theme.Muted, 70f);
             UiControls.ToggleRow(_content, "PLAY THE PLAYLIST", on, v => PhoneMusic.Instance.SetEnabled(v));
         }
 
@@ -453,15 +457,23 @@ namespace CallerRetroBall.UI
             if (t == null) return;
             bool current = entry != null && entry.key == m.NowPlayingKey;
             var card = Card(current ? new Color32(0x2A, 0x2A, 0x4A, 255) : new Color32(0x1A, 0x1A, 0x2E, 255), 130f);
-            if (entry != null)
+            if (entry != null || isExplicit)
             {
-                // Tap a song to play it now.
+                // Tap a song to play it now. An [E] song asks first (it turns EXPLICIT SONGS on).
                 var b = card.gameObject.AddComponent<Button>();
                 var img = card.GetComponent<Image>();
                 img.raycastTarget = true;
                 b.targetGraphic = img;
                 string key = t.Key;
-                b.onClick.AddListener(() => { Audio.AudioManager.Click(); PhoneMusic.Instance.PlaySong(key); });
+                bool ask = entry == null;
+                b.onClick.AddListener(() =>
+                {
+                    Audio.AudioManager.Click();
+                    if (!ask) { PhoneMusic.Instance.PlaySong(key); return; }
+                    UiControls.Dialog("EXPLICIT SONG", Logic.Loc.T("This song is explicit on Apple Music. Turn on EXPLICIT SONGS to play it (and the other explicit songs)?"),
+                        ("TURN ON AND PLAY", ButtonStyle.Primary, () => PhoneMusic.Instance.AllowExplicitAndPlay(key)),
+                        ("CANCEL", ButtonStyle.Ghost, null));
+                });
             }
             CardText(card, (current ? "► " : "") + t.DisplayTitle, 30f, current ? Theme.Gold : Theme.Cream, new Vector2(0f, 0.5f), new Vector2(0.8f, 0.95f), TextAlignmentOptions.Left, true);
             CardText(card, (isExplicit ? "[E]  " : "") + t.Credits, 24f, Theme.Muted, new Vector2(0f, 0.08f), new Vector2(0.8f, 0.5f));

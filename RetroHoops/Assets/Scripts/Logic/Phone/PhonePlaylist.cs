@@ -54,6 +54,25 @@ namespace CallerRetroBall.Logic
         public static string SearchUrl(PlaylistTrack t) =>
             "https://music.apple.com/us/search?term=" + Uri.EscapeDataString(t.Title + " " + t.Artist);
 
+        public enum NextStep { Explain, Skip, NewLoop }
+
+        /// <summary>
+        /// 15 Oct 2026 (Omari: "the next button doesn't work"): what NEXT does. With only one song that can play there
+        /// is nothing to skip to, so the phone says why (usually: the rest are explicit and EXPLICIT SONGS is off). On
+        /// the loop's last song it starts the next loop (a new shuffle) instead of stopping. Otherwise it skips.
+        /// </summary>
+        public static NextStep Next(int playable, int orderIndex, int orderLength)
+        {
+            if (playable <= 1) return NextStep.Explain;
+            return orderIndex >= orderLength - 1 ? NextStep.NewLoop : NextStep.Skip;
+        }
+
+        /// <summary>The line NEXT shows when there's nothing to skip to.</summary>
+        public static string OnlyOneSong(int hiddenExplicit) =>
+            hiddenExplicit > 0
+                ? "ONLY 1 SONG CAN PLAY: " + hiddenExplicit + " MORE " + (hiddenExplicit == 1 ? "IS" : "ARE") + " EXPLICIT. TURN ON EXPLICIT SONGS BELOW, OR TAP AN [E] SONG."
+                : "ONLY 1 SONG IN THIS PLAYLIST";
+
         /// <summary>
         /// The play order for loop number <paramref name="cycle"/> of <paramref name="count"/> songs: a shuffle that
         /// differs every loop. When <paramref name="previousLast"/> is a song index, the loop doesn't start with it
