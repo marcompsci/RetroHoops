@@ -16,6 +16,8 @@ namespace CallerRetroBall.Logic
         public const float GameWinner = 0.16f;
         /// <summary>THE STREETS: a SHOWSTOPPER bucket holds a little longer.</summary>
         public const float Showstopper = 0.14f;
+        /// <summary>THE STREETS: the freeze on an ANKLE BREAKER (added by the game screen, not by <see cref="For"/>).</summary>
+        public const float Ankles = 0.12f;
         public const float Max = 0.2f;
 
         /// <summary>Freeze length for an event (0 = none). Reduce Motion turns it off.</summary>
@@ -170,6 +172,45 @@ namespace CallerRetroBall.Logic
     /// </summary>
     public static class Announcer
     {
+        /// <summary>
+        /// 15 Oct 2026 (Omari): THE STREETS play-by-play voice: speech rate (0..1 of the iPhone's range) and pitch. Big
+        /// calls come faster and higher, like a college broadcast booth losing it.
+        /// </summary>
+        public const float CallRate = 0.53f, HypeRate = 0.58f, CallPitch = 1.05f, HypePitch = 1.2f;
+
+        /// <summary>
+        /// A commentary line made ready to be spoken: lower case with capital letters starting sentences (so names
+        /// and words aren't spelled out letter by letter), "6-0" read as "6 to 0", and the "·" separators as pauses.
+        /// </summary>
+        public static string ForSpeech(string line)
+        {
+            if (string.IsNullOrEmpty(line)) return "";
+            var sb = new System.Text.StringBuilder(line.Length + 8);
+            bool start = true;
+            for (int i = 0; i < line.Length; i++)
+            {
+                char c = line[i];
+                if (c == '·')
+                {
+                    while (sb.Length > 0 && sb[sb.Length - 1] == ' ') sb.Length--;
+                    sb.Append(',');
+                    continue;
+                }
+                if (c == '-' && i > 0 && i + 1 < line.Length && char.IsDigit(line[i - 1]) && char.IsDigit(line[i + 1])) { sb.Append(" to "); continue; }
+                if (char.IsLetter(c))
+                {
+                    sb.Append(start ? char.ToUpperInvariant(c) : char.ToLowerInvariant(c));
+                    start = false;
+                }
+                else
+                {
+                    sb.Append(c);
+                    if (c == '!' || c == '?' || c == '.') start = true;
+                }
+            }
+            return sb.ToString().Trim();
+        }
+
         /// <summary>Rough syllable count: vowel groups per word (at least one per word).</summary>
         public static int Syllables(string phrase)
         {

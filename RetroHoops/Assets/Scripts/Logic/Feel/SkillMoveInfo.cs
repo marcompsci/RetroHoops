@@ -9,7 +9,7 @@ namespace CallerRetroBall.Logic
     public static class SkillMoveInfo
     {
         public static readonly SkillMoveKind[] All =
-            { SkillMoveKind.Spin, SkillMoveKind.Jab, SkillMoveKind.Hesi, SkillMoveKind.StepBack, SkillMoveKind.Shake };
+            { SkillMoveKind.Spin, SkillMoveKind.Jab, SkillMoveKind.Crossover, SkillMoveKind.Hesi, SkillMoveKind.StepBack, SkillMoveKind.Shake };
 
         public static bool IsSecret(SkillMoveKind k) => k == SkillMoveKind.Hesi || k == SkillMoveKind.StepBack || k == SkillMoveKind.Shake;
 
@@ -25,6 +25,7 @@ namespace CallerRetroBall.Logic
                 case SkillMoveKind.Hesi: return "HESI";
                 case SkillMoveKind.StepBack: return "STEP-BACK";
                 case SkillMoveKind.Shake: return "SHAKE";
+                case SkillMoveKind.Crossover: return "CROSSOVER";
                 default: return "";
             }
         }
@@ -36,8 +37,9 @@ namespace CallerRetroBall.Logic
                 case SkillMoveKind.Spin: return "Swirl the stick half a circle, fast. Spins past your man and keeps the ball safe.";
                 case SkillMoveKind.Jab: return "Standing still, flick the stick at the rim and let go. He may bite, then attack or shoot.";
                 case SkillMoveKind.Hesi: return "At full speed, let go of the stick for a blink, then push the same way again.";
-                case SkillMoveKind.StepBack: return "Driving with a defender close, snap the stick straight back. Then shoot with room.";
+                case SkillMoveKind.StepBack: return "Tap SHOOT, then press and hold it again: step back and rise into the jumper. Or, driving with a defender close, snap the stick straight back.";
                 case SkillMoveKind.Shake: return "Wiggle the stick left, right, left, fast. It can break ankles.";
+                case SkillMoveKind.Crossover: return "With a defender on you, snap the stick from one side to the other. In street rules it can break ankles.";
                 default: return "";
             }
         }

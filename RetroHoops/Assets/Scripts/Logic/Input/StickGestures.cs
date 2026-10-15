@@ -18,8 +18,10 @@ namespace CallerRetroBall.Logic
         Hesi = 3,
         /// <summary>Secret. Going at the rim with a defender close: snap the stick straight back.</summary>
         StepBack = 4,
-        /// <summary>Secret. Wiggle the stick side to side fast: left, right, left.</summary>
+        /// <summary>Secret. Wiggle the stick side to side fast: left, right, left (a crossover, then back again).</summary>
         Shake = 5,
+        /// <summary>15 Oct 2026: snap the stick from one side to the other across the line to the rim, with a defender on you.</summary>
+        Crossover = 6,
     }
 
     /// <summary>
@@ -38,6 +40,7 @@ namespace CallerRetroBall.Logic
         public const float HesiPauseMax = 0.26f;
         public const float StepBackWindow = 0.2f;
         public const float ShakeWindow = 0.55f;
+        public const float CrossWindow = 0.3f;
         public const float Pushed = 0.6f;
         public const float Neutral = 0.25f;
 
@@ -70,7 +73,8 @@ namespace CallerRetroBall.Logic
             var hoop = toHoop.Normalized;
 
             var move = Detect(time, hoop);
-            if (move != SkillMoveKind.None) Clear();
+            // A crossover keeps the history, so snapping back again turns it into the SHAKE (the double cross).
+            if (move != SkillMoveKind.None && move != SkillMoveKind.Crossover) Clear();
             return move;
         }
 
@@ -78,6 +82,7 @@ namespace CallerRetroBall.Logic
         {
             if (IsSpin(now)) return SkillMoveKind.Spin;
             if (IsShake(now, hoop)) return SkillMoveKind.Shake;
+            if (IsCrossover(now, hoop)) return SkillMoveKind.Crossover;
             if (IsStepBack(now, hoop)) return SkillMoveKind.StepBack;
             if (IsHesi(now)) return SkillMoveKind.Hesi;
             if (IsJab(now, hoop)) return SkillMoveKind.Jab;
@@ -134,6 +139,32 @@ namespace CallerRetroBall.Logic
             // The newest sample must be one of the swings, so the move fires as the third swing lands.
             float now0 = At(0).Stick.x * perp.x + At(0).Stick.y * perp.y;
             return extremes >= 3 && Math.Abs(now0) >= Pushed;
+        }
+
+        /// <summary>
+        /// The stick just landed hard on one side of the line to the rim, and it was hard on the other side within
+        /// <see cref="CrossWindow"/>: a crossover. It fires on the step it lands (once).
+        /// </summary>
+        private bool IsCrossover(float now, Vec2 hoop)
+        {
+            if (_count < 2) return false;
+            var perp = new Vec2(-hoop.y, hoop.x);
+            int Sign(Vec2 v)
+            {
+                float side = v.x * perp.x + v.y * perp.y;
+                return side >= Pushed ? 1 : side <= -Pushed ? -1 : 0;
+            }
+            int cur = Sign(At(0).Stick);
+            if (cur == 0 || Sign(At(1).Stick) == cur) return false;
+            for (int k = 1; k < _count; k++)
+            {
+                var s = At(k);
+                if (now - s.T > CrossWindow) break;
+                int sign = Sign(s.Stick);
+                if (sign == cur) return false; // came back to the same side: not a fresh cross
+                if (sign == -cur) return true;
+            }
+            return false;
         }
 
         /// <summary>Pushing at the rim, then snapped straight back away from it within <see cref="StepBackWindow"/>.</summary>

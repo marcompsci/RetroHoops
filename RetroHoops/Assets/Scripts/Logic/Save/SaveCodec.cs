@@ -66,6 +66,7 @@ namespace CallerRetroBall.Logic
                     ["controlLayout"] = d.settings.controlLayout ?? "",
                     ["landscapeAll"] = d.settings.landscapeAll,
                     ["commentary"] = d.settings.commentary,
+                    ["pbpVoice"] = d.settings.playByPlayVoice,
                     ["tapToShoot"] = d.settings.tapToShoot,
                     ["reduceMotion"] = d.settings.reduceMotion,
                 },
@@ -524,6 +525,7 @@ namespace CallerRetroBall.Logic
                     controlLayout = ControlLayout.Serialize(ControlLayout.Parse(Str(st, "controlLayout", ""))),
                     landscapeAll = Bool(st, "landscapeAll", false),
                     commentary = Bool(st, "commentary", true),
+                    playByPlayVoice = Bool(st, "pbpVoice", true),
                     tapToShoot = Bool(st, "tapToShoot", false),
                     reduceMotion = Bool(st, "reduceMotion", false),
                 };

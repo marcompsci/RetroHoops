@@ -886,9 +886,13 @@ namespace CallerRetroBall.Logic
             // Skill moves come from the stick alone (no button this step).
             FeedSkillMoves(me, input, hasBall && ChargingIndex < 0
                 && !input.ShootPressed && !input.PassPressed && !input.DunkPressed && !input.LayupPressed);
+            if (hasBall && ChargingIndex < 0) LandStepBackShot(me, input);
             if (hasBall && ChargingIndex < 0)
             {
-                if (input.ShootPressed && CanShoot(me)) { CancelDrive(); BeginCharge(me, -1f); }
+                bool hopping = StepBackShotPending(me); // mid step-back (SHOOT double tap): he lands first
+                if (hopping) { /* the jumper starts when he lands (LandStepBackShot) */ }
+                else if (input.ShootPressed && CanShoot(me) && TryStepBackShot(me)) CancelDrive();
+                else if (input.ShootPressed && CanShoot(me)) { CancelDrive(); BeginCharge(me, -1f); }
                 else if ((input.DunkPressed || input.LayupPressed) && CanShoot(me)) StartFinish(me, input.DunkPressed);
                 else if (input.PassPressed)
                 {

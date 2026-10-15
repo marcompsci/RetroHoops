@@ -122,12 +122,12 @@ namespace CallerRetroBall.Tests
             seq.AddRange(Hold(new Vec2(-1f, 0f), 6, 2f));
             Assert.AreEqual(SkillMoveKind.Shake, Run(g, ref t, seq));
 
-            // One crossover is not a shake.
+            // One crossover is not a shake: it's a CROSSOVER (15 Oct 2026).
             g.Clear();
             seq.Clear();
             seq.AddRange(Hold(new Vec2(-1f, 0f), 6, 2f));
             seq.AddRange(Hold(new Vec2(1f, 0f), 20, 2f));
-            Assert.AreEqual(SkillMoveKind.None, Run(g, ref t, seq));
+            Assert.AreEqual(SkillMoveKind.Crossover, Run(g, ref t, seq));
         }
 
         // ------------------------------------------------------------------ in a game

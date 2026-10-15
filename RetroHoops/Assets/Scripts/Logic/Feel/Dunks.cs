@@ -141,6 +141,10 @@ namespace CallerRetroBall.Logic
         public bool Dropping;
         /// <summary>0..1 through the drop.</summary>
         public float DropU;
+        /// <summary>THE STREETS: the gather before take-off (a plant, the ball brought low, then up he goes).</summary>
+        public bool Gather;
+        /// <summary>THE STREETS: the last moment of the drop (knees bend on the landing).</summary>
+        public bool Landing;
     }
 
     /// <summary>
@@ -189,7 +193,21 @@ namespace CallerRetroBall.Logic
         /// As above, with <paramref name="hangU"/> = the share of the leap spent hanging on the rim after the slam
         /// (made dunks hang and swing; a value of 0 or less uses the short <see cref="HangShare"/> hang).
         /// </summary>
-        public static DunkFrame At(Vec2 start, Vec2 hoop, Vec2 end, float u, float slamU, float hangU, int liftAtRimPx, float approach)
+        public static DunkFrame At(Vec2 start, Vec2 hoop, Vec2 end, float u, float slamU, float hangU, int liftAtRimPx, float approach) =>
+            At(start, hoop, end, u, slamU, hangU, liftAtRimPx, approach, 0f);
+
+        /// <summary>Share of the rise spent gathering in THE STREETS (see <see cref="DunkFrame.Gather"/>).</summary>
+        public const float StreetGather = 0.2f;
+        /// <summary>Share of the drop that counts as the landing.</summary>
+        public const float LandingShare = 0.2f;
+
+        /// <summary>
+        /// 15 Oct 2026 (Omari: "make the dunking more natural" in THE STREETS): with <paramref name="gather"/> &gt; 0 the
+        /// dunker plants and gathers first (barely moving, ball low), then explodes: he rises fast and floats into the
+        /// rim (a real jump's arc, quick off the floor and slow at the top) while carrying his momentum in, and the
+        /// end of the drop is a landing.
+        /// </summary>
+        public static DunkFrame At(Vec2 start, Vec2 hoop, Vec2 end, float u, float slamU, float hangU, int liftAtRimPx, float approach, float gather)
         {
             var meet = MeetPoint(start, hoop, approach);
             bool swings = hangU > 0f;
@@ -198,7 +216,28 @@ namespace CallerRetroBall.Logic
             var f = new DunkFrame();
             if (u < 0f) u = 0f;
             if (u >= 1f) { f.Ground = end; return f; }
-            if (u < slamU)
+            if (u < slamU && gather > 0f)
+            {
+                float p = u / slamU;
+                f.BallInHands = true;
+                if (p < gather)
+                {
+                    // The plant: a short last step in, nothing off the floor yet.
+                    f.Gather = true;
+                    f.Ground = Vec2.Lerp(start, meet, 0.1f * Smooth(p / gather));
+                    f.LiftPx = 0;
+                }
+                else
+                {
+                    float r = (p - gather) / (1f - gather);
+                    // Momentum: he travels fastest just after take-off and drifts into the rim.
+                    float travel = 1f - (1f - r) * (1f - r);
+                    f.Ground = Vec2.Lerp(start, meet, 0.1f + 0.9f * travel);
+                    // A jump: quick off the floor, slow at the top (sine ease-out).
+                    f.LiftPx = (int)Math.Round(liftAtRimPx * Math.Sin(r * Math.PI * 0.5));
+                }
+            }
+            else if (u < slamU)
             {
                 float p = u / slamU;
                 f.Ground = Vec2.Lerp(start, meet, Smooth(p));
@@ -236,6 +275,7 @@ namespace CallerRetroBall.Logic
                 f.LiftPx = (int)Math.Round(from * (1f - q * q));
                 f.Dropping = true;
                 f.DropU = q;
+                f.Landing = gather > 0f && q >= 1f - LandingShare;
             }
             if (f.LiftPx < 0) f.LiftPx = 0;
             return f;

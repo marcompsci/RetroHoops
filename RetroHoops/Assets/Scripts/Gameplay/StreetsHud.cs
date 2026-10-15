@@ -210,6 +210,87 @@ namespace CallerRetroBall.Gameplay
 
         public void SetVisible(bool visible) => gameObject.SetActive(visible);
 
+        // ------------------------------------------------------------------ the ANKLE BREAKER stamp
+
+        private RectTransform _stamp, _stampBand;
+        private TextMeshProUGUI _stampText, _stampSub;
+        private float _stampAt = -9f;
+
+        /// <summary>
+        /// 15 Oct 2026 (Omari): ANKLE BREAKER shown "in a cool way". A dark band wipes across the screen, the words
+        /// slam down on it (big, tilted, with an overshoot) and shake, the victim's line slides in under them, then
+        /// the whole thing whips off upward. Reduce Motion: it just appears and fades.
+        /// </summary>
+        public void Stamp(string text, string sub, Color color)
+        {
+            if (_stamp == null) BuildStamp();
+            _stampText.text = Loc.T(text);
+            _stampText.color = color;
+            _stampSub.text = sub;
+            _stampAt = Time.unscaledTime;
+            _stamp.gameObject.SetActive(true);
+        }
+
+        public const float StampSeconds = 1.5f;
+
+        private void BuildStamp()
+        {
+            var canvas = (RectTransform)transform;
+            _stamp = UiKit.NewRect("AnkleStamp", canvas);
+            _stamp.anchorMin = _stamp.anchorMax = new Vector2(0.5f, 0.58f);
+            _stamp.sizeDelta = new Vector2(1800f, 300f);
+            var band = UiKit.Panel(_stamp, new Color(0.04f, 0.04f, 0.08f, 0.85f), null, false, "Band");
+            _stampBand = band.rectTransform;
+            _stampBand.anchorMin = new Vector2(0.5f, 0.5f);
+            _stampBand.anchorMax = new Vector2(0.5f, 0.5f);
+            _stampBand.sizeDelta = new Vector2(2600f, 230f);
+            band.raycastTarget = false;
+            foreach (float y in new[] { 1f, 0f })
+            {
+                var edge = UiKit.Panel(band.transform, Theme.Gold, null, false, "Edge");
+                edge.rectTransform.anchorMin = new Vector2(0f, y);
+                edge.rectTransform.anchorMax = new Vector2(1f, y);
+                edge.rectTransform.pivot = new Vector2(0.5f, y);
+                edge.rectTransform.sizeDelta = new Vector2(0f, 8f);
+                edge.raycastTarget = false;
+            }
+            _stampText = UiKit.Label(_stamp, "", 132f, Theme.Gold, TextAlignmentOptions.Center, true, "Words");
+            _stampText.rectTransform.anchorMin = _stampText.rectTransform.anchorMax = new Vector2(0.5f, 0.5f);
+            _stampText.rectTransform.sizeDelta = new Vector2(1800f, 170f);
+            _stampText.rectTransform.anchoredPosition = new Vector2(0f, 22f);
+            _stampText.textWrappingMode = TextWrappingModes.NoWrap;
+            _stampText.fontStyle = FontStyles.Bold | FontStyles.Italic;
+            _stampText.raycastTarget = false;
+            UiKit.ApplyTextShadow(_stampText);
+            _stampSub = UiKit.Label(_stamp, "", 44f, Theme.Cream, TextAlignmentOptions.Center, true, "Victim");
+            _stampSub.rectTransform.anchorMin = _stampSub.rectTransform.anchorMax = new Vector2(0.5f, 0.5f);
+            _stampSub.rectTransform.sizeDelta = new Vector2(1600f, 60f);
+            _stampSub.rectTransform.anchoredPosition = new Vector2(0f, -78f);
+            _stampSub.raycastTarget = false;
+            _stamp.localRotation = Quaternion.Euler(0f, 0f, 7f);
+            _stamp.gameObject.SetActive(false);
+        }
+
+        private void SyncStamp()
+        {
+            if (_stamp == null || !_stamp.gameObject.activeSelf) return;
+            float t = Time.unscaledTime - _stampAt;
+            if (t >= StampSeconds)
+            {
+                _stamp.gameObject.SetActive(false);
+                return;
+            }
+            var look = AnkleStampLook.At(t, StampSeconds, MatchHud.ReduceMotion);
+            _stampBand.localScale = new Vector3(look.BandWidth, 1f, 1f);
+            _stampText.transform.localScale = new Vector3(look.WordScale, look.WordScale, 1f);
+            _stampText.rectTransform.anchoredPosition = new Vector2(look.ShakeX, 22f + look.ShakeY);
+            _stampSub.rectTransform.anchoredPosition = new Vector2(look.SubX, -78f);
+            _stamp.anchoredPosition = new Vector2(0f, look.ExitY);
+            var g = _stamp.GetComponent<CanvasGroup>() ?? _stamp.gameObject.AddComponent<CanvasGroup>();
+            g.alpha = look.Alpha;
+            g.blocksRaycasts = false;
+        }
+
         // ------------------------------------------------------------------ SHOWSTOPPER cinema bars
 
         private RectTransform _barTop, _barBottom;
@@ -246,6 +327,7 @@ namespace CallerRetroBall.Gameplay
 
         private void LateUpdate()
         {
+            SyncStamp();
             if (_barTop == null) return;
             float t = Mathf.Clamp01((Time.unscaledTime - _cinemaAt) / 0.25f);
             float h = (_cinema ? t : 1f - t) * Screen.height * 0.09f / Mathf.Max(0.01f, ((RectTransform)transform).lossyScale.y);

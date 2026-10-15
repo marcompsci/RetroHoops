@@ -26,6 +26,7 @@ namespace CallerRetroBall.Logic
             CancelCharge();
             p.Motion.facing = Movement.FacingOf((Setup.Court.Hoop - p.Position).Normalized);
             _pumpFakes++;
+            NoteFake(shooter);
 
             int bit = -1;
             int defender = FakeTarget(p);

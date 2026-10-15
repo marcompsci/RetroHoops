@@ -118,6 +118,8 @@ namespace CallerRetroBall.Tests
             them.Def.attributes.defense = 60;
             Tap(m);
             float first = m.BiteChance(them, me);
+            // (Wait before the second fake: two quick taps are the SHOOT double-tap step-back.)
+            for (int i = 0; i < 30; i++) m.Step(Dt, default);
             Tap(m);
             Assert.AreEqual(2, m.PumpFakesThisPossession);
             Assert.Less(m.BiteChance(them, me), first, "the second fake works less often");

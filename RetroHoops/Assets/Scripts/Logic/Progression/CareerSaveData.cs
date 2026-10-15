@@ -33,6 +33,8 @@ namespace CallerRetroBall.Logic
         public bool landscapeAll;
         /// <summary>Mic Tally's text commentary during games.</summary>
         public bool commentary = true;
+        /// <summary>THE STREETS: speak the commentary out loud (the iPhone's speech voice).</summary>
+        public bool playByPlayVoice = true;
         /// <summary>Tap SHOOT to start the meter and tap again to release (no holding).</summary>
         public bool tapToShoot;
         /// <summary>No screen shake, sparks, or score bounce.</summary>

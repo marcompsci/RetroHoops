@@ -169,6 +169,8 @@ namespace CallerRetroBall.Logic
         {
             "3 ON 3 TO 21: 1s inside, 2s from deep, win by two. No clock, no fouls. The ball changes hands after every bucket.",
             "TRICK: tap TRICK with the ball. The stick picks it: still for a HALO, sideways BEHIND THE BACK, back THROUGH THE LEGS, at the rim ROLL THE ARM, and OFF THE HEAD when he's right in your face.",
+            "MOVES: with a defender on you, snap the stick side to side for a CROSSOVER (snap back again for the SHAKE). A big cross can break his ankles.",
+            "STEP-BACK: tap SHOOT, then press and hold it again. You step back and rise into the jumper with room.",
             "COMBOS: chain tricks (stick moves count) and the combo grows. The same trick twice is worth less. Score to bank it into your STREET METER. Lose the ball and it's gone.",
             "OFF THE GLASS: driving at the rim from a few steps out, tap TRICK with the stick at the rim. You throw it off the backboard and finish your own alley-oop.",
             "DEFENSE: blocks and steals go straight into your meter.",

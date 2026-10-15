@@ -24,6 +24,11 @@ namespace CallerRetroBall.Logic
         public const float StepBackSeconds = 0.22f;
         public const float StepBackSpace = 0.9f;
         public const float StepBackSpaceSeconds = 1.3f;
+        public const float CrossoverCooldown = 0.15f;
+        /// <summary>Share of beaten crossovers (in street rules) that break ankles.</summary>
+        public const float CrossoverAnkleShare = 0.45f;
+        /// <summary>SHOOT double tap: after a pump fake, press SHOOT again within this long for a step-back.</summary>
+        public const float StepBackTapWindow = 0.35f;
         public const float BankMinAngle = 18f;
         public const float BankMaxAngle = 68f;
         public const float BankMinDistance = 0.6f;
@@ -34,7 +39,7 @@ namespace CallerRetroBall.Logic
         private float[] _skillReadyAt, _skillUntil, _burstUntil, _burstFactor, _spaceUntil, _protectUntil;
         private SkillMoveKind[] _skillKind;
         private Vec2[] _skillDir;
-        private readonly int[] _skillRepeats = new int[8];
+        private readonly int[] _skillRepeats = new int[16];
 
         /// <summary>The move <paramref name="player"/> is doing right now (None when not).</summary>
         public SkillMoveKind SkillMoveOf(int player) =>
@@ -61,7 +66,12 @@ namespace CallerRetroBall.Logic
         }
 
         /// <summary>A new possession: defenders fall for every move again.</summary>
-        private void ResetSkillRepeats() => Array.Clear(_skillRepeats, 0, _skillRepeats.Length);
+        private void ResetSkillRepeats()
+        {
+            Array.Clear(_skillRepeats, 0, _skillRepeats.Length);
+            if (_stepShotAt != null)
+                for (int i = 0; i < _stepShotAt.Length; i++) { _stepShotAt[i] = -99f; _fakeAt[i] = -99f; }
+        }
 
         /// <summary>Feeds the stick for a person holding the ball (no button pressed this step); runs a move when one lands.</summary>
         private void FeedSkillMoves(int me, PlayerInput input, bool holding)
@@ -80,7 +90,10 @@ namespace CallerRetroBall.Logic
         }
 
         /// <summary>Runs a move for <paramref name="me"/> (also used by tests and the Practice Lab).</summary>
-        public void DoSkillMove(int me, SkillMoveKind kind)
+        public void DoSkillMove(int me, SkillMoveKind kind) => DoSkillMove(me, kind, false);
+
+        /// <param name="force">A step-back from the SHOOT double tap happens even with nobody close.</param>
+        private void DoSkillMove(int me, SkillMoveKind kind, bool force)
         {
             EnsureSkillState();
             var p = Players[me];
@@ -88,10 +101,11 @@ namespace CallerRetroBall.Logic
             var toHoop = (hoop - p.Position).SqrMagnitude > 0.0001f ? (hoop - p.Position).Normalized : new Vec2(0f, -1f);
             int victim = SkillTarget(p);
 
-            // A step-back only makes sense with someone to step back from.
-            if (kind == SkillMoveKind.StepBack && victim < 0) return;
+            // A step-back (from the stick) and a crossover only make sense with someone on you.
+            if ((kind == SkillMoveKind.StepBack && !force || kind == SkillMoveKind.Crossover) && victim < 0) return;
 
-            _skillReadyAt[me] = Time + SkillCooldown;
+            // A crossover can be followed straight away by the cross back (the SHAKE).
+            _skillReadyAt[me] = Time + (kind == SkillMoveKind.Crossover ? CrossoverCooldown : SkillCooldown);
             _skillKind[me] = kind;
             int repeats = _skillRepeats[(int)kind]++;
             bool beat = false;
@@ -152,6 +166,29 @@ namespace CallerRetroBall.Logic
                     }
                     break;
                 }
+                case SkillMoveKind.Crossover:
+                {
+                    // Ball across, a hard plant and a burst the other way. Beat him and he's left reaching; in street
+                    // rules a big cross can put him on the floor.
+                    _skillUntil[me] = Time + 0.3f;
+                    Burst(me, 1.3f, 0.5f);
+                    if (beat)
+                    {
+                        var d = Players[victim];
+                        bool ankles = (Setup.StreetRules || StyleOn) && Vec2.Distance(d.Position, p.Position) < 1.9f
+                                      && _rng.NextFloat() < CrossoverAnkleShare;
+                        if (ankles)
+                        {
+                            d.StunnedUntil = Math.Max(d.StunnedUntil, Time + AnkleStumbleSeconds);
+                            Stats[me].ankleBreakers++;
+                            Events.Add(new MatchEvent(MatchEventType.AnkleBreaker, me, p.Team, victim));
+                            Events.Add(new MatchEvent(MatchEventType.SkillMove, me, p.Team, (int)kind, victim));
+                            return;
+                        }
+                        d.StunnedUntil = Math.Max(d.StunnedUntil, Time + 0.4f);
+                    }
+                    break;
+                }
                 default: // Shake
                     _skillUntil[me] = Time + 0.4f;
                     Burst(me, 1.2f, 0.45f);
@@ -166,6 +203,49 @@ namespace CallerRetroBall.Logic
             Events.Add(new MatchEvent(MatchEventType.SkillMove, me, p.Team, (int)kind, victim));
             if (beat && kind != SkillMoveKind.Shake) Events.Add(new MatchEvent(MatchEventType.DefenderBeaten, me, p.Team, victim));
         }
+
+        // ------------------------------------------------------------------ SHOOT double tap: the step-back jumper
+
+        private float[] _fakeAt, _stepShotAt;
+
+        /// <summary>
+        /// 15 Oct 2026 (Omari): tap SHOOT (a pump fake), then press it again quickly: a step-back. Keep holding the
+        /// second press and he rises into the jumper as soon as he lands, with room to shoot.
+        /// </summary>
+        private bool TryStepBackShot(int me)
+        {
+            if (_fakeAt == null || Time - _fakeAt[me] > StepBackTapWindow || Time < _fakeAt[me]) return false;
+            _fakeAt[me] = -99f;
+            DoSkillMove(me, SkillMoveKind.StepBack, true);
+            if (SkillMoveOf(me) != SkillMoveKind.StepBack) return false;
+            _stepShotAt[me] = Time + StepBackSeconds;
+            return true;
+        }
+
+        private void NoteFake(int shooter)
+        {
+            EnsureStepShot();
+            _fakeAt[shooter] = Time;
+        }
+
+        private void EnsureStepShot()
+        {
+            if (_fakeAt != null) return;
+            _fakeAt = new float[Players.Length];
+            _stepShotAt = new float[Players.Length];
+            for (int i = 0; i < Players.Length; i++) _fakeAt[i] = _stepShotAt[i] = -99f;
+        }
+
+        /// <summary>A step-back from the double tap is landing: still holding SHOOT, he goes up for the jumper.</summary>
+        private void LandStepBackShot(int me, PlayerInput input)
+        {
+            if (_stepShotAt == null || _stepShotAt[me] < 0f || Time < _stepShotAt[me]) return;
+            _stepShotAt[me] = -99f;
+            if (input.ShootHeld && CanShoot(me)) BeginCharge(me, -1f);
+        }
+
+        /// <summary>True while a SHOOT double-tap step-back is in the air.</summary>
+        public bool StepBackShotPending(int me) => _stepShotAt != null && me >= 0 && me < Players.Length && _stepShotAt[me] >= 0f;
 
         /// <summary>Seconds between moves for an AI handler.</summary>
         public const float AiSkillCooldown = 2.5f;
@@ -190,7 +270,7 @@ namespace CallerRetroBall.Logic
             SkillMoveKind kind;
             float roll = _rng.NextFloat();
             if (distToHoop > 5.5f && tend.shoot >= tend.drive) kind = roll < 0.55f ? SkillMoveKind.StepBack : SkillMoveKind.Jab;
-            else kind = roll < 0.5f ? SkillMoveKind.Spin : roll < 0.85f ? SkillMoveKind.Hesi : SkillMoveKind.Shake;
+            else kind = roll < 0.35f ? SkillMoveKind.Spin : roll < 0.6f ? SkillMoveKind.Crossover : roll < 0.88f ? SkillMoveKind.Hesi : SkillMoveKind.Shake;
             DoSkillMove(p.Index, kind);
             if (SkillMoveOf(p.Index) == SkillMoveKind.None) return false;
             _skillReadyAt[p.Index] = Time + AiSkillCooldown;
@@ -235,12 +315,14 @@ namespace CallerRetroBall.Logic
                 case SkillMoveKind.Hesi: second = a.speed; break;
                 case SkillMoveKind.Jab:
                 case SkillMoveKind.StepBack: second = a.shooting; break;
+                case SkillMoveKind.Crossover: second = a.speed * 0.5f + a.playmaking * 0.5f; break;
                 default: second = a.playmaking; break;
             }
             float handle = (a.playmaking * 0.65f + second * 0.35f) / 100f;
             float feet = (defender.Def.attributes.defense * 0.7f + defender.Def.attributes.speed * 0.3f) / 100f;
             float chance = 0.42f + (handle - feet) * 0.9f;
             if (kind == SkillMoveKind.Shake) chance -= 0.12f; // breaking ankles is the big prize
+            if (kind == SkillMoveKind.Crossover) chance -= 0.04f;
             for (int k = 0; k < repeats; k++) chance *= 0.7f;
             return Math.Max(0.06f, Math.Min(0.8f, chance));
         }

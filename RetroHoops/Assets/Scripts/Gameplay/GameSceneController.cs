@@ -597,6 +597,8 @@ namespace CallerRetroBall.Gameplay
             _ballView = BallView.Create(world, _art);
             _meter = ShotMeterView.Create(world, _art);
             _bursts = PixelBursts.Create(world, _art);
+            // THE STREETS: rings of energy off the rim on dunks.
+            if (_match.StyleOn) _rimPulse = RimPulse.Create(world);
             // The stands' fans are drawn for the portrait view; landscape leaves the stands empty.
             if (!_landscape) BuildCrowd(world, court, setup, artGeometry, banner != null);
             else BuildSidelineCrowd(world, court, setup);
@@ -1447,7 +1449,12 @@ namespace CallerRetroBall.Gameplay
             if (_mic != null && _match.Events.Count > 0)
             {
                 string line = _mic.React(_match, i => { var d = _match.Players[i].Def; return string.IsNullOrEmpty(d.lastName) ? d.firstName : d.lastName; }, _match.Ball.ShotType);
-                if (line != null) _hud.Commentary(Commentary.Speaker, line);
+                if (line != null)
+                {
+                    _hud.Commentary(Commentary.Speaker, line);
+                    // THE STREETS: the booth says it out loud.
+                    if (_match.StyleOn && !Demo && _watch == null && !Theater) Speech.Say(line, _mic.LastPriority >= 4);
+                }
             }
             int human = _match.Setup.HumanTeam;
             float stop = 0f;
@@ -1524,6 +1531,7 @@ namespace CallerRetroBall.Gameplay
                             _bursts.Spawn(HoopWorld, new Color32(0xC7, 0x4D, 0xFF, 255), 30, 5f, 0.8f);
                         }
                         _cameraRig.Shake(0.35f);
+                        PulseRim(e.Team, true);
                         Sfx(SfxId.Fanfare, 1f);
                         SetCrowd(e.Team == streetsTeam || Versus ? CrowdMood.Cheer : CrowdMood.Groan, 2.2f);
                         if (e.Team == streetsTeam) Haptics.Success();
@@ -1629,6 +1637,7 @@ namespace CallerRetroBall.Gameplay
                         if (!_reduceMotion) _bursts.Spawn(HoopWorld, swish ? (Color)new Color32(0xFF, 0xD1, 0x66, 255) : Color.white, dunk ? 28 : (swish ? 20 : 12), dunk ? 5f : 4f);
                         if (dunk)
                         {
+                            if (_cinePlayer < 0) PulseRim(e.Team, false); // a SHOWSTOPPER dunk gets the big one below
                             _cameraRig.Shake(Dunks.Shake(_dunkStyle) + 0.04f);
                             if (e.Team == human || Versus) Haptics.Heavy();
                         }
@@ -1716,12 +1725,23 @@ namespace CallerRetroBall.Gameplay
                     case MatchEventType.AnkleBreaker:
                         // Street rules: the defender stumbles.
                         if (!_reduceMotion) _bursts.Spawn(CourtSpace.ToWorldSnapped(_match.Players[e.Value].Position, 0.5f), new Color32(0xFF, 0xD1, 0x66, 255), 12, 3f, 0.5f);
-                        _hud.Toast(e.Team == human ? "ANKLES!" : "GOT YOU!", 1.2f);
+                        if (_streetsHud != null)
+                        {
+                            // THE STREETS: the big ANKLE BREAKER stamp, and a beat of freeze on him going down.
+                            var victim = _match.Players[e.Value].Def;
+                            bool mine = e.Team == streetsTeam || Versus;
+                            _streetsHud.Stamp("ANKLE BREAKER!", (string.IsNullOrEmpty(victim.lastName) ? victim.firstName : victim.lastName).ToUpperInvariant() + " " + Loc.T("IS DOWN"),
+                                              mine ? Theme.Gold : Theme.Pink);
+                            if (!_reduceMotion && _link == null) stop = HitStop.Combine(stop, HitStop.Ankles);
+                            if (Speech.Enabled) Captions.Show("ANKLE BREAKER!"); // the booth will say it
+                            else Audio.AudioManager.Voice("ANKLE BREAKER!");
+                        }
+                        else _hud.Toast(e.Team == human ? "ANKLES!" : "GOT YOU!", 1.2f);
                         Sfx(SfxId.CrowdCheer, 0.9f);
                         Sfx(SfxId.CrowdOooh, 0.8f);
                         Sfx(SfxId.Squeak, 0.8f, 0.8f);
                         _cameraRig.Shake(0.15f);
-                        if (e.Team == human) { Haptics.Medium(); Audio.AudioManager.Voice("OOOH!"); }
+                        if (e.Team == human) { Haptics.Medium(); if (_streetsHud == null) Audio.AudioManager.Voice("OOOH!"); }
                         break;
                     case MatchEventType.Substitution:
                         RedrawPlayer(e.PlayerIndex);
@@ -1734,6 +1754,38 @@ namespace CallerRetroBall.Gameplay
                 }
             }
             if (stop > 0f) _hitStopUntil = Time.unscaledTime + stop;
+        }
+
+        private bool _dustUp, _dustDown;
+        private RimPulse _rimPulse;
+
+        /// <summary>THE STREETS: the energy pulse off the rim on a dunk (bigger for a SHOWSTOPPER).</summary>
+        private void PulseRim(int team, bool big)
+        {
+            if (_rimPulse == null || _reduceMotion) return;
+            int human = _match.Setup.HumanTeam;
+            var color = big ? (Color)Theme.Gold : team == human || Versus ? (Color)new Color32(0xFF, 0xD1, 0x66, 255) : new Color32(0x4C, 0xC9, 0xF0, 255);
+            _rimPulse.Fire(HoopWorld, color, big);
+            if (big) _rimPulse.Fire(HoopWorld, new Color32(0xC7, 0x4D, 0xFF, 255), false);
+        }
+
+        /// <summary>THE STREETS: a puff of dust as the dunker leaves the floor, and again as he lands.</summary>
+        private void StreetDunkDust(DunkFrame f)
+        {
+            if (!_match.StyleOn || _reduceMotion) return;
+            if (f.Gather) { _dustUp = false; _dustDown = false; return; }
+            var dust = new Color32(0xC9, 0xC4, 0xB8, 255);
+            if (!_dustUp && f.LiftPx > 0 && !f.Dropping)
+            {
+                _dustUp = true;
+                _bursts.Spawn(CourtSpace.ToWorldSnapped(f.Ground, 0.1f), dust, 8, 1.6f, 0.3f);
+                Sfx(SfxId.Squeak, 0.5f, 0.7f);
+            }
+            if (!_dustDown && f.Landing)
+            {
+                _dustDown = true;
+                _bursts.Spawn(CourtSpace.ToWorldSnapped(f.Ground, 0.1f), dust, 10, 1.8f, 0.35f);
+            }
         }
 
         private void SyncViews(float dt, bool snapCamera)
@@ -1756,7 +1808,8 @@ namespace CallerRetroBall.Gameplay
             {
                 float u = (now - _leapStart) / _leapDuration;
                 dunk = DunkPath.At(_leapFrom, _match.Setup.Court.Hoop, _match.Players[_leaper].Position, u, _slamU, _hangU, _liftAtRimPx,
-                                   _landscape ? DunkPath.ApproachSide : DunkPath.Approach);
+                                   _landscape ? DunkPath.ApproachSide : DunkPath.Approach, _match.StyleOn ? DunkPath.StreetGather : 0f);
+                StreetDunkDust(dunk);
             }
             // The rim is pulled down while someone hangs on it (2 pixels at the slam, then 1).
             if (_reduceMotion) dunk.SwingPx = 0;
@@ -1773,7 +1826,12 @@ namespace CallerRetroBall.Gameplay
                     float leap = Flair.Leap(_leapType, now - _leapStart, _leapDuration);
                     if (_leapType == ShotType.Dunk)
                     {
-                        if (dunk.OnRim || dunk.Dropping)
+                        if (dunk.Gather || dunk.Landing)
+                        {
+                            // THE STREETS: the plant before take-off and the landing: arms down, feet on the floor.
+                            flair = FlairPose.None;
+                        }
+                        else if (dunk.OnRim || dunk.Dropping)
                         {
                             // Hanging and dropping: one steady pose (no flips mid-swing), swinging under the rim.
                             flair = Dunks.HangPose(_dunkStyle, dunk);
@@ -1800,8 +1858,11 @@ namespace CallerRetroBall.Gameplay
                 // The ball rides in the dunker's hands up to the rim (windmills and tomahawks swing it around).
                 var pose = _reduceMotion ? FlairPose.None : Dunks.Pose(_dunkStyle, Mathf.Min(0.999f, (now - _leapStart) / Mathf.Max(0.01f, _slamU * _leapDuration)));
                 int reach = CharacterSpriteGenerator.HandReachPx(_match.Players[_leaper].Def.appearance);
-                var hands = CourtSpace.ToWorldSnapped(dunk.Ground)
-                            + new Vector3(pose.BallOffsetX, dunk.LiftPx + reach + 2 + System.Math.Max(0, pose.BallLift), 0f) / CourtSpace.PixelsPerUnit;
+                var hands = dunk.Gather
+                    // The gather: the ball brought down to the hip before he goes up.
+                    ? CourtSpace.ToWorldSnapped(dunk.Ground) + new Vector3(2f, reach * 0.45f, 0f) / CourtSpace.PixelsPerUnit
+                    : CourtSpace.ToWorldSnapped(dunk.Ground)
+                      + new Vector3(pose.BallOffsetX, dunk.LiftPx + reach + 2 + System.Math.Max(0, pose.BallLift), 0f) / CourtSpace.PixelsPerUnit;
                 _ballView.SyncInHands(hands, CourtSpace.SortingOrder(dunk.Ground, 2));
             }
             if (_rainbowBall) _ballView.Tint(ToColor(ArcadeColors.RainbowAt(now)));
@@ -2037,6 +2098,7 @@ namespace CallerRetroBall.Gameplay
                 case SkillMoveKind.Jab: return "JAB STEP";
                 case SkillMoveKind.Hesi: return "HESI";
                 case SkillMoveKind.StepBack: return "STEP-BACK";
+                case SkillMoveKind.Crossover: return "CROSSOVER";
                 default: return "SHAKE";
             }
         }
@@ -2059,6 +2121,7 @@ namespace CallerRetroBall.Gameplay
                 case SkillMoveKind.Jab: return DribbleMoveKind.RockerStep;
                 case SkillMoveKind.Hesi: return DribbleMoveKind.HesiHop;
                 case SkillMoveKind.StepBack: return DribbleMoveKind.StepBack;
+                case SkillMoveKind.Crossover: return DribbleMoveKind.Crossover;
                 default: return DribbleMoveKind.DoubleCross;
             }
         }
@@ -3549,6 +3612,7 @@ namespace CallerRetroBall.Gameplay
         private void OnDestroy()
         {
             PowerMonitor.Gameplay = false;
+            Speech.Stop();
             if (!_rematching) HangUp();
             UI.ControllerCursor.Suppressed = false;
             CourtSpace.Flip = false;

@@ -15,6 +15,9 @@ namespace CallerRetroBall.Logic
         /// <summary>Seconds of game time between lines (big moments can cut in after half of it).</summary>
         public const float Gap = 5f;
 
+        /// <summary>How big the last line was (4+ is a big call: the play-by-play voice speeds up for it).</summary>
+        public int LastPriority => _lastPriority;
+
         private readonly SeededRandom _rng;
         private readonly string[] _teams;
         private float _lastAt = -99f;
@@ -61,7 +64,10 @@ namespace CallerRetroBall.Logic
                         if (scorer == _runTeam) _runPoints += Math.Max(1, e.Value);
                         else { _runTeam = scorer; _runPoints = Math.Max(1, e.Value); }
                         if (m.Ball.ShotBank) Offer(2, Pick("glass", who + " OFF THE GLASS!", "KISSED IT OFF THE BOARD! " + who + "!", "GLASS! " + who + " BANKS IT IN!"));
-                        if (shot == ShotType.Dunk) Offer(3, Pick("dunk", who + " THROWS IT DOWN!", "OH, " + who + " WITH THE HAMMER!", "SOMEBODY CHECK THE RIM, " + who + " JUST BENT IT!", who + " FLUSHES IT!"));
+                        if (shot == ShotType.Dunk && m.StyleOn)
+                            Offer(4, Pick("dunk.st", "OH MY GOODNESS! " + who + " THROWS IT DOWN!", "ARE YOU SERIOUS?! " + who + " JUST RATTLED THE WHOLE BACKBOARD!",
+                                          "RIM RATTLER! " + who + " WITH AUTHORITY!", "HE'S GOT HOPS, FOLKS! " + who + " FROM THE SKY!", "BOOM! " + who + " HAMMERS IT HOME!"));
+                        else if (shot == ShotType.Dunk) Offer(3, Pick("dunk", who + " THROWS IT DOWN!", "OH, " + who + " WITH THE HAMMER!", "SOMEBODY CHECK THE RIM, " + who + " JUST BENT IT!", who + " FLUSHES IT!"));
                         else if (e.Value >= 2 && !m.Setup.FullCourt || e.Value >= 3) Offer(2, Pick("deep", who + " FROM DOWNTOWN!", "BANG! " + who + " FROM DEEP!", who + " LETS IT FLY... GOT IT!"));
                         if (_runPoints >= RunSize(m)) Offer(2, Pick("run", team + " ON A " + _runPoints + "-0 RUN!", "SOMEBODY CALL A TIMEOUT, " + team + " ARE ROLLING!", team + " CAN'T MISS RIGHT NOW!"));
                         int lead = m.Score[0] == m.Score[1] ? -1 : (m.Score[0] > m.Score[1] ? 0 : 1);
@@ -79,7 +85,27 @@ namespace CallerRetroBall.Logic
                         Offer(4, Pick("oop", "ALLEY-OOP! " + who + " FROM THE SKY!", "LOB CITY! " + who + " FINISHES!", "OH THE OOP! " + who + "!"));
                         break;
                     case MatchEventType.AnkleBreaker:
-                        Offer(5, Pick("ankles", "OH! SOMEBODY'S DOWN! " + who + " BROKE SOME ANKLES!", "SOMEBODY GET A CHAIR! " + who + " WITH THE CROSSOVER!", who + " LEFT THEM ON THE FLOOR!"));
+                        if (m.StyleOn)
+                        {
+                            // THE STREETS: the booth loses it (college-broadcast style, all original lines).
+                            string down = e.Value >= 0 && e.Value < m.Players.Length && names != null ? Cap(names(e.Value)) : "HIM";
+                            Offer(6, Pick("ankles.st",
+                                "OH MY! ANKLE BREAKER! " + who + " SENT " + down + " TO THE FLOOR!",
+                                "ARE YOU KIDDING ME?! " + who + " TOOK " + down + "'S ANKLES RIGHT OFF!",
+                                "CROSSOVER... AND DOWN GOES " + down + "! WE MAY NEED A TRAINER OUT HERE!",
+                                "OH NO! " + down + " IS ON THE BLACKTOP AND " + who + " IS JUST WALKING AWAY!",
+                                "THAT IS DISRESPECTFUL, FOLKS! " + who + " PUT " + down + " ON THE GROUND!",
+                                "SOMEBODY BRING A CHAIR FOR " + down + "! " + who + " BROKE HIM DOWN!"));
+                        }
+                        else Offer(5, Pick("ankles", "OH! SOMEBODY'S DOWN! " + who + " BROKE SOME ANKLES!", "SOMEBODY GET A CHAIR! " + who + " WITH THE CROSSOVER!", who + " LEFT THEM ON THE FLOOR!"));
+                        break;
+                    case MatchEventType.SkillMove:
+                        // THE STREETS: the booth calls the big moves too.
+                        if (!m.StyleOn) break;
+                        if (e.Value == (int)SkillMoveKind.Crossover)
+                            Offer(2, Pick("cross.st", "WHAT A CROSSOVER BY " + who + "!", "LEFT, RIGHT, GOODBYE! " + who + "!", who + " CROSSES HIM UP!"));
+                        else if (e.Value == (int)SkillMoveKind.StepBack)
+                            Offer(2, Pick("stepback.st", "STEP-BACK BY " + who + "... LOOK AT ALL THAT ROOM!", who + " CREATES SPACE!", "OH, THE STEP-BACK! " + who + "!"));
                         break;
                     case MatchEventType.Block:
                         Offer(3, Pick("block", "REJECTED! " + who + " SAYS NO!", "GET THAT OUTTA HERE! " + who + "!", who + " SENDS IT BACK!"));
