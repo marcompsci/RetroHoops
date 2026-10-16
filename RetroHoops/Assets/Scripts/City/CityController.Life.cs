@@ -154,28 +154,25 @@ namespace CallerRetroBall.City
                 {
                     var result = CityShop.Buy(career, App.Catalog, a.ItemId, _day);
                     _hud.Toast(result == CosmeticCheck.Ok ? Loc.T("BOUGHT AND PUT ON") : result == CosmeticCheck.NotEnoughPoints ? Loc.T("NOT ENOUGH SP") : Loc.T("CAN'T BUY THAT"), 1.8f);
-                    if (result == CosmeticCheck.Ok) Audio.AudioManager.Play(SfxId.Fanfare, 0.5f);
+                    if (result == CosmeticCheck.Ok) { Audio.AudioManager.Play(SfxId.Fanfare, 0.5f); RefreshMe(); }
                     break;
                 }
                 case CityAction.BuyWithCash:
                 {
                     var result = CityShop.BuyWithCash(career, App.Catalog, a.ItemId, _day);
                     _hud.Toast(result == CosmeticCheck.Ok ? Loc.T("PAID IN CASH") : result == CosmeticCheck.NotEnoughPoints ? Loc.T("NOT ENOUGH CASH") : Loc.T("CAN'T BUY THAT"), 1.8f);
-                    if (result == CosmeticCheck.Ok) Audio.AudioManager.Play(SfxId.Fanfare, 0.5f);
+                    if (result == CosmeticCheck.Ok) { Audio.AudioManager.Play(SfxId.Fanfare, 0.5f); RefreshMe(); }
                     break;
                 }
                 case CityAction.Equip:
-                    if (CityShop.Equip(career, App.Catalog, a.ItemId)) _hud.Toast("PUT ON", 1.4f);
+                    if (CityShop.Equip(career, App.Catalog, a.ItemId)) { _hud.Toast("PUT ON", 1.4f); RefreshMe(); }
                     break;
                 case CityAction.Haircut:
                     if (CityBarber.Apply(career, a.ItemId))
                     {
                         _hud.Toast("FRESH!", 1.6f);
                         Audio.AudioManager.Play(SfxId.Fanfare, 0.5f);
-                        // Your new look, right away.
-                        var me = PlayerCreator.BasePlayer(career, App.Catalog);
-                        Destroy(_meView.gameObject);
-                        _meView = CityActorView.Create(_world.transform, "You", me, Kit(App.Catalog.Team(DefaultContent.PlayerCrewId)), _world.Shadow);
+                        RefreshMe(); // your new look, right away
                     }
                     break;
             }

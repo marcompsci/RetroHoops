@@ -67,6 +67,34 @@ namespace CallerRetroBall.Logic
             while (d.moments.Count > Keep) d.moments.RemoveAt(d.moments.Count - 1);
         }
 
+        /// <summary>
+        /// I6: gear earned by playing, not bought: your first buzzer-beater gets the Sport Goggles, three game-winners
+        /// the Vet Package, five big games Full Compression. Returns what this call newly gave you (already owned = skipped).
+        /// </summary>
+        public static readonly (MomentKind[] kinds, int count, string itemId)[] Rewards =
+        {
+            (new[] { MomentKind.BuzzerBeater }, 1, "cosmetic.gear.goggles"),
+            (new[] { MomentKind.GameWinner, MomentKind.BuzzerBeater }, 3, "cosmetic.gear.vet_package"),
+            (new[] { MomentKind.BigGame }, 5, "cosmetic.gear.full_compression"),
+        };
+
+        public static List<CosmeticDef> GrantRewards(CareerSaveData d, ContentCatalog c)
+        {
+            var got = new List<CosmeticDef>();
+            if (d == null || c == null) return got;
+            foreach (var r in Rewards)
+            {
+                int n = 0;
+                foreach (var k in r.kinds) n += Count(d, k);
+                if (n < r.count || d.ownedCosmetics.Contains(r.itemId)) continue;
+                var item = c.Find(c.Cosmetics, r.itemId);
+                if (item == null) continue;
+                d.ownedCosmetics.Add(r.itemId);
+                got.Add(item);
+            }
+            return got;
+        }
+
         public static int Count(CareerSaveData d, MomentKind k)
         {
             int n = 0;

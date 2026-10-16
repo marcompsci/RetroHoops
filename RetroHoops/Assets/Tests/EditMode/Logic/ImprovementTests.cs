@@ -248,5 +248,88 @@ namespace CallerRetroBall.Tests
             foreach (var px in g.Pixels) if (px.Equals(goggles.GearColor)) rims++;
             Assert.Greater(rims, 40, "goggle rims on the front and side views");
         }
+        // ---- I4: tale of the tape
+
+        [Test]
+        public void I4_TaleOfTheTape_SeriesDangerManAndKey()
+        {
+            var hist = new System.Collections.Generic.List<MatchHistoryEntry>
+            {
+                new MatchHistoryEntry { opponentId = "team.x", scoreFor = 21, scoreAgainst = 18 },
+                new MatchHistoryEntry { opponentId = "team.y", scoreFor = 10, scoreAgainst = 21 },
+                new MatchHistoryEntry { opponentId = "team.x", scoreFor = 15, scoreAgainst = 21 },
+                new MatchHistoryEntry { opponentId = "team.x", scoreFor = 21, scoreAgainst = 9 },
+            };
+            var s = TaleOfTheTape.Against(hist, "team.x");
+            Assert.AreEqual(2, s.Wins); Assert.AreEqual(1, s.Losses);
+            Assert.AreEqual(18, s.Last.scoreAgainst, "the newest meeting");
+            StringAssert.Contains("2-1", TaleOfTheTape.SeriesLine(s));
+            StringAssert.Contains("YOU LEAD", TaleOfTheTape.SeriesLine(s));
+            StringAssert.Contains("LAST TIME: W 21-18", TaleOfTheTape.SeriesLine(s));
+            Assert.AreEqual("FIRST MEETING", TaleOfTheTape.SeriesLine(TaleOfTheTape.Against(hist, "team.z")));
+
+            var shooter = new PlayerDef { firstName = "Ace", lastName = "Lane", jerseyNumber = 3, attributes = new AttributeSet(50, 95, 50, 40, 40, 60, 60, 60) };
+            var big = new PlayerDef { firstName = "Mo", lastName = "", jerseyNumber = 44, attributes = new AttributeSet(60, 30, 30, 50, 70, 40, 60, 40) };
+            var roster = new[] { shooter, big };
+            Assert.IsTrue(ReferenceEquals(shooter, TaleOfTheTape.DangerMan(roster)), "the best player");
+            Assert.AreEqual("KEY: CLOSE OUT ON THEIR SHOOTERS", TaleOfTheTape.Key(roster));
+            string card = TaleOfTheTape.Card(hist, "team.x", roster);
+            StringAssert.Contains("WATCH: #3 LANE", card);
+            Assert.IsNull(TaleOfTheTape.Card(hist, null, roster));
+        }
+
+        // ---- I5: storm the court
+
+        [Test]
+        public void I5_StormTheCourt_OnlyForBigWins()
+        {
+            Assert.IsTrue(CourtStorm.Should(true, true, false, 0f), "a championship");
+            Assert.IsTrue(CourtStorm.Should(true, false, true, 0f), "a Baller/Legendary CPU");
+            Assert.IsTrue(CourtStorm.Should(true, false, false, 5f), "a better roster");
+            Assert.IsFalse(CourtStorm.Should(true, false, false, 1f), "an ordinary win");
+            Assert.IsFalse(CourtStorm.Should(false, true, true, 9f), "never when you lose");
+            Assert.IsTrue(CourtStorm.Tough("difficulty.legendary"));
+            Assert.IsFalse(CourtStorm.Tough(DefaultContent.DefaultDifficultyId));
+            var shooter = new Vec2(0f, 6f);
+            for (int i = 0; i < CourtStorm.MaxFans; i++)
+            {
+                float d = (CourtStorm.Spot(shooter, i, CourtStorm.MaxFans) - shooter).Magnitude;
+                Assert.Greater(d, GameWinnerMob.Radius, "fans stay outside the players' mob");
+            }
+            Assert.AreEqual(0f, CourtStorm.Progress(0f, 0));
+            Assert.AreEqual(1f, CourtStorm.Progress(CourtStorm.Seconds, 4), 1e-4f);
+            Assert.LessOrEqual(CourtStorm.Delay + 4 * 0.08f + CourtStorm.RunSeconds, CourtStorm.Seconds - 1f, "time to celebrate once there");
+        }
+
+        // ---- I6: earned gear and history
+
+        [Test]
+        public void I6_MomentsEarnGear_Once()
+        {
+            var cat = DefaultContent.Create();
+            var d = new CareerSaveData();
+            Assert.AreEqual(0, MomentsBook.GrantRewards(d, cat).Count);
+            MomentsBook.Add(d, new System.Collections.Generic.List<MomentEntry> { new MomentEntry { kind = MomentKind.BuzzerBeater } });
+            var got = MomentsBook.GrantRewards(d, cat);
+            Assert.AreEqual(1, got.Count);
+            Assert.AreEqual("cosmetic.gear.goggles", got[0].id);
+            Assert.IsTrue(d.ownedCosmetics.Contains("cosmetic.gear.goggles"));
+            Assert.AreEqual(0, MomentsBook.GrantRewards(d, cat).Count, "only once");
+            for (int i = 0; i < 2; i++) MomentsBook.Add(d, new System.Collections.Generic.List<MomentEntry> { new MomentEntry { kind = MomentKind.GameWinner } });
+            Assert.AreEqual("cosmetic.gear.vet_package", MomentsBook.GrantRewards(d, cat)[0].id, "three game-winners (buzzer-beaters count)");
+            foreach (var r in MomentsBook.Rewards) Assert.IsNotNull(cat.Find(cat.Cosmetics, r.itemId), r.itemId);
+        }
+
+        [Test]
+        public void I6_History_KeepsEveryMode()
+        {
+            var cat = DefaultContent.Create();
+            var d = new CareerSaveData();
+            d.history.Add(new MatchHistoryEntry { mode = GameMode.Streets, opponentId = "x", scoreFor = 21, scoreAgainst = 3 });
+            d.history.Add(new MatchHistoryEntry { mode = GameMode.Clutch, opponentId = "y", scoreFor = 2, scoreAgainst = 3 });
+            var back = SaveCodec.Decode(SaveCodec.Encode(d), cat, out _);
+            Assert.AreEqual(GameMode.Streets, back.history[0].mode);
+            Assert.AreEqual(GameMode.Clutch, back.history[1].mode);
+        }
     }
 }

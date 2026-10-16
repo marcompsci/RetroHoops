@@ -53,6 +53,45 @@ namespace CallerRetroBall.Logic
         }
     }
 
+    /// <summary>
+    /// I5 STORM THE COURT: beat a better team (a Baller or Legendary CPU, a roster rated 4+ above yours, or win a
+    /// championship game) on a game-winner and the fans pour out of the stands to join the mob.
+    /// </summary>
+    public static class CourtStorm
+    {
+        public const float Seconds = 3.4f;
+        public const float Delay = 0.3f;
+        public const float RunSeconds = 1.1f;
+        public const int MaxFans = 14;
+        public const float RatingGap = 4f;
+
+        public static bool Should(bool youWon, bool championship, bool toughCpu, float ratingGap) =>
+            youWon && (championship || toughCpu || ratingGap >= RatingGap);
+
+        public static bool Tough(string difficultyId) => difficultyId == "difficulty.baller" || difficultyId == "difficulty.legendary";
+
+        /// <summary>Where fan <paramref name="i"/> of <paramref name="n"/> ends up: a loose ring outside the players' mob.</summary>
+        public static Vec2 Spot(Vec2 shooter, int i, int n)
+        {
+            n = Math.Max(1, n);
+            double angle = (i + 0.5) / n * Math.PI * 2.0 + 0.25;
+            float r = 1.4f + (i % 3) * 0.45f;
+            return new Vec2(shooter.x + (float)Math.Cos(angle) * r, shooter.y + (float)Math.Sin(angle) * r * 0.7f);
+        }
+
+        /// <summary>How far along the run onto the court a fan is (0 in the seats, 1 at the mob), eased.</summary>
+        public static float Progress(float t, int i)
+        {
+            float start = Delay + (i % 5) * 0.08f;
+            float u = Math.Max(0f, Math.Min(1f, (t - start) / RunSeconds));
+            return 1f - (1f - u) * (1f - u);
+        }
+
+        /// <summary>Jumping on the spot once there (art pixels).</summary>
+        public static int Hop(float t, int i) =>
+            Progress(t, i) < 1f ? 0 : (int)Math.Round(Math.Abs(Math.Sin(t * 8.0 + i * 0.9)) * 4f);
+    }
+
     public enum CrowdChant { None = 0, Defense = 1, Mvp = 2, LetsGo = 3 }
 
     /// <summary>

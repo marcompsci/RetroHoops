@@ -654,7 +654,7 @@ namespace CallerRetroBall.Logic
                     int mode = Int(h, "mode", 0);
                     d.history.Add(new MatchHistoryEntry
                     {
-                        day = Int(h, "day", 0), mode = mode >= 0 && mode <= (int)GameMode.CustomCup ? (GameMode)mode : GameMode.QuickCall,
+                        day = Int(h, "day", 0), mode = Enum.IsDefined(typeof(GameMode), mode) ? (GameMode)mode : GameMode.QuickCall, // I6: every mode survives a reload
                         opponentId = Str(h, "opp", null), scoreFor = Int(h, "for", 0), scoreAgainst = Int(h, "against", 0),
                         points = Int(h, "pts", 0), assists = Int(h, "ast", 0), rebounds = Int(h, "reb", 0),
                     });
@@ -668,7 +668,7 @@ namespace CallerRetroBall.Logic
                     d.moments.Add(new MomentEntry
                     {
                         day = Int(m, "day", 0), kind = (MomentKind)kind,
-                        mode = mode >= 0 && mode <= (int)GameMode.Streets ? (GameMode)mode : GameMode.QuickCall,
+                        mode = Enum.IsDefined(typeof(GameMode), mode) ? (GameMode)mode : GameMode.QuickCall, // I6: every mode survives a reload
                         opponentId = Str(m, "opp", null), scoreFor = Math.Max(0, Int(m, "for", 0)), scoreAgainst = Math.Max(0, Int(m, "against", 0)),
                         value = Math.Max(0, Int(m, "v", 0)),
                     });

@@ -69,7 +69,7 @@ namespace CallerRetroBall.City
             _world = CityWorld.Build(_map, catalog, StableHash.Of(_map.DistrictId), decor);
             var me = PlayerCreator.BasePlayer(career, catalog);
             var crew = catalog.Team(DefaultContent.PlayerCrewId);
-            _meView = CityActorView.Create(_world.transform, "You", me, Kit(crew), _world.Shadow);
+            _meView = CityActorView.Create(_world.transform, "You", me, MyKit(crew, career, catalog), _world.Shadow);
 
             _hud = CityHud.Create(career.settings);
             _hud.MenuRequested += OpenMenu;
@@ -100,6 +100,27 @@ namespace CallerRetroBall.City
             // 17 Oct 2026: missions finished by walking in here (or by a drill best) pay out now.
             AnnounceMissions(CityMissions.Check(career));
             App.SaveCareer();
+        }
+
+        /// <summary>I6: you in the city wear your shoes and GEAR, like in games.</summary>
+        private static KitLook MyKit(TeamDef team, CareerSaveData career, ContentCatalog catalog)
+        {
+            var kit = Kit(team);
+            var shoes = catalog?.Find(catalog.Cosmetics, career?.equippedShoes);
+            if (shoes != null) { kit.Shoe = shoes.colorA; kit.Laces = shoes.colorA; kit.ShoeStripe = shoes.colorA; }
+            var gear = catalog?.Find(catalog.Cosmetics, career?.equippedGear);
+            if (gear != null) { kit.Gear = Gear.Parts(gear.id); kit.GearColor = gear.colorA; }
+            return kit;
+        }
+
+        /// <summary>Rebuilds your city sprite after a haircut or new gear.</summary>
+        private void RefreshMe()
+        {
+            var me = PlayerCreator.BasePlayer(App.Career, App.Catalog);
+            var at = _meView.transform.position;
+            Destroy(_meView.gameObject);
+            _meView = CityActorView.Create(_world.transform, "You", me, MyKit(App.Catalog.Team(DefaultContent.PlayerCrewId), App.Career, App.Catalog), _world.Shadow);
+            _meView.transform.position = at;
         }
 
         private static KitLook Kit(TeamDef team) =>

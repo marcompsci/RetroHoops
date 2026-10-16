@@ -69,6 +69,8 @@ namespace CallerRetroBall.Gameplay
         private bool _endedOnWinner, _endedOnBuzzer;
         /// <summary>I2 FAIR PLAY: both teams' expected makes (from the make chance at release) against their real makes.</summary>
         private readonly FairPlayTally _fair = new FairPlayTally();
+        /// <summary>I6: gear the MOMENTS book just earned you (shown with the result).</summary>
+        private string _momentReward;
         private int _lastLabelState = -1;
         private PracticeSession _practice;
         // Phase 17: H-O-R-S-E.
@@ -426,7 +428,15 @@ namespace CallerRetroBall.Gameplay
                     string n = string.IsNullOrEmpty(pl.Def.lastName) ? pl.Def.firstName : pl.Def.lastName;
                     (pl.Team == 0 ? startersA : startersB).Add("#" + pl.Def.jerseyNumber + " " + (n ?? "").ToUpperInvariant());
                 }
-                _hud.ShowIntro(court != null ? court.displayName : "THE COURT", setup.TeamA, setup.TeamB, startersA, startersB);
+                string tape = null;
+                if (!Versus && _link == null && App.Career != null)
+                {
+                    int opp = 1 - setup.HumanTeam;
+                    var roster = new System.Collections.Generic.List<PlayerDef>();
+                    foreach (var pl in _match.Players) if (pl.Team == opp && !IsBenchedSlot(pl)) roster.Add(pl.Def);
+                    tape = TaleOfTheTape.Card(App.Career.history, (opp == 0 ? setup.TeamA : setup.TeamB).id, roster);
+                }
+                _hud.ShowIntro(court != null ? court.displayName : "THE COURT", setup.TeamA, setup.TeamB, startersA, startersB, tape);
             }
             // Mic Tally on the call (Settings ► COMMENTARY), except in practice and the tutorial.
             if ((settings == null || settings.commentary) && _request.Mode != GameMode.Practice && _request.Mode != GameMode.Tutorial)
@@ -1430,7 +1440,70 @@ namespace CallerRetroBall.Gameplay
         /// <summary>Tight finish (last 20 seconds, within one score): the crowd claps along every few seconds.</summary>
         // ------------------------------------------------------------------ I1 BIG MOMENTS
 
-        private bool MobPlaying(float now) => _mobStart >= 0f && now - _mobStart < GameWinnerMob.Seconds;
+        private bool MobPlaying(float now) => _mobStart >= 0f && now - _mobStart < (_storm != null ? CourtStorm.Seconds : GameWinnerMob.Seconds);
+
+        // I5 STORM THE COURT: fans who ran out of the stands (copies of seat fans, whose seats empty).
+        private SpriteRenderer[] _storm;
+        private int[] _stormFan;
+
+        private float TeamRating(int team)
+        {
+            float sum = 0f; int n = 0;
+            foreach (var p in _match.Players)
+            {
+                if (p.Team != team || IsBenchedSlot(p)) continue;
+                var a = p.Def.attributes;
+                sum += (a.finishing + a.shooting + a.playmaking + a.defense + a.rebounding + a.speed + a.clutch) / 7f;
+                n++;
+            }
+            return n == 0 ? 0f : sum / n;
+        }
+
+        private void StartCourtStorm(string title)
+        {
+            int human = _match.Setup.HumanTeam;
+            bool youWon = !Versus && _match.Winner == human && _lastMadeTeam == human;
+            bool championship = _request.Round >= 2;
+            if (!CourtStorm.Should(youWon, championship, CourtStorm.Tough(_match.Setup.Difficulty?.id), TeamRating(1 - human) - TeamRating(human))) return;
+            if (_fans.Length == 0) return;
+            int n = Mathf.Min(CourtStorm.MaxFans, _fans.Length);
+            _storm = new SpriteRenderer[n];
+            _stormFan = new int[n];
+            var parent = new GameObject("CourtStorm").transform;
+            for (int k = 0; k < n; k++)
+            {
+                int f = (int)((long)k * _fans.Length / n);
+                _stormFan[k] = f;
+                var go = new GameObject("Stormer" + k);
+                go.transform.SetParent(parent, false);
+                var sr = go.AddComponent<SpriteRenderer>();
+                sr.sprite = _fans[f].Cheer;
+                sr.transform.position = _fans[f].Base;
+                sr.sortingOrder = _fans[f].Renderer.sortingOrder;
+                _storm[k] = sr;
+                _fans[f].Renderer.enabled = false; // the seat empties
+            }
+            if (_streetsHud == null) _hud.Toast(Loc.T(title) + "  ·  " + Loc.T("STORM THE COURT!"), 2.2f);
+            else _hud.Toast("STORM THE COURT!", 1.6f);
+            Sfx(SfxId.CrowdCheer, 1f);
+        }
+
+        private void SyncCourtStorm(float now)
+        {
+            if (_storm == null || _mobShooter < 0) return;
+            float t = now - _mobStart;
+            var shooter = _match.Players[_mobShooter].Position;
+            const float px = 1f / CourtSpace.PixelsPerUnit;
+            for (int k = 0; k < _storm.Length; k++)
+            {
+                var spot = CourtStorm.Spot(shooter, k, _storm.Length);
+                var target = CourtSpace.ToWorldSnapped(spot);
+                float u = CourtStorm.Progress(t, k);
+                var from = _fans[_stormFan[k]].Base;
+                _storm[k].transform.position = Vector3.Lerp(from, target, u) + new Vector3(0f, CourtStorm.Hop(t, k) * px, 0f);
+                if (u >= 0.6f) _storm[k].sortingOrder = CourtSpace.SortingOrder(spot);
+            }
+        }
 
         /// <summary>The whistle went just after a basket by the winners: the crowd erupts and the team mobs the shooter.</summary>
         private void StartGameWinnerMob()
@@ -1440,9 +1513,11 @@ namespace CallerRetroBall.Gameplay
             if (!_endedOnWinner) return;
             _endedOnBuzzer = GameWinnerMob.IsBuzzerBeater(_match.Setup.Rules.useGameClock, _shotClockAtRelease);
             string title = GameWinnerMob.Title(_endedOnBuzzer);
+            // I5: the game-winner is the play of the game (and a highlight).
+            _recorder.OfferBestPlay(title, _endedOnBuzzer ? 260 : 220);
             if (_streetsHud != null) _streetsHud.Stamp(title, ShortName(_match.Players[_lastMadePlayer].Def), Theme.Gold);
             else _hud.Toast(title, 2.2f);
-            SetCrowd(CrowdMood.Cheer, GameWinnerMob.Seconds + 0.5f);
+            SetCrowd(CrowdMood.Cheer, CourtStorm.Seconds + 0.5f);
             Sfx(SfxId.CrowdCheer, 1f);
             Sfx(SfxId.Fanfare, 0.7f);
             if (Versus || _lastMadeTeam == _match.Setup.HumanTeam) Haptics.Heavy();
@@ -1454,6 +1529,7 @@ namespace CallerRetroBall.Gameplay
             _celebrator = _mobShooter;
             _celebrateStart = now;
             _celebration = Mine(_mobShooter) ? _myCelebration : CelebrationKind.ChestThump;
+            StartCourtStorm(title);
             if (!_reduceMotion) _bursts.Spawn(CourtSpace.ToWorldSnapped(_match.Players[_mobShooter].Position, 1.4f), new Color32(0xFF, 0xD1, 0x66, 255), 24, 4f, 0.8f);
         }
 
@@ -2469,7 +2545,12 @@ namespace CallerRetroBall.Gameplay
                 rewarded = !customClutch && Career.ApplyMatch(App.Career, summary, grant);
                 // I3 LEGACY: your game-winners, buzzer-beaters and big nights go in the MOMENTS book.
                 if (rewarded)
+                {
                     MomentsBook.Add(App.Career, MomentsBook.FromGame(summary, _endedOnWinner && _lastMadePlayer >= 0 && _match.IsHumanControlled(_lastMadePlayer), _endedOnBuzzer));
+                    // I6: gear earned by your moments.
+                    foreach (var item in MomentsBook.GrantRewards(App.Career, App.Catalog))
+                        _momentReward = (_momentReward == null ? "" : _momentReward + "\n") + Loc.T("EARNED GEAR") + ": " + item.displayName.ToUpperInvariant();
+                }
                 int recruitsBefore = App.Career.rise.recruitable.Count;
                 if (rewarded && _request.Mode == GameMode.Rival)
                 {
@@ -2809,6 +2890,7 @@ namespace CallerRetroBall.Gameplay
             _hud.HighlightCount = _recorder.Highlights.Count;
             bool run = IsRun;
             _hud.FairPlayLine = _fair.Line(_match.Setup.HumanTeam, Loc.T("YOU"), (_match.Setup.HumanTeam == 0 ? _match.Setup.TeamB : _match.Setup.TeamA)?.abbreviation ?? "CPU");
+            if (_momentReward != null) note = string.IsNullOrEmpty(note) ? _momentReward : note + "\n" + _momentReward;
             _hud.ShowPostGame(title, summary, grant, rewarded, note, run ? "CONTINUE" : null, !run);
             if (_cashOut != null)
             {
@@ -3653,6 +3735,7 @@ namespace CallerRetroBall.Gameplay
                 f.Renderer.transform.position = f.Base + new Vector3(0f, bob * px, 0f);
             }
             SyncFlashes(now);
+            SyncCourtStorm(now);
             SyncCrowdSound();
         }
 

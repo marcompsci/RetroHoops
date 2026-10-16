@@ -620,7 +620,7 @@ namespace CallerRetroBall.Gameplay
         /// Tip-off card: where tonight's game is, both teams and their starters. It fades on its own after a
         /// few seconds or on any tap, and never stops the game (the ball is still being checked).
         /// </summary>
-        public void ShowIntro(string courtName, TeamDef a, TeamDef b, System.Collections.Generic.List<string> startersA, System.Collections.Generic.List<string> startersB)
+        public void ShowIntro(string courtName, TeamDef a, TeamDef b, System.Collections.Generic.List<string> startersA, System.Collections.Generic.List<string> startersB, string tape = null)
         {
             if (_intro != null) Destroy(_intro);
             var canvas = UiKit.CreateScreenCanvas("IntroCanvas", 25);
@@ -641,7 +641,10 @@ namespace CallerRetroBall.Gameplay
             UiKit.Size(UiKit.Label(col, "VS", 44f, Theme.Gold, TextAlignmentOptions.Center, true), 66f);
             UiKit.Size(UiKit.Label(col, b.FullName.ToUpperInvariant(), 56f, ToColor(b.primary), TextAlignmentOptions.Center, true), 76f);
             UiKit.Size(UiKit.Label(col, string.Join("  ·  ", startersB), 28f, Theme.Cream, TextAlignmentOptions.Center, false), 44f);
-            _introUntil = Time.unscaledTime + 3.2f;
+            // I4 TALE OF THE TAPE: your series with them, their danger man and the key to the game.
+            if (!string.IsNullOrEmpty(tape))
+                UiKit.Size(UiKit.Label(col, tape, 28f, Theme.Cyan, TextAlignmentOptions.Center, true), 130f);
+            _introUntil = Time.unscaledTime + (string.IsNullOrEmpty(tape) ? 3.2f : 4.4f);
         }
 
         private static Color ToColor(RgbColor c)

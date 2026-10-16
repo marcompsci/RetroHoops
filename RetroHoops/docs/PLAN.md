@@ -944,6 +944,18 @@ offline and couch play (already here). Built:
   and 12+ point wins, with opponent and score (newest 40 kept, saved).
 - Tests: `ImprovementTests` (11). Not yet seen on a device.
 
+### Improvements I4–I6 (16 Oct 2026)
+- **I4 TALE OF THE TAPE** (`TaleOfTheTape.cs`): the tip-off card adds your recent series with tonight's opponent (from
+  your last 20 saved games), the last meeting's score, their danger man (best overall) and one KEY TO THE GAME from
+  what their roster does best (shooting → close out, finishing → wall off the paint, and so on). Not in 2 Player.
+- **I5 STORM THE COURT** (`CourtStorm` in `BigMoments.cs`): a game-winner is now the play of the game (and a
+  highlight). Beat a Baller or Legendary CPU, a roster rated 4+ above yours, or win a championship game on a
+  game-winner and up to 14 fans leave their seats and run out to the mob (the celebration runs 3.4 s).
+- **I6 YOUR LOOK EVERYWHERE**: your shoes and GEAR show on your Baller City avatar, updating as soon as you buy or put
+  something on. Gear earned by playing: first buzzer-beater → Sport Goggles, three game-winners → Vet Package, five big
+  games → Full Compression. Fix: saved recent games kept Clutch and THE STREETS games as Quick Call after a reload.
+- Tests: `ImprovementTests` (now 15). Not yet seen on a device.
+
 ## Deviations from the brief (deliberate)
 
 - "Oakland Voltage" → **Eastbay Voltage** (real city + electric branding sat too close to real pro-sports naming).
