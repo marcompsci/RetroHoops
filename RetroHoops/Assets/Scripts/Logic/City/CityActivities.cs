@@ -53,6 +53,9 @@ namespace CallerRetroBall.Logic
                 return list;
             }
 
+            // 17 Oct 2026 (phase 5): the arena floor is the City Championship.
+            if (court.Use == CityCourtUse.Arena) return CityArena.Choices(career, c, day, back);
+
             // 17 Oct 2026: a holiday court plays its Holiday Game (and its crew) instead of pickup.
             if (court.Use == CityCourtUse.Holiday)
             {
@@ -166,6 +169,14 @@ namespace CallerRetroBall.Logic
                 case "barber.chair":
                     list.AddRange(CityBarber.Choices(career));
                     break;
+                case "arena.desk":
+                    list.AddRange(CityArena.Choices(career, c, day, CityDistricts.ReturnTag(map.DistrictId, "court.arena")));
+                    break;
+                case "crib.trophies":
+                case "crib.banners":
+                case "crib.safe":
+                    list.AddRange(CityCrib.Choices(portal, career));
+                    break;
                 case "streets":
                     list.AddRange(StreetsWall(map, portal, career, c, day));
                     break;
@@ -205,6 +216,15 @@ namespace CallerRetroBall.Logic
                     list.Add(open
                         ? new CityActivity { Label = "CHALLENGE", Detail = "THE PARK: " + ch.Nickname, Request = Tag(Street.Challenge(c, career, ch), back), Primary = true }
                         : new CityActivity { Label = "CHALLENGE", Locked = "Reach " + Street.RepNames[Math.Min(Street.RepNames.Length - 1, ch.Tier)] + " rep in THE PARK." });
+                    break;
+                }
+                case CityNpcRole.Crew when npc.Callout:
+                {
+                    // 17 Oct 2026 (phase 6): today's CALL-OUT.
+                    var crew = CityCrews.Find(npc.Ref);
+                    if (crew == null) break;
+                    list.Add(new CityActivity { Label = "ACCEPT CALL-OUT", Primary = true, Request = Tag(CityCallout.Request(c, career, crew), back),
+                                                Detail = crew.Name + "  ·  " + Loc.T(crew.TierName) + "  ·  " + Loc.T("Win for an extra") + " " + StreetCash.Money(CityCallout.Bonus) });
                     break;
                 }
                 case CityNpcRole.Crew:

@@ -31,6 +31,8 @@ namespace CallerRetroBall.Logic
         public const string SchoolYard = "school_yard";
         public const string CornerStore = "corner_store";
         public const string FreshCuts = "fresh_cuts";
+        public const string Arena = "baller_arena";
+        public const string Crib = "crib";
 
         public static readonly CityDistrictDefinition[] All =
         {
@@ -44,6 +46,8 @@ namespace CallerRetroBall.Logic
             new CityDistrictDefinition { Id = SchoolYard, Name = "SCHOOL YARD", Blurb = "Baller City High and its courts.", Build = BuildSchoolYard },
             new CityDistrictDefinition { Id = CornerStore, Name = "CORNER STORE", Blurb = "Gear for your game.", Interior = true, Build = BuildCornerStore },
             new CityDistrictDefinition { Id = FreshCuts, Name = "FRESH CUTS", Blurb = "The barbershop.", Interior = true, Build = BuildFreshCuts },
+            new CityDistrictDefinition { Id = Arena, Name = "BALLER ARENA", Blurb = "The City Championship.", Interior = true, Build = BuildArena },
+            new CityDistrictDefinition { Id = Crib, Name = "YOUR CRIB", Blurb = "Trophies, banners and the safe.", Interior = true, Build = BuildCrib },
         };
 
         public static CityDistrictDefinition Find(string id) => Array.Find(All, d => d.Id == id);
@@ -175,7 +179,7 @@ namespace CallerRetroBall.Logic
             var home = m.AddBuilding(new CityBuilding { Id = "home", Name = "HOME", X = 2, Y = 35, W = 8, H = 6, Style = 0, DoorX = 5, Sign = "HOME", Seed = 11 });
             m.Fill(4, 34, 3, 1, CityGround.Sidewalk);
             m.Fill(5, 24, 1, 10, CityGround.Sidewalk);
-            Door(m, home, "door.home", "GO HOME", "home", "home");
+            Door(m, home, "door.home", "GO HOME", Crib, "entrance");
             var hq = m.AddBuilding(new CityBuilding { Id = "hq", Name = "FIRST CALLERS HQ", X = 2, Y = 26, W = 10, H = 6, Style = 4, DoorX = 7, Sign = "FIRST CALLERS", Seed = 12 });
             Door(m, hq, "door.hq", "RISE HUB", "hq", "hq");
             Trees(m, 12, 37, 13, 30, 0, 24, 14, 41);
@@ -628,7 +632,10 @@ namespace CallerRetroBall.Logic
             m.Hangouts["court.record_roof.side"] = new Vec2(17.5f, 39f);
 
             // The arena: a landmark for now (the doors open in a later update).
-            m.AddBuilding(new CityBuilding { Id = "arena", Name = "BALLER ARENA", X = 19, Y = 34, W = 14, H = 12, Style = 5, Sign = "BALLER ARENA", Seed = 54 });
+            // 17 Oct 2026 (phase 5): the arena doors are open.
+            var arena = m.AddBuilding(new CityBuilding { Id = "arena", Name = "BALLER ARENA", X = 19, Y = 34, W = 14, H = 12, Style = 5, DoorX = 26, Sign = "BALLER ARENA", Seed = 54 });
+            Door(m, arena, "door.arena", "ENTER ARENA", Arena, "entrance");
+            m.AddSpawn("arena", 26.5f, 32.2f, 0);
 
             Court(m, "court.night_bus_depot", "court.night_bus_depot", "NIGHT BUS DEPOT", 35, 34, 13, 11, CityCourtUse.Streets,
                   look: new CityCourtLook { Floor = -1, Neon = true, Logo = true });
@@ -694,7 +701,7 @@ namespace CallerRetroBall.Logic
 
         // ------------------------------------------------------------------ the shops (indoors)
 
-        private static CityMap Room(string id, int w, int h, CityGround floor, string exitSpawn)
+        private static CityMap Room(string id, int w, int h, CityGround floor, string exitSpawn, string exitDistrict = FirstCallers)
         {
             var m = new CityMap(id, w, h, floor);
             m.Fill(0, 0, w, 1, CityGround.Wall);
@@ -704,9 +711,48 @@ namespace CallerRetroBall.Logic
             int door = w / 2 - 1;
             m.Set(door, 0, floor);
             m.Set(door + 1, 0, floor);
-            m.Portals.Add(new CityPortal { Id = "door.exit", Kind = CityPortalKind.Exit, Label = "LEAVE BUILDING", Target = FirstCallers, TargetSpawn = exitSpawn,
+            m.Portals.Add(new CityPortal { Id = "door.exit", Kind = CityPortalKind.Exit, Label = "LEAVE BUILDING", Target = exitDistrict, TargetSpawn = exitSpawn,
                                            X = door - 0.5f, Y = 0, W = 3f, H = 1.6f });
             m.AddSpawn("entrance", door + 1f, 1.6f, 1);
+            return m;
+        }
+
+        /// <summary>17 Oct 2026 (phase 5): the Baller Arena: the championship floor, the crowd and the scoreboard.</summary>
+        private static CityMap BuildArena()
+        {
+            var m = Room(Arena, 30, 34, CityGround.Tile, "arena", Downtown);
+            Court(m, "court.arena", CityArena.CourtId, "BALLER ARENA", 6, 9, 18, 16, CityCourtUse.Arena, CityGround.Hardwood,
+                  look: new CityCourtLook { Floor = (int)FloorStyle.Hardwood, Neon = true, Logo = true });
+            m.AddProp(CityPropKind.Crowd, 1, 9, 4, 16, true, 0);
+            m.AddProp(CityPropKind.Crowd, 25, 9, 4, 16, true, 1);
+            m.AddProp(CityPropKind.Crowd, 6, 29, 18, 3, true, 2);
+            m.AddProp(CityPropKind.Scoreboard, 11, 27, 8, 1, true);
+            m.AddProp(CityPropKind.Desk, 3, 4, 4, 1, true, 3);
+            m.Portals.Add(new CityPortal { Id = "arena.desk", Kind = CityPortalKind.Station, Label = "CITY CHAMPIONSHIP", Target = "arena.desk", X = 2.5f, Y = 2.4f, W = 5f, H = 1.6f });
+            m.AddSpawn("court.arena", 15f, 7.6f, 1);
+            m.Hangouts["arena.floor"] = new Vec2(15f, 15f);
+            m.Hangouts["arena.concourse"] = new Vec2(22f, 5f);
+            return m;
+        }
+
+        /// <summary>
+        /// 17 Oct 2026 (phase 7): YOUR CRIB. The trophy case and the banner wall are drawn from your save (see
+        /// <see cref="CityCrib"/>); their tiles are kept clear and solid here.
+        /// </summary>
+        private static CityMap BuildCrib()
+        {
+            var m = Room(Crib, 16, 14, CityGround.Hardwood, "home");
+            m.Block(2, 10, 4, 1);
+            m.Block(9, 11, 6, 1);
+            m.AddProp(CityPropKind.Bench, 9, 4, 3, 1, true);
+            m.AddProp(CityPropKind.Planter, 13, 11, 1, 1, true);
+            m.AddProp(CityPropKind.Lockers, 14, 4, 1, 3, true);
+            m.AddProp(CityPropKind.Safe, 2, 4, 1, 1, true);
+            m.Portals.Add(new CityPortal { Id = "crib.trophies", Kind = CityPortalKind.Station, Label = "TROPHY CASE", Target = "crib.trophies", X = 2f, Y = 8.6f, W = 4f, H = 1.4f });
+            m.Portals.Add(new CityPortal { Id = "crib.banners", Kind = CityPortalKind.Station, Label = "CREW BANNERS", Target = "crib.banners", X = 9f, Y = 9.6f, W = 6f, H = 1.4f });
+            m.Portals.Add(new CityPortal { Id = "crib.safe", Kind = CityPortalKind.Station, Label = "THE SAFE", Target = "crib.safe", X = 1.4f, Y = 2.6f, W = 2.2f, H = 1.4f });
+            m.Portals.Add(new CityPortal { Id = "crib.wardrobe", Kind = CityPortalKind.Station, Label = "WARDROBE", Target = "lockers", X = 12.4f, Y = 4f, W = 1.6f, H = 3f });
+            m.Hangouts["crib.couch"] = new Vec2(10.5f, 3f);
             return m;
         }
 

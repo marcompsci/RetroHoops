@@ -46,7 +46,7 @@ namespace CallerRetroBall.Logic
         public static List<CityProp> For(CityMap map, HolidayTheme theme)
         {
             var list = new List<CityProp>();
-            if (map == null || theme == HolidayTheme.None || map.DistrictId == CityDistricts.HolidayPark) return list;
+            if (map == null || theme == HolidayTheme.None || map.DistrictId == CityDistricts.HolidayPark || map.DistrictId == CityDistricts.Arena) return list;
             var spots = new List<(int x, int y)>();
             foreach (var b in map.Buildings)
             {

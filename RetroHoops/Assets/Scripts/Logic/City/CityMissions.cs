@@ -44,6 +44,14 @@ namespace CallerRetroBall.Logic
         Haircut = 17,
         /// <summary>Fast travel N times from the city map.</summary>
         Travel = 18,
+        /// <summary>Win N City Championships.</summary>
+        Titles = 19,
+        /// <summary>Finish N sets of daily City Challenges.</summary>
+        DailySets = 20,
+        /// <summary>Win N call-outs.</summary>
+        Callouts = 21,
+        /// <summary>Earn N dollars of street cash in all.</summary>
+        Earned = 22,
     }
 
     public sealed class CityMissionDef
@@ -120,9 +128,17 @@ namespace CallerRetroBall.Logic
             M(6, "c6.crews", "CREW COLLECTOR", "Beat 12 different crews.", CityMissionKind.AnyCrews, 12, 400, 50),
             M(6, "c6.wins", "CITY LEGEND", "Win 25 city games.", CityMissionKind.Wins, 25, 400, 50),
             M(6, "c6.legends", "ALL-CITY", "Beat every LEGENDARY crew.", CityMissionKind.LegendaryCrews, -1, 1000, 150),
+            // Chapter 7: BIG TIME (17 Oct 2026, phases 5–7).
+            M(7, "c7.crib", "HOME SWEET HOME", "Walk into your crib (your front door, First Callers).", CityMissionKind.Visit, 1, 50, 5, CityDistricts.Crib),
+            M(7, "c7.arena", "THE BIG ROOM", "Walk into the Baller Arena, Downtown.", CityMissionKind.Visit, 1, 50, 5, CityDistricts.Arena),
+            M(7, "c7.callout", "ANSWER THE CALL", "Win a call-out.", CityMissionKind.Callouts, 1, 150, 15),
+            M(7, "c7.daily", "DAILY GRIND", "Finish all three City Challenges in a day.", CityMissionKind.DailySets, 1, 200, 20),
+            M(7, "c7.title", "CITY CHAMPION", "Win the City Championship at the Baller Arena.", CityMissionKind.Titles, 1, 500, 75),
+            M(7, "c7.bank", "QUARTER MILLION", "Earn $250,000 in street cash.", CityMissionKind.Earned, 250000, 400, 50),
+            M(7, "c7.dynasty", "DYNASTY", "Win 3 City Championships.", CityMissionKind.Titles, 3, 1000, 150),
         };
 
-        public static readonly string[] ChapterNames = { "", "NEW IN TOWN", "MAKE A NAME", "CREW HUNTER", "HOLIDAY SEASON", "LEGENDARY", "ALL CITY" };
+        public static readonly string[] ChapterNames = { "", "NEW IN TOWN", "MAKE A NAME", "CREW HUNTER", "HOLIDAY SEASON", "LEGENDARY", "ALL CITY", "BIG TIME" };
         public static int Chapters => ChapterNames.Length - 1;
 
         private static CityMissionDef M(int chapter, string id, string title, string detail, CityMissionKind kind, int target, int sp, int fans, string reference = null) =>
@@ -184,6 +200,10 @@ namespace CallerRetroBall.Logic
                 case CityMissionKind.Shop: now = s.purchases; break;
                 case CityMissionKind.Haircut: now = s.haircuts; break;
                 case CityMissionKind.Travel: now = s.fastTravels; break;
+                case CityMissionKind.Titles: now = career?.bigTime?.arenaTitles ?? 0; break;
+                case CityMissionKind.DailySets: now = career?.bigTime?.dailySets ?? 0; break;
+                case CityMissionKind.Callouts: now = career?.bigTime?.calloutsWon ?? 0; break;
+                case CityMissionKind.Earned: now = (int)Math.Min(int.MaxValue, career?.streetCash?.earned ?? 0); break;
                 default: now = Best(s, m.Kind); break;
             }
             return (Math.Min(now, target), target);

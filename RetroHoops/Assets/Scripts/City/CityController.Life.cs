@@ -207,6 +207,44 @@ namespace CallerRetroBall.City
             _hud.ShowCard("CASHED OUT", line, list, a => { }, null);
         }
 
+        // ------------------------------------------------------------------ 17 Oct 2026 (phase 6): call-outs and City Challenges
+
+        /// <summary>Today's call-out: the crew's leader is waiting by where you came in.</summary>
+        private void SpawnCallout(CareerSaveData career, ContentCatalog catalog)
+        {
+            if (_map.Interior) return;
+            var crew = CityCallout.For(career, _map.DistrictId, _day);
+            if (crew == null) return;
+            var team = CityCrews.Register(catalog, crew);
+            var leader = team.rosterPlayerIds.Count > 0 ? catalog.Player(team.rosterPlayerIds[0]) : null;
+            if (leader == null) return;
+            var npc = new CityNpc { Id = "callout." + crew.Id, Player = leader, Team = team, Role = CityNpcRole.Crew, Ref = crew.Id, Callout = true, Haunts = new string[0] };
+            var spot = CityMovement.Settle(_map, _me.Position + new Vec2(1.6f, 0.4f));
+            _npcs.Add(npc);
+            _brains.Add(new CityNpcBrain(spot, StableHash.Of(npc.Id + _day), false, _map) { Radius = 1.2f });
+            _npcViews.Add(CityActorView.Create(_world.transform, npc.Id, leader, Kit(team), _world.Shadow));
+            _npcPositions.Add(spot);
+            _hud.Toast(leader.firstName + " (" + crew.Name + ") " + Loc.T("is calling you out!"), 2.6f);
+        }
+
+        private void OpenDaily()
+        {
+            var s = App.Career.bigTime ?? (App.Career.bigTime = new CityBigTimeSaveData());
+            var defs = CityDaily.For(_day);
+            var progress = CityDaily.Progress(s, _day);
+            var list = new List<CityActivity>();
+            for (int i = 0; i < defs.Count; i++)
+                list.Add(new CityActivity
+                {
+                    Label = (progress[i] >= defs[i].Target ? Loc.T("DONE") + ": " : "") + defs[i].Text + "  " + Math.Min(progress[i], defs[i].Target) + "/" + defs[i].Target,
+                    Detail = "+" + StreetCash.Money(CityDaily.EachPay), Action = CityAction.Info,
+                });
+            string line = Loc.T("New challenges every day. Games you start in the city count.") + "\n"
+                          + (s.dailyPaid ? Loc.T("All three done today!") : Loc.T("All three:") + " +" + StreetCash.Money(CityDaily.SetBonus))
+                          + "  ·  " + Loc.T("SETS") + " " + s.dailySets;
+            _hud.ShowCard("CITY CHALLENGES", line, list, a => { }, null);
+        }
+
         // ------------------------------------------------------------------ the map
 
         private void OpenMap()

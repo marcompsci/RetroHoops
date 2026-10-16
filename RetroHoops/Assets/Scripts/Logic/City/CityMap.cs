@@ -35,6 +35,8 @@ namespace CallerRetroBall.Logic
         Shelf = 27, BarberChair = 28, Mirror = 29, Palm = 30, Umbrella = 31,
         /// <summary>17 Oct 2026: a graffiti wall: THE STREETS.</summary>
         Graffiti = 32,
+        // 17 Oct 2026 (phases 5–7): the arena and your crib.
+        TrophyCase = 33, BannerWall = 34, Scoreboard = 35, Crowd = 36, Safe = 37,
     }
 
     /// <summary>
@@ -93,7 +95,7 @@ namespace CallerRetroBall.Logic
         public bool Contains(float x, float y) => x >= X && x < X + W && y >= Y && y < Y + H;
     }
 
-    public enum CityCourtUse { Streets = 0, Park = 1, Rise = 2, Practice = 3, /** 17 Oct 2026: a Holiday Game court. */ Holiday = 4 }
+    public enum CityCourtUse { Streets = 0, Park = 1, Rise = 2, Practice = 3, /** 17 Oct 2026: a Holiday Game court. */ Holiday = 4, /** 17 Oct 2026: the Baller Arena (the City Championship). */ Arena = 5 }
 
     public enum CityPortalKind { Court = 0, Building = 1, District = 2, Exit = 3, Station = 4 }
 

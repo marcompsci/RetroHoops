@@ -59,6 +59,37 @@ namespace CallerRetroBall.Logic
             return s;
         }
 
+        // 17 Oct 2026 (phases 5–7).
+        private static object EncodeBigTime(CityBigTimeSaveData s)
+        {
+            s = s ?? new CityBigTimeSaveData();
+            var p = s.dailyProgress ?? new int[3];
+            return new Dictionary<string, object>
+            {
+                ["ar"] = s.arenaRound, ["ad"] = s.arenaDay, ["add"] = s.arenaDoneDay, ["at"] = s.arenaTitles, ["af"] = s.arenaFinals,
+                ["dd"] = s.dailyDay, ["d0"] = p.Length > 0 ? p[0] : 0, ["d1"] = p.Length > 1 ? p[1] : 0, ["d2"] = p.Length > 2 ? p[2] : 0,
+                ["dp"] = s.dailyPaid, ["ds"] = s.dailySets, ["cd"] = s.calloutDay, ["cw"] = s.calloutsWon,
+            };
+        }
+
+        private static CityBigTimeSaveData DecodeBigTime(Dictionary<string, object> o)
+        {
+            var s = new CityBigTimeSaveData();
+            if (o == null) return s;
+            s.arenaRound = Math.Max(0, Math.Min(2, Int(o, "ar", 0)));
+            s.arenaDay = Int(o, "ad", -1);
+            s.arenaDoneDay = Int(o, "add", -1);
+            s.arenaTitles = Math.Max(0, Int(o, "at", 0));
+            s.arenaFinals = Math.Max(s.arenaTitles, Int(o, "af", 0));
+            s.dailyDay = Int(o, "dd", -1);
+            s.dailyProgress = new[] { Math.Max(0, Int(o, "d0", 0)), Math.Max(0, Int(o, "d1", 0)), Math.Max(0, Int(o, "d2", 0)) };
+            s.dailyPaid = Bool(o, "dp", false);
+            s.dailySets = Math.Max(0, Int(o, "ds", 0));
+            s.calloutDay = Int(o, "cd", -1);
+            s.calloutsWon = Math.Max(0, Int(o, "cw", 0));
+            return s;
+        }
+
         private static CitySaveData DecodeCity(Dictionary<string, object> o)
         {
             var s = new CitySaveData();

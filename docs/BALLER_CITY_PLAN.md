@@ -244,3 +244,37 @@ Tests: `BallerCityMissionsTests` (17) plus the updated `BallerCityTests`. The fu
 - `StreetCashTests` (11), including one checking the defender plays you tighter when the CPUs are keying on you.
 - The full logic suite is 1,002 passing; the Unity reference compile is clean; the Spanish text and App Store audits pass.
 - Not yet run on the phone.
+
+---
+
+## 10. Phases 5–7, 17 Oct 2026: the Baller Arena, City Challenges and call-outs, and your crib
+
+**Phase 5: BALLER ARENA**
+- The arena Downtown now has an open door (ENTER ARENA). Inside are a polished maple championship floor with neon edges, packed stands on three sides, a scoreboard and a ticket desk.
+- The **CITY CHAMPIONSHIP** (`CityArena`) is one run a day:
+  - A semifinal against a BALLER crew, then the final against a LEGENDARY crew. The draw is the same all day and new each day.
+  - Winning the final pays the title, a trophy, **$50,000** and +250 SP. A loss ends the run until tomorrow.
+  - You get in after beating three BALLER crews.
+- The new catalog court `court.baller_arena` (League circuit) is where these games are played.
+- Arena games are still that crew's game, at its own difficulty, so they count for crews beaten and missions.
+
+**Phase 6: CITY CHALLENGES and CALL-OUTS**
+- **City Challenges** (`CityDaily`), under MENU ▸ CITY CHALLENGES: three a day, the same all day.
+  - The pool: win in a given district, score N, 3 assists, 3 steals plus blocks, beat any crew, play 3 games, or win at night.
+  - Each pays **$7,500**, and finishing all three pays **$15,000** more. Games started in the city count.
+- **Call-outs** (`CityCallout`): once a day, a crew that plays in the district you walk into sends its leader to wait where you came in ("... is calling you out!"). Tap ACCEPT CALL-OUT; winning pays an extra **$10,000** on top of the usual payout. Win or lose, that's it for the day.
+
+**Phase 7: YOUR CRIB**
+- Your front door in First Callers now opens **YOUR CRIB** (`CityCrib`):
+  - **Trophy case**: a gold cup per City Championship and a medal per street milestone.
+  - **Banner wall**: a pennant in the crew's colours for each crew you've beaten.
+  - **The safe**: your bank.
+  - **The wardrobe**: opens the Locker Room.
+- The trophy case and banner wall are drawn from your save each time you walk in.
+
+**Chapter 7, BIG TIME:** walk into your crib, walk into the arena, win a call-out, finish a day's City Challenges, win the City Championship, earn $250,000, and win three titles (DYNASTY).
+
+**Tests:**
+- `BallerCityBigTimeTests` (12); the full logic suite passes, 1,013 of 1,013.
+- The Unity reference compile is clean, and the Spanish text and App Store audits pass.
+- Not yet run on the phone.

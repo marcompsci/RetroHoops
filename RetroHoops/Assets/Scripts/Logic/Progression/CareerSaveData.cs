@@ -299,6 +299,8 @@ namespace CallerRetroBall.Logic
         public CitySaveData city = new CitySaveData();
         /// <summary>17 Oct 2026: CASHED OUT (street cash, streaks, milestones, the CPUs' heat).</summary>
         public StreetCashSaveData streetCash = new StreetCashSaveData();
+        /// <summary>17 Oct 2026 (phases 5–7): the City Championship, daily challenges and call-outs.</summary>
+        public CityBigTimeSaveData bigTime = new CityBigTimeSaveData();
         /// <summary>Phase 37 CLUTCH scenarios: best stars.</summary>
         public ClutchSaveData clutch = new ClutchSaveData();
         /// <summary>Phase 39 welcome-back bonus: last day claimed, days in a row, best run.</summary>

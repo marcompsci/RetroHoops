@@ -97,8 +97,22 @@ namespace CallerRetroBall.Logic
 
         public static CityCrewDef AtCourt(string courtId) => Array.Find(All, c => c.CourtId == courtId);
 
-        public static CityCrewDef FromContext(string contextId) =>
-            contextId != null && contextId.StartsWith(ContextPrefix, StringComparison.Ordinal) ? Find(contextId.Substring(ContextPrefix.Length)) : null;
+        /// <summary>The crew in a context ("citycrew:splash", or with a tag after '#': "citycrew:splash#arena2", "#callout").</summary>
+        public static CityCrewDef FromContext(string contextId)
+        {
+            if (contextId == null || !contextId.StartsWith(ContextPrefix, StringComparison.Ordinal)) return null;
+            string id = contextId.Substring(ContextPrefix.Length);
+            int hash = id.IndexOf('#');
+            return Find(hash >= 0 ? id.Substring(0, hash) : id);
+        }
+
+        /// <summary>The tag after '#' in a crew context ("arena2", "callout"), or null.</summary>
+        public static string TagOf(string contextId)
+        {
+            if (FromContext(contextId) == null) return null;
+            int hash = contextId.IndexOf('#');
+            return hash >= 0 ? contextId.Substring(hash + 1) : null;
+        }
 
         public static string DifficultyFor(CityCrewDef crew) => crew != null && crew.Tier == CityCrewTier.Legendary ? LegendaryDifficultyId : BallerDifficultyId;
 

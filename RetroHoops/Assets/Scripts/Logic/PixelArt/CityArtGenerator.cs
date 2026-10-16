@@ -606,7 +606,7 @@ namespace CallerRetroBall.Logic.PixelArt
                     var c = new PixelCanvas(w, 20);
                     c.FillRect(0, 0, w, 14, RgbColor.FromHex("#5B3A22"));
                     c.FillRect(0, 14, w, 6, RgbColor.FromHex("#D8C7A3"));
-                    PixelFont.DrawCentered(c, p.Variant == 1 ? "CHECKOUT" : p.Variant == 2 ? "FRESH CUTS" : "FRONT DESK", w / 2, 10, RgbColor.FromHex("#FFD166"));
+                    PixelFont.DrawCentered(c, p.Variant == 1 ? "CHECKOUT" : p.Variant == 2 ? "FRESH CUTS" : p.Variant == 3 ? "TICKETS" : "FRONT DESK", w / 2, 10, RgbColor.FromHex("#FFD166"));
                     return c;
                 }
                 case CityPropKind.Rack:
@@ -675,6 +675,11 @@ namespace CallerRetroBall.Logic.PixelArt
                 case CityPropKind.Palm: return Palm(p.Variant, out pivotX);
                 case CityPropKind.Umbrella: return Umbrella(p.Variant, out pivotX);
                 case CityPropKind.Graffiti: return Graffiti(p, lit);
+                case CityPropKind.TrophyCase: return TrophyCase(p);
+                case CityPropKind.BannerWall: return BannerWall(p);
+                case CityPropKind.Scoreboard: return Scoreboard(p, lit);
+                case CityPropKind.Crowd: return Crowd(p);
+                case CityPropKind.Safe: return SafeBox(out pivotX);
                 default: // Planter
                 {
                     var c = new PixelCanvas(Tile, 18);
@@ -928,6 +933,109 @@ namespace CallerRetroBall.Logic.PixelArt
                 for (int y = 0; y < len; y++) c.Set(x, top - 5 * scale - y, main);
             }
             PixelFont.DrawCentered(c, "THINK YOU CAN HANG?", w / 2, 9, accent);
+            return c;
+        }
+
+        // ------------------------------------------------------------------ 17 Oct 2026 (phases 5–7): the arena and the crib
+
+        /// <summary>The crib's trophy case: one gold cup per City Championship (Variant % 10) and a medal per milestone (Variant / 10).</summary>
+        private static PixelCanvas TrophyCase(CityProp p)
+        {
+            int w = Math.Max(2, p.W) * Tile;
+            var c = new PixelCanvas(w, 34);
+            var wood = RgbColor.FromHex("#5B3A22");
+            c.FillRect(0, 0, w, 34, wood);
+            c.FillRect(2, 2, w - 4, 30, RgbColor.FromHex("#2B3A55"));
+            c.FillRect(2, 16, w - 4, 1, wood.Lighten(0.2f));
+            int cups = Math.Max(0, p.Variant % 10), medals = Math.Max(0, p.Variant / 10);
+            var gold = RgbColor.FromHex("#FFD166");
+            for (int i = 0; i < cups && 4 + i * 7 < w - 6; i++)
+            {
+                int x = 4 + i * 7;
+                c.FillRect(x, 18, 5, 2, gold.Darken(0.2f));
+                c.FillRect(x + 2, 20, 1, 3, gold);
+                c.FillRect(x, 23, 5, 5, gold);
+                c.Set(x - 1, 26, gold); c.Set(x + 5, 26, gold);
+            }
+            for (int i = 0; i < medals && 4 + (i % 12) * 5 < w - 4; i++)
+            {
+                int x = 4 + (i % 12) * 5, y = 6 + (i / 12) * 5;
+                c.FillCircle(x + 1, y, 1.6f, i % 3 == 0 ? gold : i % 3 == 1 ? RgbColor.FromHex("#C0C7D1") : RgbColor.FromHex("#CD7F32"));
+                c.Set(x + 1, y + 2, RgbColor.FromHex("#F72585"));
+            }
+            for (int y = 2; y < 32; y += 7) c.Set(w - 5, y, RgbColor.FromHex("#9EC7DB"));
+            return c;
+        }
+
+        /// <summary>The crib's banner wall: a pennant in the crew's colours for every crew beaten (Variant = a bit per crew).</summary>
+        private static PixelCanvas BannerWall(CityProp p)
+        {
+            int w = Math.Max(2, p.W) * Tile;
+            var c = new PixelCanvas(w, 30);
+            c.FillRect(0, 0, w, 30, RgbColor.FromHex("#6E4520"));
+            for (int y = 0; y < 30; y += 6) c.FillRect(0, y, w, 1, RgbColor.FromHex("#5B3A22"));
+            int slots = Math.Min(CityCrews.All.Length, 30);
+            int perRow = Math.Max(1, (w - 4) / 6);
+            for (int i = 0; i < slots; i++)
+            {
+                int x = 2 + (i % perRow) * 6, top = 28 - (i / perRow) * 14;
+                if (top < 12) break;
+                bool beaten = (p.Variant & (1 << i)) != 0;
+                var a = beaten ? RgbColor.FromHex(CityCrews.All[i].Primary) : RgbColor.FromHex("#3C3C4E");
+                var b = beaten ? RgbColor.FromHex(CityCrews.All[i].Secondary) : RgbColor.FromHex("#2A2A38");
+                for (int y = 0; y < 10; y++)
+                {
+                    int span = Math.Max(0, 4 - y * 4 / 10);
+                    for (int dx = 0; dx <= span; dx++) c.Set(x + dx, top - y, y < 2 ? b : a);
+                }
+            }
+            return c;
+        }
+
+        private static PixelCanvas Scoreboard(CityProp p, bool lit)
+        {
+            int w = Math.Max(2, p.W) * Tile;
+            var c = new PixelCanvas(w, 28);
+            c.FillRect(0, 0, w, 28, RgbColor.FromHex("#14141F"));
+            c.FillRect(1, 1, w - 2, 26, RgbColor.FromHex("#1B263B"));
+            var red = RgbColor.FromHex("#FF4F4F");
+            PixelFont.DrawCentered(c, "HOME", w / 4, 24, RgbColor.FromHex("#F4F1DE"));
+            PixelFont.DrawCentered(c, "AWAY", w * 3 / 4, 24, RgbColor.FromHex("#F4F1DE"));
+            PixelFont.DrawCentered(c, "21", w / 4, 15, red, 2);
+            PixelFont.DrawCentered(c, "19", w * 3 / 4, 15, red, 2);
+            PixelFont.DrawCentered(c, "BALLER ARENA", w / 2, 5, RgbColor.FromHex("#FFD166"));
+            return c;
+        }
+
+        /// <summary>Packed stands: rows of fans in every colour.</summary>
+        private static PixelCanvas Crowd(CityProp p)
+        {
+            int w = Math.Max(1, p.W) * Tile, h = Math.Max(1, p.H) * Tile;
+            var c = new PixelCanvas(w, h);
+            c.FillRect(0, 0, w, h, RgbColor.FromHex("#3C3C4E"));
+            for (int y = 2; y < h - 2; y += 5)
+                for (int x = 1; x < w - 2; x += 4)
+                {
+                    uint hs = Hash(x, y, (uint)p.Variant + 3);
+                    var shirt = RgbColor.FromHex(Bright[hs % (uint)Bright.Length]);
+                    var skin = CharacterSpriteGenerator.SkinTones[(hs >> 4) % (uint)CharacterSpriteGenerator.SkinTones.Length];
+                    c.FillRect(x, y, 3, 2, shirt);
+                    c.FillRect(x + 1, y + 2, 1, 2, skin);
+                    if ((hs >> 9) % 5 == 0) c.Set(x + (int)((hs >> 12) % 3), y + 4, skin); // a hand up
+                }
+            return c;
+        }
+
+        private static PixelCanvas SafeBox(out int pivotX)
+        {
+            var c = new PixelCanvas(16, 18);
+            pivotX = 0;
+            c.FillRect(1, 0, 14, 17, RgbColor.FromHex("#4A4A5A"));
+            c.FillRect(2, 1, 12, 15, RgbColor.FromHex("#6B6F78"));
+            c.FillCircle(8, 9, 3f, RgbColor.FromHex("#3A3A48"));
+            c.FillRect(8, 9, 3, 1, RgbColor.FromHex("#FFD166"));
+            c.FillRect(12, 6, 1, 6, RgbColor.FromHex("#B8BCC6"));
+            PixelFont.DrawCentered(c, "$", 8, 16, RgbColor.FromHex("#7CE577"));
             return c;
         }
 

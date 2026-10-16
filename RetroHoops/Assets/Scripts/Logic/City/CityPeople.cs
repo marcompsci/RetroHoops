@@ -16,6 +16,8 @@ namespace CallerRetroBall.Logic
         public string[] Haunts;
         /// <summary>Their Park legend or tour stop id (for challenges).</summary>
         public string Ref;
+        /// <summary>17 Oct 2026: today's CALL-OUT (this crew member came looking for you).</summary>
+        public bool Callout;
         public string Name => Player == null ? "" : (string.IsNullOrEmpty(Player.lastName) ? Player.firstName : Player.firstName + " " + Player.lastName);
     }
 

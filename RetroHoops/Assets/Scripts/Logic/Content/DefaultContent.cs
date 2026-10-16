@@ -113,6 +113,10 @@ namespace CallerRetroBall.Logic
             c.Courts.Add(Court("court.kennel_yard", "Kennel Yard", CourtCircuit.League,
                 "Brick walls, low ceiling, and fans who bark on defense.",
                 "#B5835A", "#F3E9D2", "#CC5500", "#3E2415", "#CC5500", 0.85f));
+            // 17 Oct 2026: BALLER CITY's arena (the City Championship).
+            c.Courts.Add(Court(CityArena.CourtId, "Baller Arena", CourtCircuit.League,
+                "Downtown's big room: polished maple, a scoreboard over centre court and a sold-out crowd.",
+                "#D8A35D", "#14141F", "#F72585", "#0B0B1A", "#4CC9F0", 0.95f));
             c.Courts.Add(Court("court.grove_gym", "Grove Gym", CourtCircuit.League,
                 "Timber rafters and a floor with a hand-painted tree at centre.",
                 "#C49A6C", "#111111", "#1E5631", "#0B2E1A", "#D4A017", 0.70f));

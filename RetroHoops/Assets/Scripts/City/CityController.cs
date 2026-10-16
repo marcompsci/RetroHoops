@@ -64,7 +64,9 @@ namespace CallerRetroBall.City
             if (firstTime) save.seen.Add(_map.DistrictId);
             save.visits++;
 
-            _world = CityWorld.Build(_map, catalog, StableHash.Of(_map.DistrictId), CityDecor.For(_map, CityDecor.Season(DateTime.Now)));
+            var decor = CityDecor.For(_map, CityDecor.Season(DateTime.Now));
+            if (_map.DistrictId == CityDistricts.Crib) decor.AddRange(CityCrib.Decor(career)); // your trophies and banners
+            _world = CityWorld.Build(_map, catalog, StableHash.Of(_map.DistrictId), decor);
             var me = PlayerCreator.BasePlayer(career, catalog);
             var crew = catalog.Team(DefaultContent.PlayerCrewId);
             _meView = CityActorView.Create(_world.transform, "You", me, Kit(crew), _world.Shadow);
@@ -86,6 +88,7 @@ namespace CallerRetroBall.City
 
             RefreshClock(force: true);
             SpawnPeople(career, catalog);
+            SpawnCallout(career, catalog);
             StartLife(career);
             if (save.fps30) Application.targetFrameRate = 30;
             Audio.AudioManager.PlayMusic(2);
@@ -387,12 +390,14 @@ namespace CallerRetroBall.City
             var zoom = new CityActivity { Label = Loc.T("ZOOM") + ": " + (_zoom + 1) + "/" + CityCamera.TilesAcross.Length, Action = CityAction.Info };
             var battery = new CityActivity { Label = Loc.T("BATTERY SAVER") + ": " + Loc.T(s.fps30 ? "ON" : "OFF"), Detail = "30 frames a second in the city.", Action = CityAction.Info };
             var menu = new CityActivity { Label = "MAIN MENU", Detail = "Your spot in the city is saved.", Action = CityAction.Info };
+            var daily = new CityActivity { Label = "CITY CHALLENGES", Detail = "Three a day. $7,500 each, $15,000 more for all three.", Action = CityAction.Info };
             var map = new CityActivity { Label = "MAP", Detail = "Every district, and fast travel to the ones you've visited.", Action = CityAction.Info };
             var weather = new CityActivity { Label = Loc.T("WEATHER") + ": " + Loc.T(s.weatherOff ? "OFF" : "ON"), Detail = "Rain, snow and wind in the city.", Action = CityAction.Info };
-            var list = new List<CityActivity> { resume, map, missions, zoom, weather, battery, menu };
+            var list = new List<CityActivity> { resume, map, missions, daily, zoom, weather, battery, menu };
             _hud.ShowCard("BALLER CITY", null, list, a =>
             {
                 if (ReferenceEquals(a, map)) OpenMap();
+                else if (ReferenceEquals(a, daily)) OpenDaily();
                 else if (ReferenceEquals(a, weather))
                 {
                     s.weatherOff = !s.weatherOff;

@@ -2455,8 +2455,23 @@ namespace CallerRetroBall.Gameplay
                 // 17 Oct 2026: BALLER CITY: crews beaten and missions done by a game started in the city.
                 if (rewarded && CityDistricts.TryParseReturn(_request.ReturnTo, out _, out _))
                 {
+                    // Phases 5–7: the City Championship, today's call-out and the daily City Challenges.
+                    int today = CityNpcScheduler.DayNumber(System.DateTime.Now);
+                    var bigNotes = new System.Collections.Generic.List<string>();
+                    string arenaLine = CityArena.ApplyGame(App.Career, _request, summary.HumanWon, today);
+                    if (arenaLine != null)
+                    {
+                        bigNotes.Add(arenaLine);
+                        if (summary.HumanWon && CityArena.RoundOf(_request) == 2) title = "CITY CHAMPIONS";
+                    }
+                    long callout = CityCallout.ApplyGame(App.Career, _request, summary.HumanWon, today);
+                    if (callout > 0) bigNotes.Add(Loc.T("CALL-OUT WON") + "  +" + StreetCash.Money(callout));
+                    long daily = CityDaily.ApplyGame(App.Career, _request, summary.HumanWon, summary.HumanLine?.stats, today, System.DateTime.Now.Hour, out var dailyDone);
+                    foreach (var dd in dailyDone) bigNotes.Add(Loc.T("CITY CHALLENGE:") + " " + dd.Text + "  +" + StreetCash.Money(CityDaily.EachPay));
+                    if (daily > dailyDone.Count * CityDaily.EachPay) bigNotes.Add(Loc.T("ALL THREE TODAY!") + "  +" + StreetCash.Money(CityDaily.SetBonus));
+                    if (bigNotes.Count > 0) note = string.IsNullOrEmpty(note) ? string.Join("\n", bigNotes) : note + "\n" + string.Join("\n", bigNotes);
                     var cityResult = CityMissions.ApplyGame(App.Career, _request, summary.HumanWon, summary.Margin, summary.HumanLine?.stats);
-                    if (cityResult.Crew != null && summary.HumanWon) title = cityResult.Crew.Name + " " + Loc.T("DOWN");
+                    if (cityResult.Crew != null && summary.HumanWon && CityArena.RoundOf(_request) != 2) title = cityResult.Crew.Name + " " + Loc.T("DOWN");
                     else if (!summary.HumanWon && CityCrews.FromContext(_request.ContextId) is CityCrewDef lost) title = lost.Name + " " + Loc.T("WINS");
                     string cityNote = cityResult.Note();
                     if (!string.IsNullOrEmpty(cityNote)) note = string.IsNullOrEmpty(note) ? cityNote : note + "\n" + cityNote;
