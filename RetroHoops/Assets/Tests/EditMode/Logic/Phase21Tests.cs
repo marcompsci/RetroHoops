@@ -670,7 +670,7 @@ namespace CallerRetroBall.Tests
         [Test]
         public void Soundtrack_SixOriginalSongs_InKey_Looping_AndNotSilent()
         {
-            Assert.AreEqual(Soundtrack.ClassicCount + 6, Soundtrack.Count);
+            Assert.AreEqual(Soundtrack.ClassicCount + 6 + StreetBeats.Beats.Length, Soundtrack.Count);
             var titles = new List<string>();
             for (int t = 0; t < Soundtrack.Count; t++) titles.Add(Soundtrack.Title(t));
             CollectionAssert.AllItemsAreUnique(titles);

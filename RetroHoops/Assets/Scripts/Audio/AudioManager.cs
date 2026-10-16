@@ -96,6 +96,9 @@ namespace CallerRetroBall.Audio
         public static void PlayMusic(int role)
         {
             if (_instance == null) return;
+            _lastRole = role;
+            // 15 Oct 2026: the phone's beat tape is playing: it keeps going from screen to screen.
+            if (PlaylistOwnsMusic) return;
             var s = App.Career?.settings;
             int track = ((role % AudioSynth.MusicTrackCount) + AudioSynth.MusicTrackCount) % AudioSynth.MusicTrackCount;
             if (role == 0 && s != null && s.musicMenu >= 0) track = s.musicMenu;
@@ -103,6 +106,72 @@ namespace CallerRetroBall.Audio
             if (role == 1 && s != null && s.musicGame == MusicShuffle) track = Random.Range(0, Soundtrack.Count);
             PlayTrack(track);
         }
+
+        private static int _lastRole;
+
+        // ------------------------------------------------------------------ 15 Oct 2026: the phone's beat tape
+
+        /// <summary>The phone's RETRO HOOPS playlist (the beat tape) is in charge of the music: screens don't switch tracks.</summary>
+        public static bool PlaylistOwnsMusic { get; private set; }
+
+        private bool _once, _paused;
+
+        /// <summary>Plays a track once (no loop) for the phone's playlist, which then picks the next one.</summary>
+        public static void PlayOnce(int track)
+        {
+            if (_instance == null) return;
+            PlaylistOwnsMusic = true;
+            _instance._once = true;
+            _instance._paused = false;
+            if (_instance._track == track && _instance._music.isPlaying) _instance._music.Stop();
+            _instance._track = -1;
+            PlayTrack(track);
+        }
+
+        /// <summary>The playlist let go of the music: back to the screen's own soundtrack.</summary>
+        public static void ReleasePlaylist()
+        {
+            if (_instance == null || !PlaylistOwnsMusic) return;
+            PlaylistOwnsMusic = false;
+            _instance._once = false;
+            _instance._paused = false;
+            _instance._music.loop = true;
+            _instance._track = -1;
+            PlayMusic(_lastRole);
+        }
+
+        public static void Pause()
+        {
+            if (_instance == null) return;
+            _instance._paused = true;
+            _instance._music.Pause();
+        }
+
+        public static void Resume()
+        {
+            if (_instance == null) return;
+            _instance._paused = false;
+            if (_instance._music.clip != null) _instance._music.UnPause();
+            if (!_instance._music.isPlaying && _instance._music.clip != null && _instance._pending == null) _instance._music.Play();
+        }
+
+        public static bool IsPaused => _instance != null && _instance._paused;
+
+        /// <summary>Seconds into the track playing now.</summary>
+        public static float Position => _instance != null && _instance._music.clip != null ? _instance._music.time : 0f;
+
+        /// <summary>Restarts the track playing now from the top.</summary>
+        public static void Restart()
+        {
+            if (_instance == null || _instance._music.clip == null) return;
+            _instance._music.time = 0f;
+            if (!_instance._paused) _instance._music.Play();
+        }
+
+        /// <summary>A playlist track played to its end (the playlist moves on).</summary>
+        public static bool TrackFinished =>
+            _instance != null && _instance._once && !_instance._paused && _instance._pending == null && _instance._music.clip != null
+            && !_instance._music.isPlaying && _instance._track >= 0 && _instance._tracks[_instance._track] == _instance._music.clip;
 
         /// <summary>Matches shuffle the whole soundtrack.</summary>
         public const int MusicShuffle = -2;
@@ -158,7 +227,9 @@ namespace CallerRetroBall.Audio
         {
             _instance._track = track;
             _instance._music.clip = _instance._tracks[track];
+            _instance._music.loop = !_instance._once;
             _instance._music.Play();
+            if (_instance._paused) _instance._music.Pause();
             // Keep only the composed song that's playing (each is several MB); the three loops stay cached.
             for (int i = Soundtrack.ClassicCount; i < _instance._tracks.Length; i++)
                 if (i != track && _instance._tracks[i] != null)

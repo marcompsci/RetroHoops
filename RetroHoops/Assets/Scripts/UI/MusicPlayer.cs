@@ -73,7 +73,12 @@ namespace CallerRetroBall.UI
 
             var footer = UiKit.Row(safe, 20f, "Footer");
             UiKit.Band(footer, 0.015f, 0.095f, 40f);
-            UiKit.Button(footer, "STOP", () => { AudioManager.StopMusic(); Refresh(); }, ButtonStyle.Ghost, 110f, 40f);
+            UiKit.Button(footer, "STOP", () =>
+            {
+                // The phone's beat tape pauses (stopping it would just start the next beat).
+                if (AudioManager.PlaylistOwnsMusic) AudioManager.Pause(); else AudioManager.StopMusic();
+                Refresh();
+            }, ButtonStyle.Ghost, 110f, 40f);
             UiKit.Button(footer, "CLOSE", Close, ButtonStyle.Primary, 110f, 40f);
             Refresh();
         }
@@ -81,7 +86,8 @@ namespace CallerRetroBall.UI
         private void Close()
         {
             // Back to the music this screen should be playing.
-            if (!AudioManager.IsPlaying) AudioManager.PlayTrack(AudioManager.CurrentTrack);
+            if (AudioManager.PlaylistOwnsMusic) AudioManager.Resume();
+            else if (!AudioManager.IsPlaying) AudioManager.PlayTrack(AudioManager.CurrentTrack);
             Destroy(gameObject);
         }
 
@@ -108,7 +114,7 @@ namespace CallerRetroBall.UI
                 var row = UiKit.Row(_list, 10f, "Track");
                 row.GetComponent<HorizontalLayoutGroup>().childForceExpandWidth = false;
                 UiKit.Size(row, 100f);
-                string bpm = t >= Soundtrack.ClassicCount ? "  ·  " + Mathf.RoundToInt(Soundtrack.Songs[t - Soundtrack.ClassicCount].Bpm) + " BPM" : "";
+                string bpm = t >= Soundtrack.ClassicCount ? "  ·  " + Mathf.RoundToInt(Soundtrack.Bpm(t)) + " BPM" : "";
                 var label = UiKit.Label(row, (t + 1).ToString("00") + "  <b>" + Soundtrack.Title(t).ToUpperInvariant() + "</b>\n<size=22><color=#8D99AE>"
                                         + Loc.T(Soundtrack.Blurb(t)) + bpm + "</color></size>", 28f, t == playing ? Theme.Gold : Theme.Cream, TextAlignmentOptions.Left);
                 label.textWrappingMode = TextWrappingModes.Normal;
@@ -116,12 +122,14 @@ namespace CallerRetroBall.UI
                 var b = UiKit.Button(row, t == playing ? (AudioManager.IsLoading ? "LOADING" : "PLAYING") : "PLAY", () =>
                 {
                     _selected = track;
+                    // Picking a track here takes over from the phone's playlist (turn it back on in the MUSIC app).
+                    if (AudioManager.PlaylistOwnsMusic) Core.PhoneMusic.Existing?.SetEnabled(false);
                     AudioManager.PlayTrack(track);
                     Refresh();
                 }, t == playing ? ButtonStyle.Primary : ButtonStyle.Secondary, 90f, 26f);
                 UiKit.Size(b, 90f, 190f);
             }
-            UiKit.Size(UiKit.Label(_list, "Every track is written and played by Retro Hoops' own chip synth. Songs are composed the first time you play them.", 24f, Theme.Muted), 80f);
+            UiKit.Size(UiKit.Label(_list, "Every track is written and played by Retro Hoops itself: the chiptune songs and the beat tape. Songs are composed the first time you play them. Playing one here turns off the phone's playlist (turn it back on in the phone's MUSIC app).", 24f, Theme.Muted), 130f);
         }
 
         private bool _wasLoading;

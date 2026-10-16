@@ -259,7 +259,7 @@ namespace CallerRetroBall.UI
                     v => PhoneMusic.Instance.SetSource(v));
             Line(mix ? "MY MIX" : "PLAYLIST", 40f, Theme.Pink, 56f, TextAlignmentOptions.Left, true);
 
-            switch (m.State)
+            switch (mix ? m.State : PhoneMusic.Status.Ready)
             {
                 case PhoneMusic.Status.Unsupported:
                     Line("Apple Music plays here in the iPhone and iPad app.", 28f, Theme.Muted, 80f);
@@ -281,7 +281,6 @@ namespace CallerRetroBall.UI
                     break;
                 case PhoneMusic.Status.Failed:
                     Line("Couldn't reach Apple Music. Check the internet connection.", 28f, Theme.Muted, 80f);
-                    UiKit.Button(_content, "TRY AGAIN", m.Retry, ButtonStyle.Secondary, 100f, 36f);
                     break;
                 case PhoneMusic.Status.MixEmpty:
                     Line(m.HiddenExplicit > 0
@@ -302,31 +301,27 @@ namespace CallerRetroBall.UI
             if (mix) BuildMyMix(m, d);
             else
             {
-                // The songs: every one listed with credits and a + (open in Apple Music). Tap one that can play to play it.
-                Line("SONGS", 34f, Theme.Gold, 54f, TextAlignmentOptions.Left, true);
-                foreach (var t in PhonePlaylist.Tracks)
-                {
-                    var playable = m.Songs.Find(s => s.key == t.Key);
-                    var found = m.Found.Find(s => s.key == t.Key);
-                    SongRow(t, playable, m, found != null && found.@explicit);
-                }
+                // 15 Oct 2026: the beat tape. Tap a beat to play it now.
+                Line("BEAT TAPE", 34f, Theme.Gold, 54f, TextAlignmentOptions.Left, true);
+                foreach (var e in m.Songs) BeatRow(e, m);
+                Line("Original instrumental beats made for Retro Hoops. Every sound is made by the game itself: no samples, no vocals. Plays offline.", 22f, Theme.Muted, 80f);
             }
-            if (m.Found.Count > 0 || m.MixFound.Count > 0 || m.State == PhoneMusic.Status.NoCleanSongs || m.HiddenExplicit > 0)
+            if (mix && (m.MixFound.Count > 0 || m.HiddenExplicit > 0))
             {
                 var career = Core.App.Career;
                 UiControls.ToggleRow(_content, "EXPLICIT SONGS", career != null && career.phone.explicitSongs, v => PhoneMusic.Instance.SetExplicit(v));
                 Line("Explicit songs play only with this on. iPhone Screen Time limits still apply.", 22f, Theme.Muted, 60f);
             }
-            Line("Songs play from Apple Music. Retro Hoops doesn't own or include them. Credits as listed on Apple Music.", 22f, Theme.Muted, 80f);
+            if (mix) Line("MY MIX songs play from Apple Music. Retro Hoops doesn't own or include them. Credits as listed on Apple Music.", 22f, Theme.Muted, 80f);
         }
 
         private void NowPlaying(PhoneMusic m, bool on)
         {
             var card = Card(new Color32(0x1E, 0x1E, 0x36, 255), 330f);
             var entry = m.Songs.Find(s => s.key == m.NowPlayingKey);
-            var track = entry != null ? PhonePlaylist.Find(entry.key) : null;
-            if (track == null && entry != null && !string.IsNullOrEmpty(entry.title))
-                track = new PlaylistTrack { Key = entry.key, Title = entry.title, Artist = entry.artist ?? "" }; // a MY MIX song
+            var track = entry != null && !string.IsNullOrEmpty(entry.title)
+                ? new PlaylistTrack { Key = entry.key, Title = entry.title, Artist = entry.artist ?? "" }
+                : null;
             if (entry?.art != null)
             {
                 var art = UiKit.Picture(card, entry.art, "Artwork");
@@ -452,39 +447,30 @@ namespace CallerRetroBall.UI
             }
         }
 
-        private void SongRow(PlaylistTrack t, PhoneMusic.Entry entry, PhoneMusic m, bool isExplicit = false)
+        /// <summary>A beat on the tape: its cover, title and vibe. Tap to play it now.</summary>
+        private void BeatRow(PhoneMusic.Entry e, PhoneMusic m)
         {
-            if (t == null) return;
-            bool current = entry != null && entry.key == m.NowPlayingKey;
+            bool current = e.key == m.NowPlayingKey;
             var card = Card(current ? new Color32(0x2A, 0x2A, 0x4A, 255) : new Color32(0x1A, 0x1A, 0x2E, 255), 130f);
-            if (entry != null || isExplicit)
+            var b = card.gameObject.AddComponent<Button>();
+            var img = card.GetComponent<Image>();
+            img.raycastTarget = true;
+            b.targetGraphic = img;
+            string key = e.key;
+            b.onClick.AddListener(() => { Audio.AudioManager.Click(); PhoneMusic.Instance.PlaySong(key); });
+            float left = 0f;
+            if (e.art != null)
             {
-                // Tap a song to play it now. An [E] song asks first (it turns EXPLICIT SONGS on).
-                var b = card.gameObject.AddComponent<Button>();
-                var img = card.GetComponent<Image>();
-                img.raycastTarget = true;
-                b.targetGraphic = img;
-                string key = t.Key;
-                bool ask = entry == null;
-                b.onClick.AddListener(() =>
-                {
-                    Audio.AudioManager.Click();
-                    if (!ask) { PhoneMusic.Instance.PlaySong(key); return; }
-                    UiControls.Dialog("EXPLICIT SONG", Logic.Loc.T("This song is explicit on Apple Music. Turn on EXPLICIT SONGS to play it (and the other explicit songs)?"),
-                        ("TURN ON AND PLAY", ButtonStyle.Primary, () => PhoneMusic.Instance.AllowExplicitAndPlay(key)),
-                        ("CANCEL", ButtonStyle.Ghost, null));
-                });
+                var art = UiKit.Picture(card, e.art, "Cover");
+                Anchor(art.rectTransform, new Vector2(0f, 0.5f), new Vector2(0f, 0.5f));
+                art.rectTransform.pivot = new Vector2(0f, 0.5f);
+                art.rectTransform.sizeDelta = new Vector2(100f, 100f);
+                art.rectTransform.anchoredPosition = new Vector2(16f, 0f);
+                art.raycastTarget = false;
+                left = 0.14f;
             }
-            CardText(card, (current ? "► " : "") + t.DisplayTitle, 30f, current ? Theme.Gold : Theme.Cream, new Vector2(0f, 0.5f), new Vector2(0.8f, 0.95f), TextAlignmentOptions.Left, true);
-            CardText(card, (isExplicit ? "[E]  " : "") + t.Credits, 24f, Theme.Muted, new Vector2(0f, 0.08f), new Vector2(0.8f, 0.5f));
-            // + : open the song in Apple Music to add it to your library.
-            string k = t.Key;
-            var plus = UiKit.Button(card, "+", () => PhoneMusic.OpenInAppleMusic(k), ButtonStyle.Secondary, 90f, 48f);
-            var prt = (RectTransform)plus.transform;
-            prt.anchorMin = prt.anchorMax = new Vector2(1f, 0.5f);
-            prt.pivot = new Vector2(1f, 0.5f);
-            prt.sizeDelta = new Vector2(110f, 100f);
-            prt.anchoredPosition = new Vector2(-16f, 0f);
+            CardText(card, (current ? "► " : "") + e.title, 30f, current ? Theme.Gold : Theme.Cream, new Vector2(left, 0.5f), new Vector2(1f, 0.95f), TextAlignmentOptions.Left, true);
+            CardText(card, Logic.Loc.T(e.album ?? ""), 22f, Theme.Muted, new Vector2(left, 0.08f), new Vector2(1f, 0.5f));
         }
 
         // ------------------------------------------------------------------ TEXTS

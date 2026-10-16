@@ -8,25 +8,18 @@ namespace CallerRetroBall.Tests
     public class PhoneTests
     {
         [Test]
-        public void Playlist_HasTheSevenSongs_WithCredits()
+        public void Playlist_IsTheBeatTape_OriginalAndCredited()
         {
-            Assert.AreEqual(7, PhonePlaylist.Tracks.Length);
+            var tape = PhonePlaylist.Tape();
+            Assert.AreEqual(StreetBeats.Beats.Length, tape.Length);
+            Assert.GreaterOrEqual(tape.Length, 8);
             var keys = new HashSet<string>();
-            foreach (var t in PhonePlaylist.Tracks)
+            foreach (var t in tape)
             {
                 Assert.IsTrue(keys.Add(t.Key), "unique keys");
                 Assert.IsNotEmpty(t.Title);
-                Assert.IsNotEmpty(t.Artist);
+                Assert.AreEqual(StreetBeats.Credit, t.Artist);
             }
-            var joe = PhonePlaylist.Find("free_joe_exotic");
-            Assert.AreEqual("Free Joe Exotic (feat. Sada Baby)", joe.DisplayTitle);
-            StringAssert.Contains("Sada Baby", joe.Credits);
-            StringAssert.Contains("Babyface Ray", PhonePlaylist.Find("7sixers").DisplayTitle);
-            Assert.IsTrue((PhonePlaylist.SearchUrl(joe)).StartsWith("https://music.apple.com/"));
-            StringAssert.Contains("Free%20Joe%20Exotic", PhonePlaylist.SearchUrl(joe));
-            var req = PhonePlaylist.ResolveRequest().Split('\n');
-            Assert.AreEqual(8, req.Length, "a line per song plus the trailing newline");
-            StringAssert.Contains("\t3200 Tre", req[3]);
         }
 
         [Test]

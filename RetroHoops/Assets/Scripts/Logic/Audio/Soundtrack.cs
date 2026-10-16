@@ -58,10 +58,26 @@ namespace CallerRetroBall.Logic
                           Verse = new[] { 0, 4, 5, 3 }, Bridge = new[] { 1, 4, 0, 4 }, Duty = 0.5f, Drums = 1, Seed = 6606, ArpRate = 2 },
         };
 
-        public static int Count => ClassicCount + Songs.Length;
+        /// <summary>15 Oct 2026: the beat tape (<see cref="StreetBeats"/>) comes after the chiptune songs.</summary>
+        public static int Count => ClassicCount + Songs.Length + StreetBeats.Beats.Length;
 
-        public static string Title(int track) => track < ClassicCount ? ClassicTitles[Wrap(track)] : Songs[track - ClassicCount].Title;
-        public static string Blurb(int track) => track < ClassicCount ? ClassicBlurbs[Wrap(track)] : Songs[track - ClassicCount].Blurb;
+        /// <summary>The first beat-tape track.</summary>
+        public static int FirstBeat => ClassicCount + Songs.Length;
+
+        /// <summary>The soundtrack track of beat <paramref name="beat"/> (an index into <see cref="StreetBeats.Beats"/>).</summary>
+        public static int BeatTrack(int beat) => FirstBeat + beat;
+
+        /// <summary>The beat for a track, or null when it's a chiptune track.</summary>
+        public static BeatDef BeatOf(int track) => track >= FirstBeat && track < Count ? StreetBeats.Beats[track - FirstBeat] : null;
+
+        public static string Title(int track) =>
+            track < ClassicCount ? ClassicTitles[Wrap(track)] : BeatOf(track)?.Title ?? Songs[track - ClassicCount].Title;
+        public static string Blurb(int track) =>
+            track < ClassicCount ? ClassicBlurbs[Wrap(track)] : BeatOf(track)?.Vibe ?? Songs[track - ClassicCount].Blurb;
+
+        /// <summary>Tempo of a composed track (0 for the classic loops).</summary>
+        public static float Bpm(int track) =>
+            track < ClassicCount || track >= Count ? 0f : BeatOf(track)?.Bpm ?? Songs[track - ClassicCount].Bpm;
 
         private static int Wrap(int t) => ((t % ClassicCount) + ClassicCount) % ClassicCount;
 
@@ -69,7 +85,9 @@ namespace CallerRetroBall.Logic
         public static float[] Render(int track)
         {
             if (track < 0 || track >= Count) track = 0;
-            return track < ClassicCount ? AudioSynth.MusicLoop(track) : Compose(Songs[track - ClassicCount]);
+            if (track < ClassicCount) return AudioSynth.MusicLoop(track);
+            var beat = BeatOf(track);
+            return beat != null ? StreetBeats.Render(beat) : Compose(Songs[track - ClassicCount]);
         }
 
         /// <summary>Length of a composed song's loop in seconds (A-A-B-A, four bars each).</summary>

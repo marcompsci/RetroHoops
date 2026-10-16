@@ -10,10 +10,11 @@ using UnityEngine.Networking;
 namespace CallerRetroBall.Core
 {
     /// <summary>
-    /// 14 Oct 2026: the phone's MUSIC app. It plays <see cref="PhonePlaylist"/> in the background through Apple Music
-    /// (RetroMusic.swift / MusicKit) on shuffle, and deals a new order every time the playlist loops. Clean
-    /// versions only. While it plays, the game's own soundtrack is silent (<see cref="AudioManager.ExternalMusic"/>).
-    /// It lives across scenes, so the songs keep going from the menus into games.
+    /// The phone's MUSIC app. It lives across scenes, so the music keeps going from the menus into games.
+    /// - RETRO HOOPS (15 Oct 2026): the game's own beat tape (<see cref="StreetBeats"/>), played by the game itself
+    ///   (<see cref="AudioManager.PlayOnce"/>) on shuffle, a new order every loop. Offline, no Apple Music needed.
+    /// - MY MIX: the player's own songs through Apple Music (RetroMusic.swift / MusicKit). While they play, the game's
+    ///   soundtrack is silent (<see cref="AudioManager.ExternalMusic"/>).
     /// </summary>
     public sealed class PhoneMusic : MonoBehaviour
     {
@@ -120,7 +121,7 @@ namespace CallerRetroBall.Core
         public int[] Order { get; private set; } = new int[0];
         public event Action Changed;
 
-        private bool _resolving, _started, _userPaused, _resolveFailed, _sawPlaying;
+        private bool _started, _userPaused, _sawPlaying;
         private float _nextPoll, _silentSince = -1f;
         private int _lastIndexPlayed = -1;
 
@@ -128,8 +129,8 @@ namespace CallerRetroBall.Core
 
         private void Start()
         {
-            if (!Supported) { State = Status.Unsupported; return; }
-            RetroMusic_Refresh();
+            ApplyFilter();
+            if (Supported) RetroMusic_Refresh();
         }
 
         /// <summary>Asks for Apple Music access (the system prompt), then starts.</summary>
@@ -149,7 +150,8 @@ namespace CallerRetroBall.Core
             App.SaveCareer();
             if (!on)
             {
-                RetroMusic_Command(4);
+                if (MixMode) RetroMusic_Command(4);
+                else AudioManager.ReleasePlaylist();
                 IsPlaying = false;
                 _started = false;
                 AudioManager.ExternalMusic = false;
@@ -161,6 +163,13 @@ namespace CallerRetroBall.Core
         {
             if (!_started) { StartLoop(-1); return; }
             _userPaused = IsPlaying;
+            if (!MixMode)
+            {
+                if (AudioManager.IsPaused) AudioManager.Resume(); else AudioManager.Pause();
+                IsPlaying = !AudioManager.IsPaused;
+                Changed?.Invoke();
+                return;
+            }
             RetroMusic_Command(IsPlaying ? 0 : 1);
         }
 
@@ -185,7 +194,8 @@ namespace CallerRetroBall.Core
                     return;
                 default:
                     _userPaused = false;
-                    RetroMusic_Command(2);
+                    if (MixMode) RetroMusic_Command(2);
+                    else { PlayAt(Math.Max(0, _tapePos + 1)); return; }
                     break;
             }
             Changed?.Invoke();
@@ -196,12 +206,17 @@ namespace CallerRetroBall.Core
             Note = null;
             if (!_started) { if (Songs.Count > 0) StartLoop(-1); return; }
             _userPaused = false;
-            RetroMusic_Command(3);
+            if (MixMode) { RetroMusic_Command(3); return; }
+            // The beat tape: back to the top of this beat, or (near its start) the one before.
+            if (AudioManager.Position > 3f || _tapePos <= 0) { AudioManager.Restart(); AudioManager.Resume(); }
+            else PlayAt(_tapePos - 1);
+            Changed?.Invoke();
         }
 
         /// <summary>Where the song playing now is in this loop's order (-1 when unknown).</summary>
         private int OrderIndexNow()
         {
+            if (!MixMode) return _tapePos;
             for (int i = 0; i < Order.Length; i++)
                 if (Order[i] >= 0 && Order[i] < Songs.Count && Songs[Order[i]].key == NowPlayingKey) return i;
             return -1;
@@ -236,10 +251,78 @@ namespace CallerRetroBall.Core
                 }
                 return;
             }
-            foreach (var f in Found)
+            // RETRO HOOPS: the whole beat tape, always (instrumentals, nothing explicit).
+            EnsureTape();
+            Songs.AddRange(_tape);
+        }
+
+        // ------------------------------------------------------------------ 15 Oct 2026: the beat tape
+
+        private readonly List<Entry> _tape = new List<Entry>();
+        private int _tapePos = -1;
+
+        private void EnsureTape()
+        {
+            if (_tape.Count == StreetBeats.Beats.Length) return;
+            _tape.Clear();
+            foreach (var b in StreetBeats.Beats)
             {
-                if (f.@explicit && !allow) { HiddenExplicit++; continue; }
-                Songs.Add(f);
+                var e = new Entry { key = b.Key, id = b.Key, title = b.Title, artist = StreetBeats.Credit, album = b.Vibe + "  ·  " + Mathf.RoundToInt(b.Bpm) + " BPM" };
+                var px = StreetBeats.Cover(b, 32);
+                var tex = new Texture2D(32, 32, TextureFormat.RGBA32, false) { filterMode = FilterMode.Point, wrapMode = TextureWrapMode.Clamp, name = "Cover " + b.Title };
+                var colors = new Color32[px.Length];
+                for (int i = 0; i < px.Length; i++) colors[i] = new Color32(px[i].r, px[i].g, px[i].b, 255);
+                tex.SetPixels32(colors);
+                tex.Apply(false, true);
+                e.art = tex;
+                _tape.Add(e);
+            }
+        }
+
+        /// <summary>Plays the beat at position <paramref name="pos"/> of this loop's order (past the end: the next loop).</summary>
+        private void PlayAt(int pos)
+        {
+            var data = Data;
+            if (data == null || Songs.Count == 0) return;
+            if (pos >= Order.Length)
+            {
+                data.cycle++;
+                StartLoop(-1);
+                return;
+            }
+            _tapePos = Math.Max(0, pos);
+            int song = Order[_tapePos];
+            int beat = StreetBeats.IndexOf(Songs[song].key);
+            if (beat < 0) return;
+            AudioManager.PlayOnce(Soundtrack.BeatTrack(beat));
+            _lastIndexPlayed = song;
+            NowPlayingKey = Songs[song].key;
+            IsPlaying = true;
+            _userPaused = false;
+            Changed?.Invoke();
+        }
+
+        private void TapeUpdate()
+        {
+            var data = Data;
+            AudioManager.ExternalMusic = false;
+            if (Songs.Count == 0 || Songs[0].key != StreetBeats.Beats[0].Key) ApplyFilter();
+            var before = State;
+            State = Status.Ready;
+            if (data == null) return;
+            if (!data.musicOn)
+            {
+                if (_started) { _started = false; IsPlaying = false; AudioManager.ReleasePlaylist(); Changed?.Invoke(); }
+                return;
+            }
+            if (!_started || !AudioManager.PlaylistOwnsMusic) { StartLoop(-1); return; }
+            if (AudioManager.TrackFinished) { PlayAt(_tapePos + 1); return; }
+            bool playing = !AudioManager.IsPaused;
+            Position = AudioManager.Position;
+            if (playing != IsPlaying || before != State)
+            {
+                IsPlaying = playing;
+                Changed?.Invoke();
             }
         }
 
@@ -259,6 +342,7 @@ namespace CallerRetroBall.Core
             if (_started)
             {
                 RetroMusic_Command(4);
+                AudioManager.ReleasePlaylist();
                 _started = false;
                 IsPlaying = false;
                 AudioManager.ExternalMusic = false;
@@ -268,7 +352,7 @@ namespace CallerRetroBall.Core
         }
 
         private Status ListState() =>
-            Songs.Count > 0 ? Status.Ready : MixMode ? Status.MixEmpty : _resolveFailed ? Status.Failed : Status.NoCleanSongs;
+            Songs.Count > 0 ? Status.Ready : MixMode ? Status.MixEmpty : Status.NoCleanSongs;
 
         // ------------------------------------------------------------------ 15 Oct 2026: MY MIX
 
@@ -422,22 +506,21 @@ namespace CallerRetroBall.Core
         {
             var entry = _instance == null ? null : _instance.Found.Find(s => s.key == key) ?? _instance.MixFound.Find(s => s.key == key)
                         ?? _instance.SearchResults.Find(s => s.key == key);
-            var track = PhonePlaylist.Find(key);
-            string url = entry != null && !string.IsNullOrEmpty(entry.url) ? entry.url : track != null ? PhonePlaylist.SearchUrl(track) : null;
+            string url = entry != null && !string.IsNullOrEmpty(entry.url) ? entry.url : null;
             if (!string.IsNullOrEmpty(url)) Application.OpenURL(url);
         }
 
         private void Update()
         {
-            if (!Supported || Time.unscaledTime < _nextPoll) return;
-            _nextPoll = Time.unscaledTime + 0.5f;
+            if (Time.unscaledTime < _nextPoll) return;
+            _nextPoll = Time.unscaledTime + 0.25f;
+            if (!MixMode) { TapeUpdate(); return; }
+            if (!Supported) { State = Status.Unsupported; return; }
             var before = State;
             int auth = RetroMusic_Auth();
             if (auth == 1 || auth == 2) State = Status.Denied;
             else if (auth == 0) State = State == Status.Loading ? Status.Loading : Status.NotConnected;
             else if (RetroMusic_CanPlay() != 1) State = Status.NoSubscription;
-            else if (!_resolving && Found.Count == 0 && RetroMusic_ResolveState() == 0) Resolve();
-            else if (_resolving) PollResolve();
             else State = ListState();
 
             // MY MIX requests (search, picker, pasted links) and finding saved songs.
@@ -449,51 +532,6 @@ namespace CallerRetroBall.Core
             if (State == Status.Ready) PollPlayback();
             else AudioManager.ExternalMusic = false;
             if (before != State) Changed?.Invoke();
-        }
-
-        private void Resolve()
-        {
-            _resolving = true;
-            State = Status.Loading;
-            RetroMusic_Resolve(PhonePlaylist.ResolveRequest());
-        }
-
-        private void PollResolve()
-        {
-            int rs = RetroMusic_ResolveState();
-            if (rs == 1) { State = Status.Loading; return; }
-            _resolving = false;
-            Songs.Clear();
-            if (rs == 2)
-            {
-                EntryList parsed = null;
-                try { parsed = JsonUtility.FromJson<EntryList>("{\"items\":" + (RetroMusic_Resolved() ?? "[]") + "}"); }
-                catch (Exception e) { Debug.LogWarning("[Retro Hoops] Apple Music list: " + e.Message); }
-                // Keep the playlist's own order.
-                Found.Clear();
-                foreach (var t in PhonePlaylist.Tracks)
-                {
-                    var hit = parsed?.items?.Find(x => x.key == t.Key);
-                    if (hit != null) Found.Add(hit);
-                }
-                ApplyFilter();
-                foreach (var f in Found) StartCoroutine(LoadArt(f));
-            }
-            _resolveFailed = rs == 3;
-            ApplyFilter();
-            State = ListState();
-            Changed?.Invoke();
-        }
-
-        /// <summary>Looks the songs up again (after a failure, e.g. no internet).</summary>
-        public void Retry()
-        {
-            if (!Supported || _resolving) return;
-            Songs.Clear();
-            Found.Clear();
-            _resolveFailed = false;
-            Resolve();
-            Changed?.Invoke();
         }
 
         private IEnumerator LoadArt(Entry e)
@@ -522,6 +560,13 @@ namespace CallerRetroBall.Core
                 if (at > 0) (order[0], order[at]) = (order[at], order[0]);
             }
             Order = order;
+            if (!MixMode)
+            {
+                _started = true;
+                PlayAt(0);
+                App.SaveCareer();
+                return;
+            }
             var ids = new string[order.Length];
             for (int i = 0; i < order.Length; i++) ids[i] = Songs[order[i]].id;
             RetroMusic_Play(string.Join(",", ids), 0);
