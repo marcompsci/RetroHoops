@@ -351,7 +351,7 @@ namespace CallerRetroBall.Tests
         public void TheLastMission_NeedsEveryLegendaryCrew()
         {
             var d = new CareerSaveData();
-            var last = CityMissions.Find("c5.legends");
+            var last = CityMissions.Find("c6.legends");
             Assert.AreEqual(CityMissions.LegendaryCount, CityMissions.TargetOf(last));
             foreach (var crew in CityCrews.All) d.city.crewsBeaten.Add(crew.Id);
             Assert.AreEqual(CityMissions.LegendaryCount, CityMissions.Progress(d.city, d, last).now);

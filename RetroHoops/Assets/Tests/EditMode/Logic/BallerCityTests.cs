@@ -16,7 +16,7 @@ namespace CallerRetroBall.Tests
         [Test]
         public void EveryDistrict_HasWalkableSpawns_AndEverythingInBounds()
         {
-            Assert.AreEqual(5, CityDistricts.All.Length);
+            Assert.AreEqual(10, CityDistricts.All.Length);
             foreach (var def in CityDistricts.All)
             {
                 var m = CityDistricts.Map(def.Id);
@@ -577,8 +577,8 @@ namespace CallerRetroBall.Tests
             Assert.IsTrue(CityDistricts.TryParseReturn(h[0].Request.ReturnTo, out _, out var hs));
             Assert.IsTrue(m.TryGetSpawn(hs, out _));
             var fc = CityDistricts.Map(CityDistricts.FirstCallers);
-            var store = CityActivities.ForPortal(fc, fc.Portals.Find(p => p.Target == "store"), d, C);
-            Assert.AreEqual("Opening soon.", store[0].Locked);
+            // 17 Oct 2026 (phase 3): the store is open now: its door goes inside.
+            Assert.AreEqual(CityDistricts.CornerStore, fc.Portal("door.store").Target);
         }
 
         [Test]

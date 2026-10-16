@@ -19,6 +19,7 @@ namespace CallerRetroBall.Logic
                 ["cw"] = Strings(s.courtsWon ?? new List<string>()), ["hw"] = Strings(s.holidayWins ?? new List<string>()),
                 ["tt"] = Strings(s.talkedTo ?? new List<string>()), ["g"] = s.cityGames, ["w"] = s.cityWins,
                 ["bp"] = s.bestPoints, ["b3"] = s.bestThrees, ["ba"] = s.bestAssists, ["bs"] = s.bestStops, ["bk"] = s.bestAnkles, ["bm"] = s.bestMargin,
+                ["buy"] = s.purchases, ["cut"] = s.haircuts, ["ft"] = s.fastTravels, ["free"] = s.freeCutUsed, ["wx"] = s.weatherOff,
             };
         }
 
@@ -55,6 +56,11 @@ namespace CallerRetroBall.Logic
             s.bestStops = Math.Max(0, Int(o, "bs", 0));
             s.bestAnkles = Math.Max(0, Int(o, "bk", 0));
             s.bestMargin = Math.Max(0, Int(o, "bm", 0));
+            s.purchases = Math.Max(0, Int(o, "buy", 0));
+            s.haircuts = Math.Max(0, Int(o, "cut", 0));
+            s.fastTravels = Math.Max(0, Int(o, "ft", 0));
+            s.freeCutUsed = Bool(o, "free", false);
+            s.weatherOff = Bool(o, "wx", false);
             foreach (var id in StrList(o, "seen"))
                 if (CityDistricts.Find(id) != null && !s.seen.Contains(id)) s.seen.Add(id);
             return s;

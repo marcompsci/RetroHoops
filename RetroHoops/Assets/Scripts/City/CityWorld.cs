@@ -24,13 +24,15 @@ namespace CallerRetroBall.City
         private readonly List<SpriteRenderer> _glows = new List<SpriteRenderer>();
         private readonly Dictionary<string, (Sprite day, Sprite night)> _propCache = new Dictionary<string, (Sprite, Sprite)>();
         private SpriteRenderer _dark;
+        private List<CityProp> _decor;
+        private float _gloom;
         private bool _lit;
         private float _darkness = -1f;
 
         public CityMap Map { get; private set; }
         public Sprite Shadow { get; private set; }
 
-        public static CityWorld Build(CityMap map, ContentCatalog catalog, uint seed)
+        public static CityWorld Build(CityMap map, ContentCatalog catalog, uint seed, List<CityProp> decorations = null)
         {
             var go = new GameObject("CityWorld");
             var w = go.AddComponent<CityWorld>();
@@ -38,6 +40,12 @@ namespace CallerRetroBall.City
             w.BuildGround(catalog, seed);
             foreach (var b in map.Buildings) w.AddBuilding(b);
             foreach (var p in map.Props) w.AddProp(p);
+            // 17 Oct 2026 (phase 3): seasonal decorations (drawn only; the map itself is unchanged).
+            if (decorations != null)
+            {
+                foreach (var p in decorations) w.AddProp(p);
+                w._decor = decorations;
+            }
             w.BuildLights();
             w.Shadow = w.Own(Sprite.Create(w.Own(TextureFactory.ToTexture(ShadowCanvas(), "city.shadow")), new Rect(0, 0, 14, 6), new Vector2(0.5f, 0.5f), Ppu * 2f));
             return w;
@@ -117,7 +125,9 @@ namespace CallerRetroBall.City
             _dark.sortingOrder = 30000;
 
             var glow = MakeSprite(CityArtGenerator.Glow(40), "city.glow", new Vector2(0.5f, 0.5f));
-            foreach (var p in Map.Props)
+            var lightProps = new List<CityProp>(Map.Props);
+            if (_decor != null) lightProps.AddRange(_decor);
+            foreach (var p in lightProps)
             {
                 // Streetlights, paper lanterns, arcade screens, Christmas trees and jack-o'-lanterns all light up.
                 float size, height;
@@ -154,7 +164,7 @@ namespace CallerRetroBall.City
         /// <summary>Sets the light for the hour (0..24). Only changes renderers when the level actually changes.</summary>
         public void SetHour(float hour)
         {
-            float dark = Map.Interior ? 0f : CityClock.Darkness(hour);
+            float dark = Map.Interior ? 0f : Mathf.Min(0.85f, CityClock.Darkness(hour) + _gloom);
             bool lit = !Map.Interior && CityClock.LightsOn(hour);
             if (lit != _lit || _darkness < 0f)
             {
@@ -171,6 +181,36 @@ namespace CallerRetroBall.City
                 c.a = glowA;
                 g.color = c;
             }
+        }
+
+        /// <summary>Extra dimming for clouds and rain (applied on the next <see cref="SetHour"/>).</summary>
+        public void SetGloom(float gloom)
+        {
+            _gloom = Mathf.Clamp01(gloom);
+            _darkness = -1f;
+        }
+
+        /// <summary>A prop's daytime sprite (cars on the road), shared with the map's own props.</summary>
+        public Sprite PropSprite(CityProp p)
+        {
+            string key = p.Kind + "." + p.Variant + "." + p.W + "x" + p.H;
+            if (!_propCache.TryGetValue(key, out var pair))
+            {
+                var canvas = CityArtGenerator.Prop(p, false, out int px, out int py);
+                var night = CityArtGenerator.Prop(p, true, out _, out _);
+                var pivot = new Vector2(px / (float)canvas.Width, py / (float)canvas.Height);
+                pair = (MakeSprite(canvas, "city.p." + key, pivot), MakeSprite(night, "city.p." + key + ".lit", pivot));
+                _propCache[key] = pair;
+            }
+            return pair.day;
+        }
+
+        /// <summary>A small solid-colour square sprite (weather particles), owned by the world.</summary>
+        public Sprite Dot(int w, int h, RgbColor color)
+        {
+            var c = new PixelCanvas(w, h);
+            for (int i = 0; i < c.Pixels.Length; i++) c.Pixels[i] = color;
+            return MakeSprite(c, "city.dot." + w + "x" + h + color, new Vector2(0.5f, 0.5f));
         }
 
         private static PixelCanvas ShadowCanvas()

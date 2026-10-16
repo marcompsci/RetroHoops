@@ -4,7 +4,7 @@ using System.Collections.Generic;
 namespace CallerRetroBall.Logic
 {
     /// <summary>What a city choice does when picked.</summary>
-    public enum CityAction { PlayMatch = 0, OpenRiseHub = 1, OpenLockerRoom = 2, Info = 3 }
+    public enum CityAction { PlayMatch = 0, OpenRiseHub = 1, OpenLockerRoom = 2, Info = 3, /** 17 Oct 2026 (phase 3): the shops. */ Buy = 4, Equip = 5, Haircut = 6 }
 
     /// <summary>
     /// One thing you can do at a court, a door, a station or with a person: a label, a line of detail, and either a
@@ -19,6 +19,9 @@ namespace CallerRetroBall.Logic
         /// <summary>Why it can't be picked now (null = it can).</summary>
         public string Locked;
         public bool Primary;
+        /// <summary>The shops: a cosmetic id, or a barber choice ("style:2").</summary>
+        public string ItemId;
+        public int Price;
     }
 
     /// <summary>
@@ -116,7 +119,7 @@ namespace CallerRetroBall.Logic
         }
 
         /// <summary>The choices at a door or a station.</summary>
-        public static List<CityActivity> ForPortal(CityMap map, CityPortal portal, CareerSaveData career, ContentCatalog c)
+        public static List<CityActivity> ForPortal(CityMap map, CityPortal portal, CareerSaveData career, ContentCatalog c, int day = 0)
         {
             var list = new List<CityActivity>();
             if (portal == null) return list;
@@ -156,6 +159,15 @@ namespace CallerRetroBall.Logic
                 }
                 case "reception":
                     list.Add(new CityActivity { Label = "TODAY AT THE GYM", Detail = "Free Shoot, Passing Targets, Dribble Lane, the Three-Point Drill and Around the World are on the floor. The Halloween court is through the left door.", Action = CityAction.Info });
+                    break;
+                case "shop":
+                    list.AddRange(CityShop.Choices(career, c, day));
+                    break;
+                case "barber.chair":
+                    list.AddRange(CityBarber.Choices(career));
+                    break;
+                case "school":
+                    list.Add(new CityActivity { Label = "BALLER CITY HIGH", Detail = "Classes are out. The courts out front are open.", Action = CityAction.Info });
                     break;
                 case "store":
                 case "barber":

@@ -31,6 +31,8 @@ namespace CallerRetroBall.Logic
         Desk = 10, Rack = 11, Cooler = 12, Lockers = 13, Sign = 14, Cone = 15, Mailbox = 16, Planter = 17,
         // 17 Oct 2026: court dressing and the holidays.
         Pumpkin = 18, PineLit = 19, Snowman = 20, Egg = 21, Bunting = 22, Arcade = 23, LanternPost = 24, Stall = 25, Ramp = 26,
+        // 17 Oct 2026 (phase 3): shops, the beach.
+        Shelf = 27, BarberChair = 28, Mirror = 29, Palm = 30, Umbrella = 31,
     }
 
     /// <summary>

@@ -36,6 +36,14 @@ namespace CallerRetroBall.Logic
         Margin = 13,
         /// <summary>A Practice Lab best (Ref = DrillKind name) of at least N (makes / score).</summary>
         Drill = 14,
+        /// <summary>Beat N different crews (any tier).</summary>
+        AnyCrews = 15,
+        /// <summary>Buy N things at the Corner Store.</summary>
+        Shop = 16,
+        /// <summary>N haircuts at Fresh Cuts.</summary>
+        Haircut = 17,
+        /// <summary>Fast travel N times from the city map.</summary>
+        Travel = 18,
     }
 
     public sealed class CityMissionDef
@@ -101,10 +109,20 @@ namespace CallerRetroBall.Logic
             M(5, "c5.threes", "FROM DOWNTOWN", "Hit 5 shots from beyond the arc in one city game.", CityMissionKind.Threes, 5, 200, 20),
             M(5, "c5.margin", "NO MERCY", "Win a city game by 8 or more.", CityMissionKind.Margin, 8, 200, 20),
             M(5, "c5.allholiday", "EVERY HOLIDAY", "Win on all 4 holiday courts.", CityMissionKind.Holiday, 4, 350, 40),
-            M(5, "c5.legends", "RUN THE CITY", "Beat every LEGENDARY crew.", CityMissionKind.LegendaryCrews, -1, 750, 100),
+            M(5, "c5.legends", "RUN THE CITY", "Beat 6 LEGENDARY crews.", CityMissionKind.LegendaryCrews, 6, 750, 100),
+            // Chapter 6: ALL CITY (17 Oct 2026, phase 3).
+            M(6, "c6.boardwalk", "BEACH RUN", "Walk east of the Blacktop to the Boardwalk.", CityMissionKind.Visit, 1, 60, 5, CityDistricts.Boardwalk),
+            M(6, "c6.downtown", "BRIGHT LIGHTS", "Walk east of Hoop Heights to Downtown.", CityMissionKind.Visit, 1, 60, 5, CityDistricts.Downtown),
+            M(6, "c6.school", "BACK TO SCHOOL", "Walk west of Holiday Park to the School Yard.", CityMissionKind.Visit, 1, 60, 5, CityDistricts.SchoolYard),
+            M(6, "c6.travel", "TAXI", "Fast travel from the city MAP.", CityMissionKind.Travel, 1, 40, 5),
+            M(6, "c6.shop", "FRESH GEAR", "Buy something at the Corner Store.", CityMissionKind.Shop, 1, 60, 10),
+            M(6, "c6.cut", "FRESH CUT", "Get a haircut at Fresh Cuts.", CityMissionKind.Haircut, 1, 60, 10),
+            M(6, "c6.crews", "CREW COLLECTOR", "Beat 12 different crews.", CityMissionKind.AnyCrews, 12, 400, 50),
+            M(6, "c6.wins", "CITY LEGEND", "Win 25 city games.", CityMissionKind.Wins, 25, 400, 50),
+            M(6, "c6.legends", "ALL-CITY", "Beat every LEGENDARY crew.", CityMissionKind.LegendaryCrews, -1, 1000, 150),
         };
 
-        public static readonly string[] ChapterNames = { "", "NEW IN TOWN", "MAKE A NAME", "CREW HUNTER", "HOLIDAY SEASON", "LEGENDARY" };
+        public static readonly string[] ChapterNames = { "", "NEW IN TOWN", "MAKE A NAME", "CREW HUNTER", "HOLIDAY SEASON", "LEGENDARY", "ALL CITY" };
         public static int Chapters => ChapterNames.Length - 1;
 
         private static CityMissionDef M(int chapter, string id, string title, string detail, CityMissionKind kind, int target, int sp, int fans, string reference = null) =>
@@ -162,6 +180,10 @@ namespace CallerRetroBall.Logic
                 case CityMissionKind.LegendaryCrews: now = LegendaryBeaten(s); break;
                 case CityMissionKind.Holiday: now = s.holidayWins.Count; break;
                 case CityMissionKind.Drill: now = DrillValue(career, m.Ref); break;
+                case CityMissionKind.AnyCrews: now = s.crewsBeaten.Count; break;
+                case CityMissionKind.Shop: now = s.purchases; break;
+                case CityMissionKind.Haircut: now = s.haircuts; break;
+                case CityMissionKind.Travel: now = s.fastTravels; break;
                 default: now = Best(s, m.Kind); break;
             }
             return (Math.Min(now, target), target);

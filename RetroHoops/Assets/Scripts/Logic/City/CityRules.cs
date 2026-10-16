@@ -33,6 +33,10 @@ namespace CallerRetroBall.Logic
         public int cityGames, cityWins;
         /// <summary>Best single-game lines in city games.</summary>
         public int bestPoints, bestThrees, bestAssists, bestStops, bestAnkles, bestMargin;
+        // 17 Oct 2026 (phase 3): the shops, the map and the weather setting.
+        public int purchases, haircuts, fastTravels;
+        public bool freeCutUsed;
+        public bool weatherOff;
 
         /// <summary>Puts you at a spawn (a court's gate, a door): where the next visit to the city starts.</summary>
         public void Arrive(string districtId, string spawnId)

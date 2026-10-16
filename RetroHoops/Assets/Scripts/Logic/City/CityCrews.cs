@@ -69,6 +69,23 @@ namespace CallerRetroBall.Logic
               "court.holiday_easter", CityCrewTier.Baller, DefenseScheme.ManToMan, "#F4A6C0", "#FFFDF5", Archetype.RimRunner, Archetype.QuickCutter, Archetype.TwoWaySpark),
             C("fireworks", "FWK", "FIREWORKS", "BOOM", "SHARPSHOOTERS", "Threes that light up the sky.", "Look up. That's us.",
               "court.holiday_fourth", CityCrewTier.Legendary, DefenseScheme.ManToMan, "#C1121F", "#1D3557", Archetype.DeepShooter, Archetype.ShotCreator, Archetype.DeepShooter),
+            // 17 Oct 2026 (phase 3): the Boardwalk, Downtown and the School Yard.
+            C("sharks", "SSK", "SAND SHARKS", "FIN", "HUSTLE", "Diving for loose balls, all game long.", "We smell blood in the water.",
+              "court.boardwalk_slab", CityCrewTier.Baller, DefenseScheme.Pressure, "#219EBC", "#FFB703", Archetype.HustleGuard, Archetype.QuickCutter, Archetype.LockdownWing),
+            C("sunset", "SNS", "SUNSET SQUAD", "GOLDIE", "INSIDE-OUT", "Post it, kick it, shoot it.", "Last game before the sun goes down.",
+              "court.sundown_yard", CityCrewTier.Baller, DefenseScheme.ManToMan, "#FB923C", "#7C2D12", Archetype.PostAnchor, Archetype.Playmaker, Archetype.DeepShooter),
+            C("keepers", "KPR", "THE KEEPERS", "BEACON", "PAINT PROTECTORS", "Nothing easy at the rim. Shoot over them.", "The light's on. Nobody's home.",
+              "court.lighthouse_point", CityCrewTier.Legendary, DefenseScheme.Zone, "#FFD60A", "#2E4057", Archetype.PostAnchor, Archetype.GlassCleaner, Archetype.LockdownWing),
+            C("laststop", "LST", "LAST STOP", "TRANSFER", "SLASHERS", "Straight-line drives. Wall off the paint.", "This is where your night ends.",
+              "court.tram_yard", CityCrewTier.Baller, DefenseScheme.PackLine, "#FB5607", "#3A0CA3", Archetype.QuickCutter, Archetype.ShotCreator, Archetype.RimRunner),
+            C("riders", "NRD", "NIGHT RIDERS", "HEADLIGHTS", "SCORERS", "Three bucket-getters. Pick your poison.", "We don't miss after dark.",
+              "court.night_bus_depot", CityCrewTier.Legendary, DefenseScheme.ManToMan, "#5E60CE", "#B8F2E6", Archetype.ShotCreator, Archetype.DeepShooter, Archetype.TwoWaySpark),
+            C("bsides", "BSD", "THE B-SIDES", "VINYL", "SPACE AND PACE", "Spread the floor and move the ball.", "You only know our hits.",
+              "court.record_roof", CityCrewTier.Baller, DefenseScheme.Zone, "#C9184A", "#F2E9E4", Archetype.Playmaker, Archetype.DeepShooter, Archetype.StretchForward),
+            C("recess", "RCS", "RECESS", "BELL", "HIGH ENERGY", "Fast, loud and never tired.", "Recess is forever.",
+              "court.pinwheel_lot", CityCrewTier.Baller, DefenseScheme.Pressure, "#7CE577", "#F72585", Archetype.QuickCutter, Archetype.HustleGuard, Archetype.RimRunner),
+            C("varsity", "VAR", "VARSITY", "COACH", "FUNDAMENTALS", "Perfect spacing, no mistakes.", "Bounce pass. Box out. Win.",
+              "court.canyon_rim", CityCrewTier.Legendary, DefenseScheme.ManToMan, "#7C2D12", "#FFE4CC", Archetype.FloorGeneral, Archetype.LockdownWing, Archetype.PostAnchor),
         };
 
         private static CityCrewDef C(string id, string abbr, string name, string leader, string style, string blurb, string trash, string court, CityCrewTier tier,

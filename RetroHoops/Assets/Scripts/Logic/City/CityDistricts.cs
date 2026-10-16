@@ -26,6 +26,11 @@ namespace CallerRetroBall.Logic
         public const string Gym = "baller_gym";
         public const string HoopHeights = "hoop_heights";
         public const string HolidayPark = "holiday_park";
+        public const string Boardwalk = "boardwalk";
+        public const string Downtown = "downtown";
+        public const string SchoolYard = "school_yard";
+        public const string CornerStore = "corner_store";
+        public const string FreshCuts = "fresh_cuts";
 
         public static readonly CityDistrictDefinition[] All =
         {
@@ -34,6 +39,11 @@ namespace CallerRetroBall.Logic
             new CityDistrictDefinition { Id = Gym, Name = "BALLER GYM", Blurb = "Practice Lab, the Halloween court and the locker room.", Interior = true, Build = BuildGym },
             new CityDistrictDefinition { Id = HoopHeights, Name = "HOOP HEIGHTS", Blurb = "Six courts, six looks, and the best crews in the city.", Build = BuildHoopHeights },
             new CityDistrictDefinition { Id = HolidayPark, Name = "HOLIDAY PARK", Blurb = "A court for every holiday, open all year.", Build = BuildHolidayPark },
+            new CityDistrictDefinition { Id = Boardwalk, Name = "THE BOARDWALK", Blurb = "Sand, the pier and the ferry deck.", Build = BuildBoardwalk },
+            new CityDistrictDefinition { Id = Downtown, Name = "DOWNTOWN", Blurb = "Towers, the arena and the night buses.", Build = BuildDowntown },
+            new CityDistrictDefinition { Id = SchoolYard, Name = "SCHOOL YARD", Blurb = "Baller City High and its courts.", Build = BuildSchoolYard },
+            new CityDistrictDefinition { Id = CornerStore, Name = "CORNER STORE", Blurb = "Gear for your game.", Interior = true, Build = BuildCornerStore },
+            new CityDistrictDefinition { Id = FreshCuts, Name = "FRESH CUTS", Blurb = "The barbershop.", Interior = true, Build = BuildFreshCuts },
         };
 
         public static CityDistrictDefinition Find(string id) => Array.Find(All, d => d.Id == id);
@@ -189,9 +199,9 @@ namespace CallerRetroBall.Logic
 
             // SE: the corner store and the barber (not open yet), a little park.
             var store = m.AddBuilding(new CityBuilding { Id = "store", Name = "CORNER STORE", X = 21, Y = 9, W = 7, H = 6, Style = 5, DoorX = 24, Sign = "CORNER STORE", Seed = 14 });
-            Door(m, store, "door.store", "CORNER STORE", "store", null);
+            Door(m, store, "door.store", "CORNER STORE", CornerStore, "entrance");
             var barber = m.AddBuilding(new CityBuilding { Id = "barber", Name = "FRESH CUTS", X = 29, Y = 9, W = 6, H = 6, Style = 1, DoorX = 31, Sign = "FRESH CUTS", Seed = 15 });
-            Door(m, barber, "door.barber", "FRESH CUTS", "barber", null);
+            Door(m, barber, "door.barber", "FRESH CUTS", FreshCuts, "entrance");
             m.Fill(20, 7, 16, 1, CityGround.Sidewalk);
             Trees(m, 22, 3, 26, 2, 30, 4, 34, 2);
             m.AddProp(CityPropKind.Bench, 27, 5, 2, 1, true);
@@ -219,6 +229,7 @@ namespace CallerRetroBall.Logic
             m.AddSpawn("court.first_callers", 7.5f, 1.2f, 1);
             m.AddSpawn("from_blacktop", 33.4f, 20.5f, 2);
             m.AddSpawn("store", 24.5f, 7.8f, 0);
+            m.AddSpawn("barber", 31.5f, 7.8f, 0);
             m.Hangouts["home.porch"] = new Vec2(7.5f, 33f);
             m.Hangouts["hq.front"] = new Vec2(9.5f, 24.6f);
             m.Hangouts["gym.lot"] = new Vec2(24f, 27f);
@@ -289,7 +300,10 @@ namespace CallerRetroBall.Logic
             m.Portals.Add(new CityPortal { Id = "road.first_callers", Kind = CityPortalKind.District, Label = "TO FIRST CALLERS", Target = FirstCallers,
                                            TargetSpawn = "from_blacktop", X = 0, Y = 17, W = 1.4f, H = 6 });
 
+            m.Portals.Add(new CityPortal { Id = "road.boardwalk", Kind = CityPortalKind.District, Label = "TO THE BOARDWALK", Target = Boardwalk,
+                                           TargetSpawn = "from_blacktop", X = 46.6f, Y = 17, W = 1.4f, H = 6 });
             m.AddSpawn("from_first_callers", 2.2f, 20.5f, 3);
+            m.AddSpawn("from_boardwalk", 45.4f, 20.5f, 2);
             m.AddSpawn("court.sunset_cage", 9.5f, 1.2f, 1);
             m.AddSpawn("court.overpass_park", 36.5f, 1.4f, 1);
             m.AddSpawn("court.static_lot", 9f, 24.6f, 1);
@@ -445,7 +459,10 @@ namespace CallerRetroBall.Logic
             foreach (int y in new[] { 25, 32, 48, 55 }) { m.AddProp(CityPropKind.Lamp, 21, y, 1, 1, true); m.AddProp(CityPropKind.Lamp, 30, y, 1, 1, true); }
             m.Portals.Add(new CityPortal { Id = "road.first_callers", Kind = CityPortalKind.District, Label = "TO FIRST CALLERS", Target = FirstCallers,
                                            TargetSpawn = "from_heights", X = 24, Y = 0, W = 4, H = 1.4f });
+            m.Portals.Add(new CityPortal { Id = "road.downtown", Kind = CityPortalKind.District, Label = "TO DOWNTOWN", Target = Downtown,
+                                           TargetSpawn = "from_heights", X = 50.6f, Y = 26, W = 1.4f, H = 6 });
             m.AddSpawn("from_first_callers", 25.5f, 2.6f, 1);
+            m.AddSpawn("from_downtown", 49.4f, 29.5f, 2);
             m.AddSpawn("court.coin_op", 10.5f, 4.6f, 1);
             m.AddSpawn("court.skate_bowl", 40.5f, 4.6f, 1);
             m.AddSpawn("court.lantern_market", 10.5f, 32.8f, 1);
@@ -509,12 +526,204 @@ namespace CallerRetroBall.Logic
             foreach (int x in new[] { 4, 14, 28, 38 }) { m.AddProp(CityPropKind.Lamp, x, 20, 1, 1, true); m.AddProp(CityPropKind.Lamp, x, 27, 1, 1, true); }
             m.Portals.Add(new CityPortal { Id = "road.first_callers", Kind = CityPortalKind.District, Label = "TO FIRST CALLERS", Target = FirstCallers,
                                            TargetSpawn = "from_holiday", X = 20, Y = 46.6f, W = 4, H = 1.4f });
+            m.Portals.Add(new CityPortal { Id = "road.school", Kind = CityPortalKind.District, Label = "TO THE SCHOOL YARD", Target = SchoolYard,
+                                           TargetSpawn = "from_holiday_park", X = 0, Y = 21, W = 1.4f, H = 6 });
             m.AddSpawn("from_first_callers", 21.5f, 45f, 0);
+            m.AddSpawn("from_school", 2.6f, 24.5f, 3);
             m.AddSpawn("court.holiday_christmas", 9.5f, 29.2f, 1);
             m.AddSpawn("court.holiday_halloween", 34.5f, 29.2f, 1);
             m.AddSpawn("court.holiday_easter", 9.5f, 3.2f, 1);
             m.AddSpawn("court.holiday_fourth", 34.5f, 3.2f, 1);
             m.Hangouts["park.center"] = new Vec2(21.5f, 35f);
+            return m;
+        }
+
+        // ------------------------------------------------------------------ The Boardwalk (52 × 44)
+
+        /// <summary>17 Oct 2026 (phase 3): the beach east of the Blacktop: three courts on the sand and the ferry deck on the pier.</summary>
+        private static CityMap BuildBoardwalk()
+        {
+            var m = new CityMap(Boardwalk, 52, 44, CityGround.Sand);
+            HRoad(m, 18);
+            m.Fill(0, 24, 52, 14, CityGround.Pier);
+            m.Fill(0, 38, 52, 6, CityGround.Water);
+
+            Court(m, "court.boardwalk_slab", "court.boardwalk_slab", "BOARDWALK SLAB", 3, 3, 13, 11, CityCourtUse.Streets,
+                  look: new CityCourtLook { Floor = -1, Logo = true });
+            foreach (int y in new[] { 4, 8, 12 }) m.AddProp(CityPropKind.Arcade, 1, y, 1, 1, true, y + 3);
+            m.Hangouts["court.boardwalk_slab.side"] = new Vec2(17f, 8f);
+
+            Court(m, "court.sundown_yard", "court.sundown_yard", "SUNDOWN YARD", 19, 3, 13, 11, CityCourtUse.Streets,
+                  look: new CityCourtLook { Floor = (int)FloorStyle.Rubber, Logo = true });
+            m.AddProp(CityPropKind.Umbrella, 33, 4, 1, 1, true, 0);
+            m.AddProp(CityPropKind.Umbrella, 33, 10, 1, 1, true, 1);
+            m.Hangouts["court.sundown_yard.side"] = new Vec2(33.5f, 7f);
+
+            Court(m, "court.lighthouse_point", "court.lighthouse_point", "LIGHTHOUSE POINT", 36, 3, 13, 11, CityCourtUse.Streets,
+                  look: new CityCourtLook { Floor = (int)FloorStyle.Tiles, Logo = true });
+            m.AddProp(CityPropKind.Palm, 50, 4, 1, 1, true, 0);
+            m.AddProp(CityPropKind.Palm, 50, 11, 1, 1, true, 1);
+            m.Hangouts["court.lighthouse_point.side"] = new Vec2(50.5f, 8f);
+
+            // The pier: the ferry deck, snack stalls and the lighthouse.
+            Court(m, "court.ferry_deck", "court.ferry_deck", "FERRY DECK", 19, 25, 13, 11, CityCourtUse.Streets, CityGround.Pier,
+                  look: new CityCourtLook { Floor = (int)FloorStyle.Hardwood, Neon = true, Logo = true });
+            Fence(m, 0, 37, 52, true);
+            m.AddProp(CityPropKind.Stall, 3, 30, 3, 1, true, 2);
+            m.AddProp(CityPropKind.Stall, 9, 30, 3, 1, true, 4);
+            m.AddBuilding(new CityBuilding { Id = "lighthouse", Name = "LIGHTHOUSE", X = 42, Y = 28, W = 6, H = 8, Style = 2, Sign = "LIGHTHOUSE", Seed = 41 });
+            m.AddProp(CityPropKind.Bench, 34, 27, 1, 2, true);
+            m.Hangouts["court.ferry_deck.side"] = new Vec2(35f, 31f);
+            m.Hangouts["pier.rail"] = new Vec2(12f, 35f);
+
+            foreach (int x in new[] { 6, 18, 34, 46 }) { m.AddProp(CityPropKind.Lamp, x, 16, 1, 1, true); m.AddProp(CityPropKind.Lamp, x, 23, 1, 1, true); }
+            m.Portals.Add(new CityPortal { Id = "road.blacktop", Kind = CityPortalKind.District, Label = "TO BLACKTOP DISTRICT", Target = Blacktop,
+                                           TargetSpawn = "from_boardwalk", X = 0, Y = 17, W = 1.4f, H = 6 });
+            m.AddSpawn("from_blacktop", 2.6f, 20.5f, 3);
+            m.AddSpawn("court.boardwalk_slab", 9.5f, 15.2f, 0);
+            m.AddSpawn("court.sundown_yard", 25.5f, 15.2f, 0);
+            m.AddSpawn("court.lighthouse_point", 42.5f, 15.2f, 0);
+            m.AddSpawn("court.ferry_deck", 25.5f, 24.4f, 1);
+            return m;
+        }
+
+        // ------------------------------------------------------------------ Downtown (52 × 48)
+
+        /// <summary>17 Oct 2026 (phase 3): east of Hoop Heights: the towers, the arena, and four courts between them.</summary>
+        private static CityMap BuildDowntown()
+        {
+            var m = new CityMap(Downtown, 52, 48, CityGround.Sidewalk);
+            HRoad(m, 27);
+
+            Court(m, "court.rain_alley", "court.rain_alley", "RAIN ALLEY", 3, 3, 13, 11, CityCourtUse.Streets,
+                  look: new CityCourtLook { Floor = -1, Neon = true });
+            m.AddBuilding(new CityBuilding { Id = "tower.w", Name = "TOWER", X = 1, Y = 15, W = 6, H = 9, Style = 3, Seed = 51 });
+            m.AddBuilding(new CityBuilding { Id = "tower.w2", Name = "TOWER", X = 10, Y = 16, W = 7, H = 8, Style = 4, Seed = 52 });
+            m.AddProp(CityPropKind.Trash, 17, 5, 1, 1, true);
+            m.Hangouts["court.rain_alley.side"] = new Vec2(17.5f, 9f);
+
+            m.AddBuilding(new CityBuilding { Id = "heights_tower", Name = "BALLER TOWER", X = 19, Y = 4, W = 13, H = 10, Style = 4, Sign = "BALLER TOWER", Seed = 53 });
+            m.AddProp(CityPropKind.Planter, 19, 2, 1, 1, true);
+            m.AddProp(CityPropKind.Planter, 31, 2, 1, 1, true);
+
+            Court(m, "court.tram_yard", "court.tram_yard", "TRAM YARD", 35, 3, 13, 11, CityCourtUse.Streets,
+                  look: new CityCourtLook { Floor = (int)FloorStyle.Rubber, Logo = true });
+            m.AddProp(CityPropKind.Car, 35, 16, 3, 1, true, 4);
+            m.AddProp(CityPropKind.Car, 41, 16, 3, 1, true, 1);
+            m.Hangouts["court.tram_yard.side"] = new Vec2(33.5f, 9f);
+
+            Court(m, "court.record_roof", "court.record_roof", "RECORD SHOP ROOF", 3, 34, 13, 11, CityCourtUse.Streets,
+                  look: new CityCourtLook { Floor = (int)FloorStyle.Tiles, Logo = true });
+            m.Hangouts["court.record_roof.side"] = new Vec2(17.5f, 39f);
+
+            // The arena: a landmark for now (the doors open in a later update).
+            m.AddBuilding(new CityBuilding { Id = "arena", Name = "BALLER ARENA", X = 19, Y = 34, W = 14, H = 12, Style = 5, Sign = "BALLER ARENA", Seed = 54 });
+
+            Court(m, "court.night_bus_depot", "court.night_bus_depot", "NIGHT BUS DEPOT", 35, 34, 13, 11, CityCourtUse.Streets,
+                  look: new CityCourtLook { Floor = -1, Neon = true, Logo = true });
+            m.AddProp(CityPropKind.Car, 48, 35, 3, 1, true, 3);
+            m.AddProp(CityPropKind.Car, 48, 41, 3, 1, true, 5);
+            m.Hangouts["court.night_bus_depot.side"] = new Vec2(33.5f, 40f);
+
+            foreach (int x in new[] { 4, 14, 37, 47 }) { m.AddProp(CityPropKind.Lamp, x, 25, 1, 1, true); m.AddProp(CityPropKind.Lamp, x, 32, 1, 1, true); }
+            m.Portals.Add(new CityPortal { Id = "road.heights", Kind = CityPortalKind.District, Label = "TO HOOP HEIGHTS", Target = HoopHeights,
+                                           TargetSpawn = "from_downtown", X = 0, Y = 26, W = 1.4f, H = 6 });
+            m.AddSpawn("from_heights", 2.6f, 29.5f, 3);
+            m.AddSpawn("court.rain_alley", 9.5f, 1.6f, 1);
+            m.AddSpawn("court.tram_yard", 41.5f, 1.6f, 1);
+            m.AddSpawn("court.record_roof", 9.5f, 32.8f, 1);
+            m.AddSpawn("court.night_bus_depot", 41.5f, 32.8f, 1);
+            m.Hangouts["arena.front"] = new Vec2(26f, 32.8f);
+            return m;
+        }
+
+        // ------------------------------------------------------------------ School Yard (52 × 44)
+
+        /// <summary>17 Oct 2026 (phase 3): Baller City High, west of Holiday Park: three courts by the school.</summary>
+        private static CityMap BuildSchoolYard()
+        {
+            var m = new CityMap(SchoolYard, 52, 44, CityGround.Grass);
+            HRoad(m, 22);
+
+            Court(m, "court.pinwheel_lot", "court.pinwheel_lot", "PINWHEEL LOT", 3, 3, 13, 11, CityCourtUse.Streets,
+                  look: new CityCourtLook { Floor = (int)FloorStyle.Rubber, Logo = true });
+            m.Hangouts["court.pinwheel_lot.side"] = new Vec2(17f, 8f);
+
+            Court(m, "court.snowline_park", "court.snowline_park", "SNOWLINE PARK", 19, 3, 13, 11, CityCourtUse.Streets,
+                  look: new CityCourtLook { Floor = (int)FloorStyle.Tiles });
+            m.Hangouts["court.snowline_park.side"] = new Vec2(33f, 8f);
+
+            Court(m, "court.canyon_rim", "court.canyon_rim", "CANYON RIM", 35, 3, 13, 11, CityCourtUse.Streets,
+                  look: new CityCourtLook { Floor = (int)FloorStyle.Hardwood, Logo = true });
+            m.AddProp(CityPropKind.Bleachers, 49, 4, 1, 8, true);
+            m.Hangouts["court.canyon_rim.side"] = new Vec2(34f, 15.5f);
+
+            // Baller City High and its front lawn.
+            m.Fill(4, 28, 44, 2, CityGround.Sidewalk);
+            m.AddBuilding(new CityBuilding { Id = "school", Name = "BALLER CITY HIGH", X = 8, Y = 31, W = 34, H = 10, Style = 0, DoorX = 25, Sign = "BALLER CITY HIGH", Seed = 61 });
+            m.Fill(24, 27, 3, 4, CityGround.Sidewalk);
+            Trees(m, 4, 31, 45, 31, 4, 38, 45, 38);
+            m.AddProp(CityPropKind.Bench, 14, 28, 2, 1, true);
+            m.AddProp(CityPropKind.Bench, 34, 28, 2, 1, true);
+            m.Portals.Add(new CityPortal { Id = "door.school", Kind = CityPortalKind.Building, Label = "BALLER CITY HIGH", Target = "school",
+                                           X = 24.5f, Y = 29.8f, W = 2f, H = 1.2f });
+
+            foreach (int x in new[] { 6, 18, 34, 46 }) { m.AddProp(CityPropKind.Lamp, x, 20, 1, 1, true); m.AddProp(CityPropKind.Lamp, x, 27, 1, 1, true); }
+            m.Portals.Add(new CityPortal { Id = "road.holiday", Kind = CityPortalKind.District, Label = "TO HOLIDAY PARK", Target = HolidayPark,
+                                           TargetSpawn = "from_school", X = 50.6f, Y = 21, W = 1.4f, H = 6 });
+            m.AddSpawn("from_holiday_park", 49.4f, 24.5f, 2);
+            m.AddSpawn("court.pinwheel_lot", 9.5f, 15.2f, 0);
+            m.AddSpawn("court.snowline_park", 25.5f, 15.2f, 0);
+            m.AddSpawn("court.canyon_rim", 41.5f, 15.2f, 0);
+            m.Hangouts["school.steps"] = new Vec2(28f, 28.5f);
+            return m;
+        }
+
+        // ------------------------------------------------------------------ the shops (indoors)
+
+        private static CityMap Room(string id, int w, int h, CityGround floor, string exitSpawn)
+        {
+            var m = new CityMap(id, w, h, floor);
+            m.Fill(0, 0, w, 1, CityGround.Wall);
+            m.Fill(0, h - 1, w, 1, CityGround.Wall);
+            m.Fill(0, 0, 1, h, CityGround.Wall);
+            m.Fill(w - 1, 0, 1, h, CityGround.Wall);
+            int door = w / 2 - 1;
+            m.Set(door, 0, floor);
+            m.Set(door + 1, 0, floor);
+            m.Portals.Add(new CityPortal { Id = "door.exit", Kind = CityPortalKind.Exit, Label = "LEAVE BUILDING", Target = FirstCallers, TargetSpawn = exitSpawn,
+                                           X = door - 0.5f, Y = 0, W = 3f, H = 1.6f });
+            m.AddSpawn("entrance", door + 1f, 1.6f, 1);
+            return m;
+        }
+
+        /// <summary>17 Oct 2026 (phase 3): the Corner Store: shelves of gear and the checkout (today's stock).</summary>
+        private static CityMap BuildCornerStore()
+        {
+            var m = Room(CornerStore, 16, 14, CityGround.Tile, "store");
+            m.AddProp(CityPropKind.Shelf, 2, 6, 4, 1, true, 0);
+            m.AddProp(CityPropKind.Shelf, 2, 10, 4, 1, true, 1);
+            m.AddProp(CityPropKind.Shelf, 10, 10, 4, 1, true, 2);
+            m.AddProp(CityPropKind.Cooler, 14, 6, 1, 1, true);
+            m.AddProp(CityPropKind.Cooler, 14, 4, 1, 1, true);
+            m.AddProp(CityPropKind.Desk, 9, 5, 4, 1, true, 1);
+            m.Portals.Add(new CityPortal { Id = "counter", Kind = CityPortalKind.Station, Label = "SHOP", Target = "shop", X = 8.5f, Y = 3.4f, W = 5f, H = 1.6f });
+            m.Hangouts["store.aisle"] = new Vec2(7.5f, 8.5f);
+            return m;
+        }
+
+        /// <summary>17 Oct 2026 (phase 3): Fresh Cuts: two chairs, the mirrors and the waiting bench.</summary>
+        private static CityMap BuildFreshCuts()
+        {
+            var m = Room(FreshCuts, 14, 12, CityGround.Tile, "barber");
+            m.AddProp(CityPropKind.Mirror, 2, 10, 4, 1, true, 0);
+            m.AddProp(CityPropKind.Mirror, 8, 10, 4, 1, true, 1);
+            m.AddProp(CityPropKind.BarberChair, 3, 8, 1, 1, true, 0);
+            m.AddProp(CityPropKind.BarberChair, 9, 8, 1, 1, true, 1);
+            m.AddProp(CityPropKind.Bench, 1, 3, 1, 3, true);
+            m.AddProp(CityPropKind.Desk, 9, 3, 4, 1, true, 2);
+            m.Portals.Add(new CityPortal { Id = "chair", Kind = CityPortalKind.Station, Label = "HAIRCUT", Target = "barber.chair", X = 2f, Y = 6.4f, W = 9f, H = 1.6f });
+            m.Hangouts["barber.bench"] = new Vec2(2.6f, 4.5f);
             return m;
         }
 

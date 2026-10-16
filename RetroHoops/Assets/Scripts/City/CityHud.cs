@@ -266,6 +266,80 @@ namespace CallerRetroBall.City
             UiKit.Button(column, "CLOSE", () => { CloseCard(true); closed?.Invoke(); }, ButtonStyle.Ghost, 104f, 40f);
         }
 
+        /// <summary>One district on the city MAP.</summary>
+        public struct MapEntry
+        {
+            public string Id, Name, Summary;
+            public int Col, Row;
+            public bool Here, Visited;
+        }
+
+        /// <summary>
+        /// 17 Oct 2026 (phase 3): the city MAP. Districts as blocks on a grid with the roads between them; tap one you've
+        /// been to for fast travel. Districts you haven't walked into yet show as "???".
+        /// </summary>
+        public void ShowMap(IList<MapEntry> entries, int cols, int rows, string footer, Action<string> travel, Action closed)
+        {
+            CloseCard(false);
+            SetControlsVisible(false);
+            var root = UiKit.NewRect("Map", _canvas.transform);
+            UiKit.Stretch(root);
+            _card = root.gameObject;
+            var scrim = UiKit.Panel(root, new Color(0.04f, 0.04f, 0.09f, 0.94f), name: "Scrim");
+            UiKit.Stretch(scrim.rectTransform);
+            scrim.raycastTarget = true;
+            var safe = UiKit.SafeArea(root);
+            var title = UiKit.Label(safe, "BALLER CITY MAP", 60f, Theme.Gold, TextAlignmentOptions.Center, true);
+            UiKit.Band(title.rectTransform, 0.9f, 0.97f, 40f);
+            var grid = UiKit.NewRect("Grid", safe);
+            UiKit.Band(grid, 0.22f, 0.88f, 40f);
+            // Roads between neighbouring blocks.
+            foreach (var a in entries)
+                foreach (var b in entries)
+                {
+                    bool right = b.Row == a.Row && b.Col == a.Col + 1, up = b.Col == a.Col && b.Row == a.Row + 1;
+                    if (!right && !up) continue;
+                    var road = UiKit.Panel(grid, new Color(0.23f, 0.23f, 0.27f, 1f), name: "Road");
+                    var rt = road.rectTransform;
+                    float x0 = (a.Col + 0.5f) / cols, y0 = (a.Row + 0.5f) / rows;
+                    rt.anchorMin = new Vector2(right ? x0 : x0 - 0.02f, up ? y0 : y0 - 0.015f);
+                    rt.anchorMax = new Vector2(right ? (b.Col + 0.5f) / cols : x0 + 0.02f, up ? (b.Row + 0.5f) / rows : y0 + 0.015f);
+                    rt.offsetMin = rt.offsetMax = Vector2.zero;
+                }
+            foreach (var e in entries)
+            {
+                var entry = e;
+                var cell = UiKit.NewRect("Cell " + e.Id, grid);
+                cell.anchorMin = new Vector2((float)e.Col / cols, (float)e.Row / rows);
+                cell.anchorMax = new Vector2((float)(e.Col + 1) / cols, (float)(e.Row + 1) / rows);
+                cell.offsetMin = new Vector2(8f, 8f);
+                cell.offsetMax = new Vector2(-8f, -8f);
+                string label = e.Visited ? e.Name : "???";
+                var b = UiKit.Button(cell, label, () =>
+                {
+                    if (entry.Here) { Toast("YOU ARE HERE", 1.4f); return; }
+                    if (!entry.Visited) { Toast("Walk there first to unlock fast travel.", 2.2f); return; }
+                    travel?.Invoke(entry.Id);
+                }, e.Here ? ButtonStyle.Primary : e.Visited ? ButtonStyle.Secondary : ButtonStyle.Ghost, 10f, 30f);
+                var brt = (RectTransform)b.transform;
+                UiKit.Stretch(brt);
+                if (e.Visited)
+                {
+                    var sum = UiKit.Label(brt, (e.Here ? Loc.T("YOU ARE HERE") + "\n" : "") + e.Summary, 20f, Theme.Cream, TextAlignmentOptions.Bottom, false, "Summary");
+                    sum.rectTransform.anchorMin = new Vector2(0.04f, 0.04f);
+                    sum.rectTransform.anchorMax = new Vector2(0.96f, 0.5f);
+                    sum.rectTransform.offsetMin = sum.rectTransform.offsetMax = Vector2.zero;
+                    sum.enableAutoSizing = true;
+                    sum.fontSizeMin = 12f;
+                    sum.fontSizeMax = 20f;
+                }
+            }
+            var foot = UiKit.Label(safe, footer, 30f, Theme.Cream, TextAlignmentOptions.Center, false);
+            UiKit.Band(foot.rectTransform, 0.12f, 0.21f, 40f);
+            var close = UiKit.Button(safe, "CLOSE", () => { CloseCard(true); closed?.Invoke(); }, ButtonStyle.Ghost, 100f, 40f);
+            UiKit.Place((RectTransform)close.transform, new Vector2(0.5f, 0.06f), new Vector2(420f, 110f));
+        }
+
         public void CloseCard(bool showControls = true)
         {
             if (_card != null) Destroy(_card);

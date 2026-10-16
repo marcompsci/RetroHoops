@@ -606,7 +606,7 @@ namespace CallerRetroBall.Logic.PixelArt
                     var c = new PixelCanvas(w, 20);
                     c.FillRect(0, 0, w, 14, RgbColor.FromHex("#5B3A22"));
                     c.FillRect(0, 14, w, 6, RgbColor.FromHex("#D8C7A3"));
-                    PixelFont.DrawCentered(c, "FRONT DESK", w / 2, 10, RgbColor.FromHex("#FFD166"));
+                    PixelFont.DrawCentered(c, p.Variant == 1 ? "CHECKOUT" : p.Variant == 2 ? "FRESH CUTS" : "FRONT DESK", w / 2, 10, RgbColor.FromHex("#FFD166"));
                     return c;
                 }
                 case CityPropKind.Rack:
@@ -669,6 +669,11 @@ namespace CallerRetroBall.Logic.PixelArt
                 case CityPropKind.LanternPost: return LanternPost(p.Variant, lit, out pivotX);
                 case CityPropKind.Stall: return Stall(p, lit);
                 case CityPropKind.Ramp: return Ramp(p);
+                case CityPropKind.Shelf: return Shelf(p);
+                case CityPropKind.BarberChair: return BarberChair(p.Variant, out pivotX);
+                case CityPropKind.Mirror: return Mirror(p, lit);
+                case CityPropKind.Palm: return Palm(p.Variant, out pivotX);
+                case CityPropKind.Umbrella: return Umbrella(p.Variant, out pivotX);
                 default: // Planter
                 {
                     var c = new PixelCanvas(Tile, 18);
@@ -872,6 +877,82 @@ namespace CallerRetroBall.Logic.PixelArt
                 for (int y = 0; y < top; y++) c.Set(x, y, y == top - 1 ? RgbColor.FromHex("#D9D9D9") : (y % 4 == 0 ? dark : face));
             }
             c.FillRect(left ? w - 2 : 0, 0, 2, 15, RgbColor.FromHex("#3A3A48")); // coping
+            return c;
+        }
+
+        private static PixelCanvas Shelf(CityProp p)
+        {
+            int w = Math.Max(1, p.W) * Tile;
+            var c = new PixelCanvas(w, 30);
+            var wood = RgbColor.FromHex("#5B3A22");
+            c.FillRect(0, 0, w, 30, wood.Darken(0.2f));
+            for (int row = 0; row < 3; row++)
+            {
+                int y = 2 + row * 9;
+                c.FillRect(1, y, w - 2, 1, wood.Lighten(0.2f));
+                for (int x = 2; x < w - 3; x += 4)
+                {
+                    // Shoe boxes, jerseys and balls.
+                    var col = RgbColor.FromHex(Bright[(x / 4 + row * 2 + p.Variant) % Bright.Length]);
+                    if ((x / 4 + row) % 3 == 0) c.FillCircle(x + 1.5f, y + 3.5f, 2.5f, RgbColor.FromHex("#E07A2E"));
+                    else c.FillRect(x, y + 1, 3, row == 1 ? 6 : 4, col);
+                }
+            }
+            return c;
+        }
+
+        private static PixelCanvas BarberChair(int variant, out int pivotX)
+        {
+            var c = new PixelCanvas(16, 24);
+            pivotX = 0;
+            var seat = RgbColor.FromHex(variant % 2 == 0 ? "#C1121F" : "#1D4ED8");
+            c.FillRect(6, 0, 4, 6, RgbColor.FromHex("#B8BCC6"));
+            c.FillRect(3, 0, 10, 2, RgbColor.FromHex("#8E9196"));
+            c.FillRect(2, 6, 12, 5, seat);
+            c.FillRect(3, 11, 10, 11, seat.Darken(0.1f));
+            c.FillRect(5, 22, 6, 2, seat.Lighten(0.15f));
+            c.FillRect(1, 9, 2, 3, RgbColor.FromHex("#B8BCC6"));
+            c.FillRect(13, 9, 2, 3, RgbColor.FromHex("#B8BCC6"));
+            return c;
+        }
+
+        private static PixelCanvas Mirror(CityProp p, bool lit)
+        {
+            int w = Math.Max(1, p.W) * Tile;
+            var c = new PixelCanvas(w, 26);
+            c.FillRect(0, 0, w, 26, RgbColor.FromHex("#3C3C4E"));
+            c.FillRect(2, 6, w - 4, 18, RgbColor.FromHex("#9EC7DB"));
+            for (int i = 0; i < 6; i++) c.Set(4 + i, 20 - i, RgbColor.FromHex("#E4F3FA"));
+            for (int x = 3; x < w - 3; x += 6) c.FillCircle(x, 3, 1.5f, lit ? RgbColor.FromHex("#FFE8A3") : RgbColor.FromHex("#C9C9B8"));
+            return c;
+        }
+
+        private static PixelCanvas Palm(int variant, out int pivotX)
+        {
+            var c = new PixelCanvas(30, 46);
+            pivotX = 15 - Tile / 2;
+            for (int y = 0; y < 32; y++)
+            {
+                int x = 14 + (int)(Math.Sin(y / 10.0) * 2);
+                c.FillRect(x, y, 3, 1, (y / 3) % 2 == 0 ? RgbColor.FromHex("#8B5A2B") : RgbColor.FromHex("#6E4520"));
+            }
+            var leaf = RgbColor.FromHex(variant % 2 == 0 ? "#2E8B4A" : "#3F9E52");
+            foreach (var (dx, dy) in new[] { (-1, 0), (1, 0), (-1, 1), (1, 1), (0, 1), (-1, -1), (1, -1) })
+                for (int i = 0; i < 12; i++)
+                    c.FillRect(15 + dx * i, 33 + dy * i / 2 - (i * i) / 18, 2, 2, leaf);
+            c.FillCircle(15, 32, 2.5f, RgbColor.FromHex("#6E4520"));
+            return c;
+        }
+
+        private static PixelCanvas Umbrella(int variant, out int pivotX)
+        {
+            var c = new PixelCanvas(28, 30);
+            pivotX = 14 - Tile / 2;
+            c.FillRect(13, 0, 2, 22, RgbColor.FromHex("#F4F1DE"));
+            var a = RgbColor.FromHex(Bright[Math.Abs(variant) % Bright.Length]);
+            for (int y = 0; y < 8; y++)
+                for (int x = -13 + y; x <= 13 - y; x++)
+                    c.Set(14 + x, 20 + y, ((x + 14) / 4) % 2 == 0 ? a : RgbColor.FromHex("#F4F1DE"));
             return c;
         }
 

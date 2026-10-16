@@ -17,7 +17,7 @@ namespace CallerRetroBall.City
     /// The rules (maps, walking, prompts, schedules, choices, saves) are engine-free in Logic/City and tested there;
     /// this class draws them and wires the touch controls.
     /// </summary>
-    public sealed class CityController : MonoBehaviour
+    public sealed partial class CityController : MonoBehaviour
     {
         private const int MaxNpcs = 24;
         private static int _zoom = 1;
@@ -64,7 +64,7 @@ namespace CallerRetroBall.City
             if (firstTime) save.seen.Add(_map.DistrictId);
             save.visits++;
 
-            _world = CityWorld.Build(_map, catalog, StableHash.Of(_map.DistrictId));
+            _world = CityWorld.Build(_map, catalog, StableHash.Of(_map.DistrictId), CityDecor.For(_map, CityDecor.Season(DateTime.Now)));
             var me = PlayerCreator.BasePlayer(career, catalog);
             var crew = catalog.Team(DefaultContent.PlayerCrewId);
             _meView = CityActorView.Create(_world.transform, "You", me, Kit(crew), _world.Shadow);
@@ -86,6 +86,7 @@ namespace CallerRetroBall.City
 
             RefreshClock(force: true);
             SpawnPeople(career, catalog);
+            StartLife(career);
             if (save.fps30) Application.targetFrameRate = 30;
             Audio.AudioManager.PlayMusic(2);
             Audio.AudioManager.SetAmbience(!_map.Interior);
@@ -159,6 +160,7 @@ namespace CallerRetroBall.City
                 b.Step(_map, Time.time, dt, _me.Position, i == _talking, _npcPositions);
                 _npcPositions[i] = b.Body.Position;
             }
+            UpdateLife(dt);
 
             // What the action button does.
             _prompt = card ? CityPrompt.None : CityInteraction.Find(_map, _me.Position, _npcPositions);
@@ -203,6 +205,7 @@ namespace CallerRetroBall.City
                 bool arms = b.Activity == CityNpcActivity.Shoot || b.Activity == CityNpcActivity.Cheer;
                 _npcViews[i].Sync(dt, p, b.Body.Facing, moving, b.Body.Velocity.Magnitude, arms, _reduceMotion);
             }
+            DrawLife(dt, halfW, halfH);
         }
 
         private void RefreshClock(bool force)
@@ -216,7 +219,8 @@ namespace CallerRetroBall.City
             _world.SetHour(_hour);
             var def = CityDistricts.Find(_map.DistrictId);
             string block = Loc.T(CityClock.Name(_block));
-            _hud.SetPlace(def?.Name ?? "", _map.Interior ? Loc.T("INSIDE") + "  ·  " + block : block + "  ·  " + now.ToString("h:mm tt", System.Globalization.CultureInfo.InvariantCulture));
+            string sky = _weather == CityWeatherKind.Clear ? "" : "  ·  " + Loc.T(CityWeather.Name(_weather));
+            _hud.SetPlace(def?.Name ?? "", _map.Interior ? Loc.T("INSIDE") + "  ·  " + block : block + "  ·  " + now.ToString("h:mm tt", System.Globalization.CultureInfo.InvariantCulture) + sky);
         }
 
         // ------------------------------------------------------------------ using things
@@ -256,8 +260,7 @@ namespace CallerRetroBall.City
             }
             else
             {
-                var choices = CityActivities.ForPortal(_map, portal, career, catalog);
-                _hud.ShowCard(portal.Label, null, choices, Pick, null);
+                ShowPortalCard(portal);
             }
             if (advanced) App.SaveCareer();
         }
@@ -309,6 +312,11 @@ namespace CallerRetroBall.City
                     SavePosition();
                     App.BackToCity = true;
                     Leave(SceneNames.LockerRoom);
+                    break;
+                case CityAction.Buy:
+                case CityAction.Equip:
+                case CityAction.Haircut:
+                    HandleShop(a);
                     break;
                 default:
                     if (!string.IsNullOrEmpty(a.Detail)) _hud.Toast(a.Detail, 3f);
@@ -367,10 +375,20 @@ namespace CallerRetroBall.City
             var zoom = new CityActivity { Label = Loc.T("ZOOM") + ": " + (_zoom + 1) + "/" + CityCamera.TilesAcross.Length, Action = CityAction.Info };
             var battery = new CityActivity { Label = Loc.T("BATTERY SAVER") + ": " + Loc.T(s.fps30 ? "ON" : "OFF"), Detail = "30 frames a second in the city.", Action = CityAction.Info };
             var menu = new CityActivity { Label = "MAIN MENU", Detail = "Your spot in the city is saved.", Action = CityAction.Info };
-            var list = new List<CityActivity> { resume, missions, zoom, battery, menu };
+            var map = new CityActivity { Label = "MAP", Detail = "Every district, and fast travel to the ones you've visited.", Action = CityAction.Info };
+            var weather = new CityActivity { Label = Loc.T("WEATHER") + ": " + Loc.T(s.weatherOff ? "OFF" : "ON"), Detail = "Rain, snow and wind in the city.", Action = CityAction.Info };
+            var list = new List<CityActivity> { resume, map, missions, zoom, weather, battery, menu };
             _hud.ShowCard("BALLER CITY", null, list, a =>
             {
-                if (ReferenceEquals(a, missions)) OpenMissions();
+                if (ReferenceEquals(a, map)) OpenMap();
+                else if (ReferenceEquals(a, weather))
+                {
+                    s.weatherOff = !s.weatherOff;
+                    App.SaveCareer();
+                    ApplyWeather();
+                    OpenMenu();
+                }
+                else if (ReferenceEquals(a, missions)) OpenMissions();
                 else if (ReferenceEquals(a, zoom))
                 {
                     _zoom = (_zoom + 1) % CityCamera.TilesAcross.Length;

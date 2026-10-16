@@ -181,3 +181,35 @@ To do on device (not yet executed):
 - **Saves:** the mission and crew progress is in the city save. Unknown ids and impossible numbers are dropped on load.
 
 Tests: `BallerCityMissionsTests` (17) plus the updated `BallerCityTests`. The full logic suite is 978 passing, the Unity reference compile is clean, and the Spanish text and App Store audits pass. Not yet run on the phone.
+
+---
+
+## 8. Phase 3, 17 Oct 2026: new districts, the map and fast travel, the shops, and the living city
+
+- **New districts:**
+  - **THE BOARDWALK**, east of the Blacktop: Boardwalk Slab, Sundown Yard, Lighthouse Point, and Ferry Deck on the pier, plus the lighthouse, snack stalls, umbrellas, palms and arcade cabinets.
+  - **DOWNTOWN**, east of Hoop Heights: Rain Alley, Tram Yard, Record Shop Roof and Night Bus Depot around Baller Tower and the Baller Arena (a landmark; its doors aren't open yet).
+  - **SCHOOL YARD**, west of Holiday Park: Pinwheel Lot, Snowline Park and Canyon Rim in front of Baller City High.
+  - That makes 26 game courts, each with its own look.
+- **8 more crews**, for 22 in total: SAND SHARKS, SUNSET SQUAD, THE KEEPERS (LEGENDARY), LAST STOP, NIGHT RIDERS (LEGENDARY), THE B-SIDES, RECESS and VARSITY (LEGENDARY). Their styles: hustle, inside-out, paint protectors, slashers, scorers, space and pace, high energy, and fundamentals.
+- **MAP and fast travel** (`CityAtlas`), under MENU ▸ MAP. The districts appear as blocks on a grid with the roads between them, and each block shows its courts and how many of its crews you've beaten. Tap a district you've already walked into to fast travel to its main entrance. A test checks that the map matches the real roads.
+- **CORNER STORE** (`CityShop`):
+  - Six pieces of the game's own gear on the shelves each day (jerseys, shoes, celebrations, dribble moves, dunk packages), a new mix every day.
+  - It uses the same buying rules as the Locker Room: fans required, Hoops Pass items never sold.
+  - Anything you own can be put on there.
+- **FRESH CUTS** (`CityBarber`):
+  - Six hairstyles and five hair colours for the player you made in the Locker Room.
+  - The first cut is free; after that a cut is 40 SP and a colour is 25 SP. You see your new look straight away.
+  - The default Rook keeps his look.
+- **The living city:**
+  - **Passers-by** on the sidewalks: generated people, never real players, fewer at night.
+  - **Cars:** they drive on the right on the east-west roads, stop for you and loop round.
+  - **Weather** (`CityWeather`): the same for a whole day in each district; mostly clear, with clouds, rain and wind, and snow instead of rain from December to February. It shows as dimming and pooled particles; there's no rain or snow with Reduce Motion. MENU ▸ WEATHER turns it off.
+  - **Court sounds:** dribbles and swishes from the nearest player shooting.
+  - **Seasonal decorations** (`CityDecor`, from the calendar): jack-o'-lanterns now (October), lit trees and snowmen in December, eggs at Easter and bunting for the Fourth. They aren't solid and are never placed on roads or doors.
+- **Chapter 6, ALL CITY**: visit the three new districts, fast travel, buy gear, get a haircut, beat 12 crews, win 25 city games, and beat every LEGENDARY crew. Chapter 5's last mission is now "beat 6 LEGENDARY crews", so new crews don't move its goal.
+
+**Tests:**
+- `BallerCityPhase3Tests` (13 tests); the full logic suite passes, 991 of 991.
+- The Unity reference compile is clean, and the Spanish text and App Store audits pass.
+- Not yet run on the phone.
