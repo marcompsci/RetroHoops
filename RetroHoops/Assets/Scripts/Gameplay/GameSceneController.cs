@@ -58,6 +58,15 @@ namespace CallerRetroBall.Gameplay
         private Vec2[] _cutVel = new Vec2[0];
         private float[] _sweatAt = new float[0];
         private float _cutSampleAt;
+        /// <summary>I1 BIG MOMENTS: the last basket, the clock when the last shot went up, the game-winner mob and chants.</summary>
+        private int _lastMadeTeam = -1, _lastMadePlayer = -1;
+        private float _lastMadeAt = -99f, _releaseClock = 99f, _shotClockAtRelease = 99f;
+        private float _mobStart = -1f;
+        private int _mobShooter = -1;
+        private Vec2[] _mobFrom = new Vec2[0];
+        private float _chantAt = -99f, _chantUntil = -99f;
+        /// <summary>The game-winner (or buzzer-beater) that ended this game, for the Moments book (I3).</summary>
+        private bool _endedOnWinner, _endedOnBuzzer;
         private int _lastLabelState = -1;
         private PracticeSession _practice;
         // Phase 17: H-O-R-S-E.
@@ -741,7 +750,7 @@ namespace CallerRetroBall.Gameplay
             SyncViews(steps * FixedStep, snapCamera: false);
             ViewsMarker.End();
             SyncCoach();
-            if (_practice == null && _tutorial == null && _horse == null) UpdateCrowdChant();
+            if (_practice == null && _tutorial == null && _horse == null) { UpdateCrowdChant(); UpdateChants(); }
 
             if (_tutorial != null && _tutorial.Finished && !_finalShown) ShowTutorialEnd();
             else if (_practice != null && _practice.Finished && !_finalShown) ShowPracticeEnd();
@@ -749,7 +758,7 @@ namespace CallerRetroBall.Gameplay
             else if (_match.IsOver && !_finalShown)
             {
                 if (Demo) Quit();
-                else ShowFinal();
+                else if (!MobPlaying(Time.unscaledTime)) ShowFinal(); // I1: the team mobs the game-winner first
             }
         }
 
@@ -1410,6 +1419,78 @@ namespace CallerRetroBall.Gameplay
         private float _nextHornAt, _nextClapAt;
 
         /// <summary>Tight finish (last 20 seconds, within one score): the crowd claps along every few seconds.</summary>
+        // ------------------------------------------------------------------ I1 BIG MOMENTS
+
+        private bool MobPlaying(float now) => _mobStart >= 0f && now - _mobStart < GameWinnerMob.Seconds;
+
+        /// <summary>The whistle went just after a basket by the winners: the crowd erupts and the team mobs the shooter.</summary>
+        private void StartGameWinnerMob()
+        {
+            float now = Time.unscaledTime;
+            _endedOnWinner = _lastMadePlayer >= 0 && GameWinnerMob.IsGameWinner(_match.Winner, _lastMadeTeam, _lastMadeAt, now);
+            if (!_endedOnWinner) return;
+            _endedOnBuzzer = GameWinnerMob.IsBuzzerBeater(_match.Setup.Rules.useGameClock, _shotClockAtRelease);
+            string title = GameWinnerMob.Title(_endedOnBuzzer);
+            if (_streetsHud != null) _streetsHud.Stamp(title, ShortName(_match.Players[_lastMadePlayer].Def), Theme.Gold);
+            else _hud.Toast(title, 2.2f);
+            SetCrowd(CrowdMood.Cheer, GameWinnerMob.Seconds + 0.5f);
+            Sfx(SfxId.CrowdCheer, 1f);
+            Sfx(SfxId.Fanfare, 0.7f);
+            if (Versus || _lastMadeTeam == _match.Setup.HumanTeam) Haptics.Heavy();
+            if (_reduceMotion || Demo || Theater || _link != null) return; // the call and the crowd, no run-around
+            _mobShooter = _lastMadePlayer;
+            _mobStart = now;
+            _mobFrom = new Vec2[_match.Players.Length];
+            for (int i = 0; i < _mobFrom.Length; i++) _mobFrom[i] = _match.Players[i].Position;
+            _celebrator = _mobShooter;
+            _celebrateStart = now;
+            _celebration = Mine(_mobShooter) ? _myCelebration : CelebrationKind.ChestThump;
+            if (!_reduceMotion) _bursts.Spawn(CourtSpace.ToWorldSnapped(_match.Players[_mobShooter].Position, 1.4f), new Color32(0xFF, 0xD1, 0x66, 255), 24, 4f, 0.8f);
+        }
+
+        private static string ShortName(PlayerDef d) =>
+            (string.IsNullOrEmpty(d.lastName) ? d.firstName : d.lastName).ToUpperInvariant();
+
+        private int MobCount()
+        {
+            int n = 0, team = _match.Players[_mobShooter].Team;
+            foreach (var p in _match.Players) if (p.Team == team && p.Index != _mobShooter) n++;
+            return n;
+        }
+
+        private int MobSlot(int i)
+        {
+            int n = 0, team = _match.Players[_mobShooter].Team;
+            foreach (var p in _match.Players)
+            {
+                if (p.Index == i) return n;
+                if (p.Team == team && p.Index != _mobShooter) n++;
+            }
+            return n;
+        }
+
+        /// <summary>The home crowd (your side) chants DE-FENSE, MVP or LET'S GO when the game calls for it.</summary>
+        private void UpdateChants()
+        {
+            if (_match == null || _match.IsOver || _fans.Length == 0) return;
+            float now = Time.unscaledTime;
+            if (now - _chantAt < CrowdChants.Every) return;
+            int home = Versus ? -1 : _match.Setup.HumanTeam;
+            var rules = _match.Setup.Rules;
+            var need = rules.targetScore > 0 ? new[] { rules.targetScore - _match.Score[0], rules.targetScore - _match.Score[1] } : null;
+            var holder = _match.Holder;
+            bool mvp = holder != null && holder.Team == home && _match.IsHeatedUp(holder.Index);
+            var chant = CrowdChants.For(_match.Phase == MatchPhase.Live, home, _match.OffenseTeam, _match.Score, need,
+                                        rules.useGameClock ? _match.GameClock : -1f, mvp);
+            if (chant == CrowdChant.None) return;
+            _chantAt = now;
+            _chantUntil = now + CrowdChants.Lasts;
+            var team = home == 0 ? _match.Setup.TeamA : _match.Setup.TeamB;
+            string text = chant == CrowdChant.LetsGo ? Loc.T("LET'S GO") + " " + (team.nickname ?? "").ToUpperInvariant() + "!" : CrowdChants.Text(chant, null);
+            _hud.Toast(text, CrowdChants.Lasts);
+            Sfx(SfxId.ClapChant, 0.6f);
+        }
+
         private void UpdateCrowdChant()
         {
             if (_match == null || _match.IsOver || _match.Phase != MatchPhase.Live || !_match.Setup.Rules.useGameClock) return;
@@ -1594,6 +1675,7 @@ namespace CallerRetroBall.Gameplay
                         if (e.PlayerIndex >= 0 && e.PlayerIndex < _passPoseUntil.Length) _passPoseUntil[e.PlayerIndex] = Time.unscaledTime + Stances.PassPoseSeconds;
                         break;
                     case MatchEventType.ShotReleased:
+                        _releaseClock = _match.Setup.Rules.useGameClock ? _match.GameClock : 99f;
                         _lastShooter = e.PlayerIndex;
                         _shootPoseUntil = Time.unscaledTime + 0.35f;
                         if (_match.Ball.Phase == BallPhase.Shot && (_match.Ball.ShotType == ShotType.Dunk || _match.Ball.ShotType == ShotType.Layup))
@@ -1643,6 +1725,10 @@ namespace CallerRetroBall.Gameplay
                         }
                         break;
                     case MatchEventType.ShotMade:
+                        _lastMadeTeam = e.Team;
+                        _lastMadePlayer = e.PlayerIndex;
+                        _lastMadeAt = Time.unscaledTime;
+                        _shotClockAtRelease = _releaseClock;
                         bool swish = _match.Ball.ShotGrade == TimingGrade.Green;
                         bool dunk = _match.Ball.ShotType == ShotType.Dunk;
                         _netAt = Time.unscaledTime;
@@ -1712,6 +1798,7 @@ namespace CallerRetroBall.Gameplay
                     case MatchEventType.GameOver:
                         Sfx(SfxId.Buzzer, 0.8f);
                         Sfx(SfxId.ArenaHorn, 0.55f);
+                        StartGameWinnerMob();
                         break;
                     case MatchEventType.Interception:
                         _hud.Toast(e.Team == human ? "PICKED OFF!" : "STOLEN", 1.1f);
@@ -1875,6 +1962,15 @@ namespace CallerRetroBall.Gameplay
                     jump = Mathf.Max(jump, leap);
                 }
                 if (_skyHigh) jump *= 2f; // SKY HIGH secret: looks only
+                if (MobPlaying(now) && i != _mobShooter && _match.Players[i].Team == _match.Players[_mobShooter].Team && i < _mobFrom.Length)
+                {
+                    // I1: teammates run to the game-winner and jump all over him.
+                    GameWinnerMob.Pose(_mobFrom[i], _match.Players[_mobShooter].Position, MobSlot(i), MobCount(), now - _mobStart, out var mobGround, out int mobLift, out bool mobArms);
+                    _playerViews[i].SetOverride(mobGround, mobLift);
+                    flair = FlairPose.None;
+                    flair.ArmsUp = mobArms;
+                    jump = 0f;
+                }
                 if (flair.Frame == PoseFrame.None && !flair.ArmsUp && !shooting && jump <= 0.05f && i != _leaper)
                 {
                     // G2: defensive stance and slide near the ball, the chest-pass frame after a pass.
@@ -3537,6 +3633,7 @@ namespace CallerRetroBall.Gameplay
                     bob = Mathf.Max(bob, lift);
                     armsUp |= waving;
                 }
+                if (!still && now < _chantUntil && _crowdMood == CrowdMood.Idle) armsUp = ((int)(now * 3f) + i) % 2 == 0; // I1: clapping along
                 f.Renderer.sprite = armsUp ? f.Cheer : f.Idle;
                 f.Renderer.transform.position = f.Base + new Vector3(0f, bob * px, 0f);
             }
