@@ -41,6 +41,8 @@ namespace CallerRetroBall.Logic
         public bool reduceMotion;
         /// <summary>I2 HOUSE RULES for Quick Call (<see cref="HouseRules.Pack"/>); empty = the default game.</summary>
         public string houseRules = "";
+        /// <summary>I8: your live stat line under the score bar.</summary>
+        public bool liveStatLine = true;
         /// <summary>"en" or "es".</summary>
         public string language = Loc.English;
         /// <summary>CRT look: 0 = off, 1 = soft scanlines, 2 = strong (scanlines + vignette).</summary>
@@ -271,6 +273,8 @@ namespace CallerRetroBall.Logic
         public string equippedGear;
         /// <summary>I3 LEGACY: the MOMENTS book, newest first (<see cref="MomentsBook"/>).</summary>
         public List<MomentEntry> moments = new List<MomentEntry>();
+        /// <summary>I11: a Quick Call game interrupted by the app going to the background (null = none).</summary>
+        public SuspendedGame suspended;
         public CareerTotals totals = new CareerTotals();
         public PracticeBests practice = new PracticeBests();
         public SettingsData settings = new SettingsData();

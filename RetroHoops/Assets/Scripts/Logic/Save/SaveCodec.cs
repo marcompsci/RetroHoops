@@ -71,6 +71,7 @@ namespace CallerRetroBall.Logic
                     ["tapToShoot"] = d.settings.tapToShoot,
                     ["reduceMotion"] = d.settings.reduceMotion,
                     ["houseRules"] = d.settings.houseRules ?? "",
+                    ["liveStatLine"] = d.settings.liveStatLine,
                 },
                 ["rise"] = EncodeRise(d.rise),
                 ["classic"] = EncodeClassic(d.classic),
@@ -172,6 +173,12 @@ namespace CallerRetroBall.Logic
                     ["pts"] = e.points, ["ast"] = e.assists, ["reb"] = e.rebounds, ["result"] = e.result,
                 }),
                 ["appliedMatchIds"] = Strings(d.appliedMatchIds),
+                ["suspended"] = d.suspended == null ? null : new Dictionary<string, object>
+                {
+                    ["home"] = d.suspended.homeTeamId, ["away"] = d.suspended.awayTeamId, ["court"] = d.suspended.courtId,
+                    ["diff"] = d.suspended.difficultyId, ["rules"] = d.suspended.houseRules ?? "",
+                    ["a"] = d.suspended.scoreA, ["b"] = d.suspended.scoreB, ["clock"] = (double)d.suspended.clock, ["day"] = d.suspended.day,
+                },
                 ["moments"] = List(d.moments ?? new List<MomentEntry>(), m => new Dictionary<string, object>
                 {
                     ["day"] = m.day, ["kind"] = (int)m.kind, ["mode"] = (int)m.mode, ["opp"] = m.opponentId,
@@ -540,6 +547,7 @@ namespace CallerRetroBall.Logic
                     tapToShoot = Bool(st, "tapToShoot", false),
                     reduceMotion = Bool(st, "reduceMotion", false),
                     houseRules = Str(st, "houseRules", "") ?? "",
+                    liveStatLine = Bool(st, "liveStatLine", true),
                 };
                 d.rise = DecodeRise(Obj(o, "rise"));
                 d.classic = DecodeClassic(Obj(o, "classic"));
@@ -660,6 +668,15 @@ namespace CallerRetroBall.Logic
                     });
                     if (d.history.Count >= Records.HistoryLength) break;
                 }
+                var sg = Obj(o, "suspended");
+                if (sg != null && Str(sg, "home", null) != null)
+                    d.suspended = new SuspendedGame
+                    {
+                        homeTeamId = Str(sg, "home", null), awayTeamId = Str(sg, "away", null), courtId = Str(sg, "court", null),
+                        difficultyId = Str(sg, "diff", null), houseRules = Str(sg, "rules", "") ?? "",
+                        scoreA = Math.Max(0, Int(sg, "a", 0)), scoreB = Math.Max(0, Int(sg, "b", 0)),
+                        clock = Math.Max(0f, (float)Num(sg, "clock", 0)), day = Int(sg, "day", 0),
+                    };
                 foreach (var item in Arr(o, "moments"))
                 {
                     if (!(item is Dictionary<string, object> m)) continue;

@@ -124,6 +124,14 @@ namespace CallerRetroBall.Gameplay
             _shotClock = Text(rt, "14", 36f, new Vector2(0.55f, 0.24f));
             _shotClock.color = Theme.Gold;
 
+            // I8 MY LINE: your live box score under the score bar.
+            _myLine = UiKit.Label(safe, "", 24f, Theme.Cyan, TextAlignmentOptions.Center, true, "MyLine");
+            _myLine.rectTransform.anchorMin = _myLine.rectTransform.anchorMax = new Vector2(0.5f, 1f);
+            _myLine.rectTransform.pivot = new Vector2(0.5f, 1f);
+            _myLine.rectTransform.sizeDelta = new Vector2(1000f, 32f);
+            _myLine.rectTransform.anchoredPosition = new Vector2(0f, -166f);
+            _myLine.raycastTarget = false;
+
             _toast = UiKit.Label(safe, "", 44f, Theme.Cream, TextAlignmentOptions.Center, true, "Toast");
             UiKit.Place(_toast.rectTransform, new Vector2(0.5f, 0.52f), new Vector2(1000f, 120f));
             // Long lines (coach tips, H-O-R-S-E calls) shrink and wrap instead of spilling off screen.
@@ -138,7 +146,7 @@ namespace CallerRetroBall.Gameplay
             _info.enableAutoSizing = true; // long lines (controls hint) shrink to fit
             _info.fontSizeMin = 20f;
             _info.fontSizeMax = 36f;
-            _info.rectTransform.anchoredPosition = new Vector2(0f, -172f);
+            _info.rectTransform.anchoredPosition = new Vector2(0f, -204f); // I8: the live stat line sits just under the score bar
 
             // Mic Tally's commentary ticker, under the score bar.
             _micPanel = UiKit.Panel(safe, new Color(0.04f, 0.04f, 0.09f, 0.78f), name: "MicTicker");
@@ -433,6 +441,9 @@ namespace CallerRetroBall.Gameplay
             ClearFinal();
             Title(title, s.teamAName.ToUpperInvariant() + "  " + s.scoreA + " - " + s.scoreB + "  " + s.teamBName.ToUpperInvariant());
 
+            if (!string.IsNullOrEmpty(GradeLine))
+                UiKit.Size(UiKit.Label(_finalColumn, GradeLine, 34f, Theme.Gold, TextAlignmentOptions.Center, true), 56f);
+
             var pog = s.Line(s.playerOfTheGame);
             if (pog != null)
                 UiKit.Size(UiKit.Label(_finalColumn, "PLAYER OF THE GAME  <color=#FFD166>" + pog.name.ToUpperInvariant() + "</color>  " +
@@ -567,6 +578,8 @@ namespace CallerRetroBall.Gameplay
         public bool HasPlayOfTheGame { get; set; }
         /// <summary>I2 FAIR PLAY: expected vs real makes for both sides (null = hide).</summary>
         public string FairPlayLine { get; set; }
+        /// <summary>I10: your letter grade and why (null = hide).</summary>
+        public string GradeLine { get; set; }
         /// <summary>Phase 40: plays in the HIGHLIGHTS reel (the button shows when there are 2 or more).</summary>
         public int HighlightCount { get; set; }
         /// <summary>Phase 31: SAVE GAME TAPE on the end screens (two-phone, Live and watched games).</summary>
@@ -682,6 +695,18 @@ namespace CallerRetroBall.Gameplay
             float t = ReduceMotion ? 1f : (Time.unscaledTime - since) / PunchSeconds;
             float scale = t >= 1f || t < 0f ? 1f : 1f + 0.4f * (1f - t) * (1f - t);
             label.rectTransform.localScale = new Vector3(scale, scale, 1f);
+        }
+
+        private TextMeshProUGUI _myLine;
+        private string _myLineText = "";
+
+        /// <summary>I8: the controlled player's live line ("8 PTS · 4/7 FG · 2 AST"); null or empty hides it.</summary>
+        public void SetMyLine(string text)
+        {
+            text = text ?? "";
+            if (_myLine == null || text == _myLineText) return;
+            _myLineText = text;
+            _myLine.text = text;
         }
 
         public void Sync(MatchSimulation m)

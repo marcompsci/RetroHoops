@@ -538,6 +538,15 @@ namespace CallerRetroBall.UI
                  ShowStreets, ButtonStyle.Primary);
 
             Section(column, "PLAY NOW");
+            // I11: a Quick Call game the phone interrupted.
+            if (QuickResume.Valid(career.suspended, App.Catalog, App.Today))
+                Mode(column, QuickResume.Label(career.suspended, App.Catalog), Loc.T("Pick up where you left off: same teams, score and clock (the box score starts fresh)."), () =>
+                {
+                    App.PendingMatch = QuickResume.Request(career.suspended, App.Catalog);
+                    career.suspended = null;
+                    App.SaveCareer();
+                    SceneFlow.GoTo(SceneNames.Game);
+                }, ButtonStyle.Primary);
             Mode(column, "QUICK CALL", "Pick a team and an opponent. One game. Score and it's still your ball.", ShowQuickCall, ButtonStyle.Primary);
             Mode(column, "FULL COURT", "5 on 5, both baskets, 2s and 3s. Four minutes.", ShowFullCourt, ButtonStyle.Secondary);
             Mode(column, "THE PARK", "Call out street legends, 1-on-1 to 4-on-4. Break ankles. Rep: " + Street.RepNames[Street.RepLevel(career.street.rep)], ShowPark, ButtonStyle.Secondary);

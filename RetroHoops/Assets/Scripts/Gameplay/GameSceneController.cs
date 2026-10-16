@@ -725,7 +725,7 @@ namespace CallerRetroBall.Gameplay
             }
             var input = Coaching ? default : ReadInput();
             var input2 = Versus ? ReadInput2() : default;
-            _accumulator += Mathf.Min(Time.unscaledDeltaTime, FixedStep * MaxStepsPerFrame);
+            _accumulator += Mathf.Min(Time.unscaledDeltaTime, FixedStep * MaxStepsPerFrame) * ClutchCamScale();
             int steps = 0;
             while (_accumulator >= FixedStep && steps < MaxStepsPerFrame)
             {
@@ -1440,6 +1440,47 @@ namespace CallerRetroBall.Gameplay
         /// <summary>Tight finish (last 20 seconds, within one score): the crowd claps along every few seconds.</summary>
         // ------------------------------------------------------------------ I1 BIG MOMENTS
 
+        // ------------------------------------------------------------------ I7 CLUTCH CAM
+
+        private bool _clutchCamOn;
+
+        /// <summary>Slow motion while a shot that could decide the game is in the air (not in replays, drills, the demo or two-phone games).</summary>
+        private float ClutchCamScale()
+        {
+            var ball = _match.Ball;
+            bool on = !Theater && _watch == null && !Demo && _practice == null && _tutorial == null && _horse == null
+                      && ball.Phase == BallPhase.Shot && ball.ShooterIndex >= 0
+                      && ClutchCam.Active(_match.Phase == MatchPhase.Live, true, _match.Players[ball.ShooterIndex].Team, _match.Score, ball.ShotPoints,
+                                          _match.Setup.Rules.targetScore, _match.Setup.Rules.useGameClock, _match.GameClock);
+            if (on && !_clutchCamOn)
+            {
+                Sfx(SfxId.CrowdOooh, 0.7f);
+                if (_streetsHud != null) _streetsHud.Cinema(true);
+            }
+            else if (!on && _clutchCamOn && _streetsHud != null && _cineUntil < Time.unscaledTime) _streetsHud.Cinema(false);
+            _clutchCamOn = on;
+            return on ? ClutchCam.Scale : 1f;
+        }
+
+        // ------------------------------------------------------------------ I9 LIVING ARENA
+
+        private int _dapPlayer = -1;
+        private float _dapStart = -99f;
+
+        private void StartDap(int scorer)
+        {
+            if (_reduceMotion || scorer < 0) return;
+            var pos = new Vec2[_match.Players.Length];
+            var teams = new int[_match.Players.Length];
+            for (int i = 0; i < pos.Length; i++)
+            {
+                pos[i] = _match.Players[i].Position;
+                teams[i] = IsBenchedSlot(_match.Players[i]) ? -1 : _match.Players[i].Team;
+            }
+            _dapPlayer = LivingArena.NearestTeammate(pos, teams, scorer);
+            _dapStart = Time.unscaledTime;
+        }
+
         private bool MobPlaying(float now) => _mobStart >= 0f && now - _mobStart < (_storm != null ? CourtStorm.Seconds : GameWinnerMob.Seconds);
 
         // I5 STORM THE COURT: fans who ran out of the stands (copies of seat fans, whose seats empty).
@@ -1517,7 +1558,8 @@ namespace CallerRetroBall.Gameplay
             _recorder.OfferBestPlay(title, _endedOnBuzzer ? 260 : 220);
             if (_streetsHud != null) _streetsHud.Stamp(title, ShortName(_match.Players[_lastMadePlayer].Def), Theme.Gold);
             else _hud.Toast(title, 2.2f);
-            SetCrowd(CrowdMood.Cheer, CourtStorm.Seconds + 0.5f);
+            int crowdTeam = LivingArena.CrowdTeam(Versus);
+            SetCrowd(crowdTeam < 0 || _lastMadeTeam == crowdTeam ? CrowdMood.Cheer : CrowdMood.Groan, CourtStorm.Seconds + 0.5f);
             Sfx(SfxId.CrowdCheer, 1f);
             Sfx(SfxId.Fanfare, 0.7f);
             if (Versus || _lastMadeTeam == _match.Setup.HumanTeam) Haptics.Heavy();
@@ -1560,7 +1602,7 @@ namespace CallerRetroBall.Gameplay
             if (_match == null || _match.IsOver || _fans.Length == 0) return;
             float now = Time.unscaledTime;
             if (now - _chantAt < CrowdChants.Every) return;
-            int home = Versus ? -1 : _match.Setup.HumanTeam;
+            int home = LivingArena.CrowdTeam(Versus);
             var rules = _match.Setup.Rules;
             var need = rules.targetScore > 0 ? new[] { rules.targetScore - _match.Score[0], rules.targetScore - _match.Score[1] } : null;
             var holder = _match.Holder;
@@ -1572,6 +1614,7 @@ namespace CallerRetroBall.Gameplay
             _chantUntil = now + CrowdChants.Lasts;
             var team = home == 0 ? _match.Setup.TeamA : _match.Setup.TeamB;
             string text = chant == CrowdChant.LetsGo ? Loc.T("LET'S GO") + " " + (team.nickname ?? "").ToUpperInvariant() + "!" : CrowdChants.Text(chant, null);
+            if (LivingArena.Hostile(home, _match.Setup.HumanTeam)) text = Loc.T("ROAD CROWD") + ": " + text; // I9: they're against you tonight
             _hud.Toast(text, CrowdChants.Lasts);
             Sfx(SfxId.ClapChant, 0.6f);
         }
@@ -1827,7 +1870,10 @@ namespace CallerRetroBall.Gameplay
                             _cameraRig.Shake(Dunks.Shake(_dunkStyle) + 0.04f);
                             if (e.Team == human || Versus) Haptics.Heavy();
                         }
-                        bool crowdHappy = Versus || e.Team == human;
+                        // I9: the crowd backs the home side, so a road basket gets groans.
+                        int crowdTeam = LivingArena.CrowdTeam(Versus);
+                        bool crowdHappy = Versus || e.Team == crowdTeam;
+                        StartDap(e.PlayerIndex);
                         SetCrowd(crowdHappy ? CrowdMood.Cheer : CrowdMood.Groan, crowdHappy ? 1.6f : 1.1f);
                         ArenaOnBasket(e.Team, e.Value, dunk);
                         if (_match.IsHumanControlled(e.PlayerIndex))
@@ -1843,7 +1889,7 @@ namespace CallerRetroBall.Gameplay
                         _celebrateStart = Time.unscaledTime;
                         _celebration = Mine(e.PlayerIndex) ? _myCelebration : CelebrationKind.FistPump;
                         Sfx(swish ? SfxId.Swish : SfxId.Rim);
-                        Sfx(e.Team == human ? SfxId.CrowdCheer : SfxId.CrowdGroan, 0.6f);
+                        Sfx(crowdHappy ? SfxId.CrowdCheer : SfxId.CrowdGroan, 0.6f);
                         if (e.Team == human) Haptics.Success();
                         break;
                     case MatchEventType.ShotMissed:
@@ -2048,6 +2094,12 @@ namespace CallerRetroBall.Gameplay
                     jump = Mathf.Max(jump, leap);
                 }
                 if (_skyHigh) jump *= 2f; // SKY HIGH secret: looks only
+                if (i == _dapPlayer && flair.Frame == PoseFrame.None && !flair.ArmsUp && jump <= 0.05f)
+                {
+                    int dap = LivingArena.DapLift(now - _dapStart);
+                    if (dap > 0 || now - _dapStart < LivingArena.DapSeconds) { flair.ArmsUp = true; flair.Lift += dap; }
+                    else _dapPlayer = -1;
+                }
                 if (MobPlaying(now) && i != _mobShooter && _match.Players[i].Team == _match.Players[_mobShooter].Team && i < _mobFrom.Length)
                 {
                     // I1: teammates run to the game-winner and jump all over him.
@@ -2121,6 +2173,10 @@ namespace CallerRetroBall.Gameplay
                          : _match.Controlled.Position);
             _cameraRig.Follow(_match.ToWorldCourt(follow), Mathf.Max(dt, Time.unscaledDeltaTime), snapCamera);
             _hud.Sync(_match);
+            // I8 MY LINE: your numbers under the score bar (not in 2 Player, THE STREETS has its meters there).
+            bool showLine = !Versus && !Demo && _streetsHud == null && _practice == null && _tutorial == null && _horse == null
+                            && (App.Career?.settings == null || App.Career.settings.liveStatLine) && _match.ControlledIndex >= 0;
+            _hud.SetMyLine(showLine ? MyLine.Text(_match.Stats[_match.ControlledIndex]) : null);
             if (_streetsHud != null) _streetsHud.Sync(_match, _touchShown && !_paused && _match.Phase != MatchPhase.Final);
             // The info line builds a string, so refresh it ~10x a second rather than every frame.
             if (Time.unscaledTime >= _nextInfoAt)
@@ -2891,6 +2947,7 @@ namespace CallerRetroBall.Gameplay
             bool run = IsRun;
             _hud.FairPlayLine = _fair.Line(_match.Setup.HumanTeam, Loc.T("YOU"), (_match.Setup.HumanTeam == 0 ? _match.Setup.TeamB : _match.Setup.TeamA)?.abbreviation ?? "CPU");
             if (_momentReward != null) note = string.IsNullOrEmpty(note) ? _momentReward : note + "\n" + _momentReward;
+            _hud.GradeLine = summary.HumanLine != null ? GameGrade.Line(summary.HumanLine.stats, summary.HumanWon, summary.fullCourt || summary.mode == GameMode.FullCourt) : null;
             _hud.ShowPostGame(title, summary, grant, rewarded, note, run ? "CONTINUE" : null, !run);
             if (_cashOut != null)
             {
@@ -3906,6 +3963,17 @@ namespace CallerRetroBall.Gameplay
         private void OnApplicationPause(bool pauseStatus)
         {
             if (pauseStatus && _match != null && !_match.IsOver) SetPaused(true);
+            if (pauseStatus) SaveForResume();
+        }
+
+        /// <summary>I11: a Quick Call game going to the background is saved, in case the app gets closed.</summary>
+        private void SaveForResume()
+        {
+            if (_match == null || _match.IsOver || App.Career == null || _request == null) return;
+            if (!QuickResume.Supports(_request.Mode, _link != null, Demo) || _match.Phase == MatchPhase.Final) return;
+            App.Career.suspended = QuickResume.Capture(_request, _match.Score[0], _match.Score[1],
+                _match.Setup.Rules.useGameClock ? _match.GameClock : 0f, App.Career.settings?.houseRules, App.Today);
+            App.SaveCareer();
         }
 
         private void OnApplicationFocus(bool hasFocus)
@@ -3915,6 +3983,12 @@ namespace CallerRetroBall.Gameplay
 
         private void OnDestroy()
         {
+            // I11: leaving the game normally (finished or quit) means there's nothing to pick back up.
+            if (App.Career != null && App.Career.suspended != null && _request != null && _request.Mode == GameMode.QuickCall)
+            {
+                App.Career.suspended = null;
+                App.SaveCareer();
+            }
             PowerMonitor.Gameplay = false;
             Speech.Stop();
             if (!_rematching) HangUp();

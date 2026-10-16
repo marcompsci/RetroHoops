@@ -92,6 +92,40 @@ namespace CallerRetroBall.Logic
             Progress(t, i) < 1f ? 0 : (int)Math.Round(Math.Abs(Math.Sin(t * 8.0 + i * 0.9)) * 4f);
     }
 
+    /// <summary>
+    /// I9 LIVING ARENA: the crowd belongs to the home team (team A, whose court it is), so road games are loud
+    /// against you; and the nearest teammate leaps up, arms raised, after every basket.
+    /// </summary>
+    public static class LivingArena
+    {
+        /// <summary>The team the crowd backs: the home side (none in 2 Player).</summary>
+        public static int CrowdTeam(bool versus) => versus ? -1 : 0;
+
+        /// <summary>Is the crowd against you tonight?</summary>
+        public static bool Hostile(int crowdTeam, int you) => crowdTeam >= 0 && you >= 0 && crowdTeam != you;
+
+        public const float DapSeconds = 0.7f;
+
+        /// <summary>The teammate's leap after a basket (art pixels up; 0 when done).</summary>
+        public static int DapLift(float t) =>
+            t < 0f || t >= DapSeconds ? 0 : (int)Math.Round(Math.Sin(t / DapSeconds * Math.PI) * 4.0);
+
+        /// <summary>The scorer's nearest teammate (-1 if none).</summary>
+        public static int NearestTeammate(Vec2[] positions, int[] teams, int scorer)
+        {
+            if (positions == null || teams == null || scorer < 0 || scorer >= positions.Length) return -1;
+            int best = -1;
+            float bestD = float.MaxValue;
+            for (int i = 0; i < positions.Length; i++)
+            {
+                if (i == scorer || teams[i] != teams[scorer]) continue;
+                float d = (positions[i] - positions[scorer]).SqrMagnitude;
+                if (d < bestD) { bestD = d; best = i; }
+            }
+            return best;
+        }
+    }
+
     public enum CrowdChant { None = 0, Defense = 1, Mvp = 2, LetsGo = 3 }
 
     /// <summary>

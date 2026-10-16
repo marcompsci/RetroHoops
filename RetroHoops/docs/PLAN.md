@@ -956,6 +956,23 @@ offline and couch play (already here). Built:
   games → Full Compression. Fix: saved recent games kept Clutch and THE STREETS games as Quick Call after a reload.
 - Tests: `ImprovementTests` (now 15). Not yet seen on a device.
 
+### Improvements I7–I11 (16 Oct 2026)
+- **I7 CLUTCH CAM** (`ClutchCam.cs`): a shot that could decide the game (it would reach the target, or in the last 4 s
+  it would tie or take the lead) plays out at 45% speed, with an "oooh" from the crowd (THE STREETS adds the letterbox).
+  The outcome isn't peeked at; the simulation runs the same steps, only slower in real time. Not in replays, drills,
+  the demo or two-phone games.
+- **I8 MY LINE** (`MyLine.cs`): your live box score under the score bar ("8 PTS · 4/7 FG · 1/3 DEEP · 2 AST"),
+  Settings ► LIVE STAT LINE (on by default). Not in 2 Player or THE STREETS (its meters sit there).
+- **I9 LIVING ARENA** (`LivingArena` in `BigMoments.cs`): the crowd backs the home side (team A), so road games groan at
+  your baskets and chant against you ("ROAD CROWD: DE-FENSE!"); the scorer's nearest teammate leaps up, arms raised,
+  after every basket (off with Reduce Motion).
+- **I10 GAME GRADE** (`GameGrade.cs`): a letter grade (F to A+) for your game on the result screen, with the two
+  biggest reasons (efficient scoring, assists, boards, defence, cold shooting, turnovers).
+- **I11 PICK UP WHERE YOU LEFT OFF** (`QuickResume.cs`): a Quick Call game that goes to the background is saved (teams,
+  court, difficulty, house rules, score, clock). PLAY ► RESUME tips off again from that score and clock (box score
+  starts fresh); finishing or leaving the game clears it; it keeps 7 days.
+- Tests: `MorePhasesTests` (5). 1049 logic tests pass. Not yet seen on a device.
+
 ## Deviations from the brief (deliberate)
 
 - "Oakland Voltage" → **Eastbay Voltage** (real city + electric branding sat too close to real pro-sports naming).
