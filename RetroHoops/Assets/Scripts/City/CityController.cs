@@ -19,7 +19,7 @@ namespace CallerRetroBall.City
     /// </summary>
     public sealed class CityController : MonoBehaviour
     {
-        private const int MaxNpcs = 12;
+        private const int MaxNpcs = 24;
         private static int _zoom = 1;
 
         private CityMap _map;
@@ -93,6 +93,8 @@ namespace CallerRetroBall.City
 
             var def = CityDistricts.Find(_map.DistrictId);
             if (firstTime && def != null) _hud.Toast(def.Name, 2.2f);
+            // 17 Oct 2026: missions finished by walking in here (or by a drill best) pay out now.
+            AnnounceMissions(CityMissions.Check(career));
             App.SaveCareer();
         }
 
@@ -228,6 +230,11 @@ namespace CallerRetroBall.City
             {
                 var npc = _npcs[p.Npc];
                 _talking = p.Npc;
+                if (CityMissions.NoteTalk(career.city, npc.Id))
+                {
+                    AnnounceMissions(CityMissions.Check(career));
+                    advanced = true;
+                }
                 string title = npc.Name.ToUpperInvariant() + "  ·  " + RoleName(npc);
                 _hud.ShowCard(title, CityDialogue.Line(npc, career, _day), CityActivities.ForNpc(_map, npc, career, catalog, _me.Position), Pick, () => _talking = -1);
                 if (advanced) App.SaveCareer();
@@ -262,6 +269,11 @@ namespace CallerRetroBall.City
                 case CityNpcRole.Teammate: return Loc.T("TEAMMATE");
                 case CityNpcRole.Rival: return Loc.T("RIVAL");
                 case CityNpcRole.Legend: return Loc.T("PARK LEGEND");
+                case CityNpcRole.Crew:
+                {
+                    var crew = CityCrews.Find(npc.Ref);
+                    return crew == null ? Loc.T("CREW") : crew.Name + "  ·  " + Loc.T(crew.TierName);
+                }
                 default: return Loc.T("CREW LEADER");
             }
         }
@@ -272,6 +284,7 @@ namespace CallerRetroBall.City
             {
                 case CityCourtUse.Rise: return "The First Callers' home court.";
                 case CityCourtUse.Practice: return "The training floor.";
+                case CityCourtUse.Holiday: return "A Holiday Game court, open all year.";
                 default: return "Run with whoever's here, or take on the court's crews.";
             }
         }
@@ -345,13 +358,20 @@ namespace CallerRetroBall.City
             if (_leaving) return;
             var s = App.Career.city;
             var resume = new CityActivity { Label = "RESUME", Action = CityAction.Info, Primary = true };
+            int chapter = CityMissions.CurrentChapter(s);
+            var missions = new CityActivity
+            {
+                Label = "MISSIONS", Action = CityAction.Info,
+                Detail = chapter > CityMissions.Chapters ? Loc.T("All missions complete.") : Loc.T("CHAPTER") + " " + chapter + ": " + Loc.T(CityMissions.ChapterNames[chapter]),
+            };
             var zoom = new CityActivity { Label = Loc.T("ZOOM") + ": " + (_zoom + 1) + "/" + CityCamera.TilesAcross.Length, Action = CityAction.Info };
             var battery = new CityActivity { Label = Loc.T("BATTERY SAVER") + ": " + Loc.T(s.fps30 ? "ON" : "OFF"), Detail = "30 frames a second in the city.", Action = CityAction.Info };
             var menu = new CityActivity { Label = "MAIN MENU", Detail = "Your spot in the city is saved.", Action = CityAction.Info };
-            var list = new List<CityActivity> { resume, zoom, battery, menu };
+            var list = new List<CityActivity> { resume, missions, zoom, battery, menu };
             _hud.ShowCard("BALLER CITY", null, list, a =>
             {
-                if (ReferenceEquals(a, zoom))
+                if (ReferenceEquals(a, missions)) OpenMissions();
+                else if (ReferenceEquals(a, zoom))
                 {
                     _zoom = (_zoom + 1) % CityCamera.TilesAcross.Length;
                     _snapCamera = true;
@@ -371,6 +391,42 @@ namespace CallerRetroBall.City
                 }
                 else CloseCard();
             }, null);
+        }
+
+        // ------------------------------------------------------------------ missions
+
+        /// <summary>The MISSIONS card: this chapter's missions with progress, rewards and the crews you've beaten.</summary>
+        private void OpenMissions()
+        {
+            var career = App.Career;
+            var s = career.city;
+            int chapter = CityMissions.CurrentChapter(s);
+            var list = new List<CityActivity>();
+            if (chapter > CityMissions.Chapters)
+                list.Add(new CityActivity { Label = "RUN THE CITY", Detail = "Every mission done. Every crew still wants a rematch.", Action = CityAction.Info, Primary = true });
+            foreach (var m in CityMissions.Active(s))
+            {
+                var (now, target) = CityMissions.Progress(s, career, m);
+                list.Add(new CityActivity
+                {
+                    Label = Loc.T(m.Title) + "  " + now + "/" + target,
+                    Detail = Loc.T(m.Detail) + "  ·  +" + m.Sp + " SP  +" + m.Fans + " " + Loc.T("FANS"),
+                    Action = CityAction.Info,
+                });
+            }
+            string line = (chapter > CityMissions.Chapters ? "" : Loc.T("CHAPTER") + " " + chapter + "/" + CityMissions.Chapters + ": " + Loc.T(CityMissions.ChapterNames[chapter]) + "\n")
+                          + Loc.T("CREWS BEATEN") + " " + s.crewsBeaten.Count + "/" + CityCrews.All.Length
+                          + "  ·  " + Loc.T("CITY WINS") + " " + s.cityWins + "  ·  " + Loc.T("MISSIONS") + " " + s.missionsDone.Count + "/" + CityMissions.All.Length;
+            _hud.ShowCard("MISSIONS", line, list, a => OpenMenu(), null);
+        }
+
+        private void AnnounceMissions(List<CityMissionDef> done)
+        {
+            if (done == null || done.Count == 0) return;
+            var m = done[done.Count - 1];
+            _hud.Toast(Loc.T("MISSION COMPLETE:") + " " + Loc.T(m.Title) + "\n+" + m.Sp + " SP", 3f);
+            Audio.AudioManager.Play(SfxId.Fanfare, 0.7f);
+            App.SaveCareer();
         }
 
         // ------------------------------------------------------------------ keys and pads (Mac, iPad keyboards, controllers)

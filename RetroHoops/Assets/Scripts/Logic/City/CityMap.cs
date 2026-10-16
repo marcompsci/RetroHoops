@@ -21,12 +21,33 @@ namespace CallerRetroBall.Logic
         Rubber = 12,
         /// <summary>An interior wall (solid).</summary>
         Wall = 13,
+        /// <summary>17 Oct 2026: snow (the Christmas court's lawn).</summary>
+        Snow = 14,
     }
 
     public enum CityPropKind : byte
     {
         Tree = 0, Lamp = 1, Bench = 2, Hydrant = 3, Trash = 4, Car = 5, Fence = 6, Hoop = 7, Bush = 8, Bleachers = 9,
         Desk = 10, Rack = 11, Cooler = 12, Lockers = 13, Sign = 14, Cone = 15, Mailbox = 16, Planter = 17,
+        // 17 Oct 2026: court dressing and the holidays.
+        Pumpkin = 18, PineLit = 19, Snowman = 20, Egg = 21, Bunting = 22, Arcade = 23, LanternPost = 24, Stall = 25, Ramp = 26,
+    }
+
+    /// <summary>
+    /// 17 Oct 2026 (Omari): how a city court is painted, so every court looks like itself: the floor (asphalt,
+    /// hardwood, neon grid, tiles, rubber), a centre logo, and holiday dressing (candy-cane lines, cobwebs, eggs, stars).
+    /// </summary>
+    public struct CityCourtLook
+    {
+        /// <summary>A <see cref="FloorStyle"/> value; -1 = plain (asphalt outside, hardwood inside).</summary>
+        public int Floor;
+        public HolidayTheme Theme;
+        /// <summary>A painted centre logo.</summary>
+        public bool Logo;
+        /// <summary>Glow lines on the edges (neon courts).</summary>
+        public bool Neon;
+
+        public static CityCourtLook Plain => new CityCourtLook { Floor = -1 };
     }
 
     /// <summary>A building on the map: its footprint (solid), how it looks, and its door.</summary>
@@ -64,10 +85,11 @@ namespace CallerRetroBall.Logic
         public CityCourtUse Use;
         /// <summary>The hoop is at the top edge (true) or the bottom.</summary>
         public bool HoopTop = true;
+        public CityCourtLook Look = CityCourtLook.Plain;
         public bool Contains(float x, float y) => x >= X && x < X + W && y >= Y && y < Y + H;
     }
 
-    public enum CityCourtUse { Streets = 0, Park = 1, Rise = 2, Practice = 3 }
+    public enum CityCourtUse { Streets = 0, Park = 1, Rise = 2, Practice = 3, /** 17 Oct 2026: a Holiday Game court. */ Holiday = 4 }
 
     public enum CityPortalKind { Court = 0, Building = 1, District = 2, Exit = 3, Station = 4 }
 

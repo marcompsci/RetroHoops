@@ -22,6 +22,18 @@ namespace CallerRetroBall.Logic
         /// <summary>BATTERY SAVER in the city: 30 fps instead of 60.</summary>
         public bool fps30;
 
+        // 17 Oct 2026: missions and crews.
+        public List<string> missionsDone = new List<string>();
+        public List<string> crewsBeaten = new List<string>();
+        /// <summary>Courts (court ids) you've won a city game on, and the holiday ones.</summary>
+        public List<string> courtsWon = new List<string>();
+        public List<string> holidayWins = new List<string>();
+        /// <summary>People you've talked to (NPC ids).</summary>
+        public List<string> talkedTo = new List<string>();
+        public int cityGames, cityWins;
+        /// <summary>Best single-game lines in city games.</summary>
+        public int bestPoints, bestThrees, bestAssists, bestStops, bestAnkles, bestMargin;
+
         /// <summary>Puts you at a spawn (a court's gate, a door): where the next visit to the city starts.</summary>
         public void Arrive(string districtId, string spawnId)
         {

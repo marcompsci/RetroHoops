@@ -463,7 +463,7 @@ namespace CallerRetroBall.UI
                 UiControls.ChoiceRow(column, "COURT", courtNames, 0, i => courtChoice = i);
             }
 
-            var difficulties = c.Difficulties;
+            var difficulties = CityCrews.Pickable(c);
             int diffIndex = Mathf.Max(0, difficulties.FindIndex(d => d.id == App.Career.settings.difficultyId));
             var names = difficulties.ConvertAll(d => d.displayName.ToUpperInvariant()).ToArray();
             UiControls.ChoiceRow(column, "DIFFICULTY", names, diffIndex, i => diffIndex = i);

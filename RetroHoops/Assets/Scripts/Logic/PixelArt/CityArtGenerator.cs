@@ -123,6 +123,12 @@ namespace CallerRetroBall.Logic.PixelArt
                 case CityGround.Sand: return n > 0.8f ? RgbColor.FromHex("#D6BC7E") : RgbColor.FromHex("#E2C98F");
                 case CityGround.Dirt: return n > 0.85f ? RgbColor.FromHex("#7C7468") : n < 0.12f ? RgbColor.FromHex("#5F584E") : RgbColor.FromHex("#6E675C");
                 case CityGround.Rubber: return n > 0.85f ? RgbColor.FromHex("#C25E44") : RgbColor.FromHex("#B5533C");
+                case CityGround.Snow:
+                {
+                    if (n > 0.97f) return RgbColor.FromHex("#CFE3F2");
+                    if (n < 0.06f) return RgbColor.FromHex("#E4EEF6");
+                    return RgbColor.FromHex("#F4F8FB");
+                }
                 default: // interior wall, seen from above: a dark top with a lighter lip
                 {
                     bool lip = map.Get(tx, ty - 1) != CityGround.Wall && y < 3;
@@ -139,13 +145,12 @@ namespace CallerRetroBall.Logic.PixelArt
             var lines = colors?.lines ?? RgbColor.FromHex("#F2F2F2");
             var paint = colors?.paint ?? RgbColor.FromHex("#B5533C");
             int x0 = court.X * Tile, y0 = court.Y * Tile, w = court.W * Tile, h = court.H * Tile;
-            if (!indoor)
+            var look = court.Look;
+            // 17 Oct 2026: each court's own floor.
+            if (!indoor || look.Floor >= 0)
                 for (int y = 0; y < h; y++)
                     for (int x = 0; x < w; x++)
-                    {
-                        float n = Noise(x0 + x, y0 + y, 99);
-                        c.Pixels[(y0 + y) * c.Width + x0 + x] = n > 0.9f ? floor.Lighten(0.06f) : n < 0.08f ? floor.Darken(0.08f) : floor;
-                    }
+                        c.Pixels[(y0 + y) * c.Width + x0 + x] = FloorPixel(look.Floor, floor, lines, x, y, Noise(x0 + x, y0 + y, 99));
             // Paint (the key) under the hoop at the top.
             int keyW = 5 * Tile, keyH = (int)(5.8f * Tile);
             int kx = x0 + (w - keyW) / 2, ky = y0 + h - 4 - keyH;
@@ -168,6 +173,176 @@ namespace CallerRetroBall.Logic.PixelArt
             }
             // The centre circle on the half-court line at the bottom.
             Circle(c, cx, y0 + 2, 1.8f * Tile, lc, top: true);
+            if (look.Logo)
+            {
+                // A painted half-disc logo inside the centre circle, with a ring.
+                for (int y = 0; y < (int)(1.4f * Tile); y++)
+                    for (int x = -(int)(1.4f * Tile); x <= (int)(1.4f * Tile); x++)
+                        if (x * x + y * y <= (1.4f * Tile) * (1.4f * Tile))
+                            c.Set((int)cx + x, y0 + 3 + y, (x + y) % 7 == 0 ? paint.Lighten(0.25f) : paint);
+                Circle(c, cx, y0 + 3, 0.7f * Tile, lc, top: true);
+            }
+            if (look.Neon)
+            {
+                // Glow strips: a soft second line inside the boundary.
+                var glow = lines.Lighten(0.15f);
+                BlendRect(c, x0 + 4, y0 + 4, w - 8, h - 8, glow, 0.6f);
+                BlendRect(c, x0 + 5, y0 + 5, w - 10, h - 10, glow, 0.28f);
+            }
+            DrawTheme(c, look.Theme, x0, y0, w, h, kx, ky, keyW, keyH);
+        }
+
+        /// <summary>One floor pixel in a court style (x, y inside the court).</summary>
+        private static RgbColor FloorPixel(int style, RgbColor floor, RgbColor lines, int x, int y, float n)
+        {
+            switch ((FloorStyle)style)
+            {
+                case FloorStyle.Hardwood:
+                {
+                    int plank = y / 4;
+                    bool seam = y % 4 == 0 || (x + plank * 11) % 32 == 0;
+                    var wood = plank % 2 == 0 ? floor : floor.Darken(0.05f);
+                    return seam ? floor.Darken(0.2f) : (n > 0.93f ? wood.Lighten(0.06f) : wood);
+                }
+                case FloorStyle.NeonGrid:
+                {
+                    var dark = floor.Darken(0.25f);
+                    if (x % 16 == 0 || y % 16 == 0) return Blend(dark, lines, 0.35f);
+                    if (x % 16 == 1 || y % 16 == 1) return Blend(dark, lines, 0.12f);
+                    return n > 0.97f ? dark.Lighten(0.1f) : dark;
+                }
+                case FloorStyle.Tiles:
+                {
+                    bool alt = ((x / 8) + (y / 8)) % 2 == 0;
+                    if (x % 8 == 0 || y % 8 == 0) return floor.Darken(0.18f);
+                    return alt ? floor : floor.Lighten(0.07f);
+                }
+                case FloorStyle.Rubber:
+                {
+                    if (n > 0.93f) return floor.Lighten(0.22f);
+                    if (n < 0.07f) return floor.Darken(0.18f);
+                    return floor;
+                }
+                default:
+                    return n > 0.9f ? floor.Lighten(0.06f) : n < 0.08f ? floor.Darken(0.08f) : floor;
+            }
+        }
+
+        private static void BlendRect(PixelCanvas c, int x, int y, int w, int h, RgbColor col, float t)
+        {
+            void B(int px, int py)
+            {
+                if (px < 0 || py < 0 || px >= c.Width || py >= c.Height) return;
+                c.Pixels[py * c.Width + px] = Blend(c.Pixels[py * c.Width + px], col, t);
+            }
+            for (int i = 0; i < w; i++) { B(x + i, y); B(x + i, y + h - 1); }
+            for (int j = 1; j < h - 1; j++) { B(x, y + j); B(x + w - 1, y + j); }
+        }
+
+        private static RgbColor Blend(RgbColor a, RgbColor b, float t) =>
+            new RgbColor((byte)(a.r + (b.r - a.r) * t), (byte)(a.g + (b.g - a.g) * t), (byte)(a.b + (b.b - a.b) * t), 255);
+
+        /// <summary>Holiday dressing painted on a court: candy-cane lines, cobwebs, eggs, stars and stripes.</summary>
+        private static void DrawTheme(PixelCanvas c, HolidayTheme theme, int x0, int y0, int w, int h, int kx, int ky, int keyW, int keyH)
+        {
+            switch (theme)
+            {
+                case HolidayTheme.Christmas:
+                {
+                    // Candy-cane boundary and snow drifts in the corners.
+                    var red = RgbColor.FromHex("#C1121F");
+                    for (int i = 0; i < w - 4; i++)
+                        if ((i / 4) % 2 == 0) { c.Set(x0 + 2 + i, y0 + 2, red); c.Set(x0 + 2 + i, y0 + h - 3, red); }
+                    for (int j = 0; j < h - 4; j++)
+                        if ((j / 4) % 2 == 0) { c.Set(x0 + 2, y0 + 2 + j, red); c.Set(x0 + w - 3, y0 + 2 + j, red); }
+                    var snow = RgbColor.FromHex("#F4F8FB");
+                    foreach (var (cx, cy) in new[] { (x0 + 3, y0 + 3), (x0 + w - 4, y0 + 3), (x0 + 3, y0 + h - 4), (x0 + w - 4, y0 + h - 4) })
+                        for (int y = -10; y <= 10; y++)
+                            for (int x = -10; x <= 10; x++)
+                                if (x * x + y * y < 90 && Noise(cx + x, cy + y, 5) > 0.25f) c.Set(cx + x, cy + y, snow);
+                    // Snowflakes on the floor.
+                    for (int y = 6; y < h - 6; y += 13)
+                        for (int x = 6 + (y % 2) * 6; x < w - 6; x += 23)
+                            Flake(c, x0 + x, y0 + y, RgbColor.FromHex("#DDEBF5"));
+                    break;
+                }
+                case HolidayTheme.Halloween:
+                {
+                    // Cobwebs in the top corners and an orange moon in the key.
+                    var web = RgbColor.FromHex("#D9D2E9");
+                    Web(c, x0 + 3, y0 + h - 4, 1, -1, web);
+                    Web(c, x0 + w - 4, y0 + h - 4, -1, -1, web);
+                    c.FillCircle(kx + keyW / 2, ky + keyH / 2, 12, RgbColor.FromHex("#FF8C1A"));
+                    c.FillCircle(kx + keyW / 2 + 4, ky + keyH / 2 + 3, 10, RgbColor.FromHex("#5A189A"));
+                    for (int i = 0; i < 6; i++) Bat(c, x0 + 12 + i * (w - 24) / 5, y0 + 18 + (i % 2) * 10, RgbColor.FromHex("#10002B"));
+                    break;
+                }
+                case HolidayTheme.Easter:
+                {
+                    // Painted eggs and pastel dots.
+                    string[] pastel = { "#F4A6C0", "#BDE0FE", "#FFF1A8", "#B9FBC0", "#CDB4DB" };
+                    int k = 0;
+                    for (int y = 10; y < h - 10; y += 22)
+                        for (int x = 10 + (y / 22 % 2) * 11; x < w - 10; x += 26)
+                        {
+                            if (x > kx - x0 - 6 && x < kx - x0 + keyW + 6 && y > ky - y0 - 6) continue;
+                            EggShape(c, x0 + x, y0 + y, RgbColor.FromHex(pastel[k++ % pastel.Length]));
+                        }
+                    break;
+                }
+                case HolidayTheme.FourthOfJuly:
+                {
+                    // Stripes in the key, stars along the baseline.
+                    var red = RgbColor.FromHex("#C1121F");
+                    var white = RgbColor.FromHex("#F4F1DE");
+                    for (int y = 1; y < keyH - 1; y++)
+                        for (int x = 1; x < keyW - 1; x++)
+                            c.Set(kx + x, ky + y, (y / 6) % 2 == 0 ? red : white);
+                    for (int x = 10; x < w - 10; x += 18) Star(c, x0 + x, y0 + 10, RgbColor.FromHex("#F4F1DE"));
+                    for (int x = 10; x < w - 10; x += 36) Star(c, x0 + x + 9, y0 + h / 2, RgbColor.FromHex("#4CC9F0"));
+                    break;
+                }
+            }
+        }
+
+        private static void Flake(PixelCanvas c, int x, int y, RgbColor col)
+        {
+            c.Set(x, y, col);
+            for (int i = 1; i <= 2; i++) { c.Set(x + i, y, col); c.Set(x - i, y, col); c.Set(x, y + i, col); c.Set(x, y - i, col); }
+            c.Set(x + 1, y + 1, col); c.Set(x - 1, y - 1, col); c.Set(x + 1, y - 1, col); c.Set(x - 1, y + 1, col);
+        }
+
+        private static void Web(PixelCanvas c, int x, int y, int dx, int dy, RgbColor col)
+        {
+            for (int i = 0; i < 18; i++) { c.Set(x + dx * i, y, col); c.Set(x, y + dy * i, col); c.Set(x + dx * i, y + dy * i, col); }
+            for (int r = 5; r <= 15; r += 5)
+                for (int i = 0; i <= r; i++) c.Set(x + dx * i, y + dy * (r - i), col);
+        }
+
+        private static void Bat(PixelCanvas c, int x, int y, RgbColor col)
+        {
+            c.FillRect(x - 1, y, 3, 2, col);
+            c.FillRect(x - 5, y + 1, 4, 1, col);
+            c.FillRect(x + 2, y + 1, 4, 1, col);
+            c.Set(x - 5, y + 2, col);
+            c.Set(x + 5, y + 2, col);
+        }
+
+        private static void EggShape(PixelCanvas c, int x, int y, RgbColor col)
+        {
+            for (int j = -5; j <= 6; j++)
+                for (int i = -4; i <= 4; i++)
+                {
+                    float ry = j < 0 ? 5f : 6.5f;
+                    if (i * i / 16f + j * j / (ry * ry) <= 1f) c.Set(x + i, y + j, (j == 0 || j == 1) && (i + 8) % 3 != 0 ? col.Darken(0.25f) : col);
+                }
+        }
+
+        private static void Star(PixelCanvas c, int x, int y, RgbColor col)
+        {
+            c.FillRect(x - 1, y - 3, 3, 7, col);
+            c.FillRect(x - 3, y - 1, 7, 3, col);
+            c.Set(x - 2, y - 3, col); c.Set(x + 2, y - 3, col);
         }
 
         private static void Rect(PixelCanvas c, int x, int y, int w, int h, RgbColor col)
@@ -485,6 +660,15 @@ namespace CallerRetroBall.Logic.PixelArt
                     c.FillRect(0, 15, 10, 1, RgbColor.FromHex("#3C6AE8"));
                     return c;
                 }
+                case CityPropKind.Pumpkin: return Pumpkin(p.Variant, lit, out pivotX);
+                case CityPropKind.PineLit: return PineLit(p.Variant, lit, out pivotX);
+                case CityPropKind.Snowman: return Snowman(p.Variant, out pivotX);
+                case CityPropKind.Egg: return BigEgg(p.Variant, out pivotX);
+                case CityPropKind.Bunting: return Bunting(p, lit);
+                case CityPropKind.Arcade: return Arcade(p.Variant, lit, out pivotX);
+                case CityPropKind.LanternPost: return LanternPost(p.Variant, lit, out pivotX);
+                case CityPropKind.Stall: return Stall(p, lit);
+                case CityPropKind.Ramp: return Ramp(p);
                 default: // Planter
                 {
                     var c = new PixelCanvas(Tile, 18);
@@ -494,6 +678,201 @@ namespace CallerRetroBall.Logic.PixelArt
                     return c;
                 }
             }
+        }
+
+        // ------------------------------------------------------------------ 17 Oct 2026: court dressing and holidays
+
+        private static readonly string[] Bright = { "#F72585", "#4CC9F0", "#FFD166", "#7CE577", "#FF8C42", "#C74DFF" };
+
+        private static PixelCanvas Pumpkin(int variant, bool lit, out int pivotX)
+        {
+            var c = new PixelCanvas(16, 15);
+            pivotX = 0;
+            var body = RgbColor.FromHex(variant % 3 == 0 ? "#F77F00" : "#FF8C1A");
+            c.FillCircle(8, 6, 6.5f, body.Darken(0.2f));
+            c.FillCircle(5, 6, 4, body);
+            c.FillCircle(11, 6, 4, body);
+            c.FillCircle(8, 6, 4, body.Lighten(0.08f));
+            c.FillRect(7, 11, 2, 3, RgbColor.FromHex("#3E6B2A"));
+            // Carved face (glows at night).
+            var face = lit ? RgbColor.FromHex("#FFE066") : RgbColor.FromHex("#3B1F00");
+            c.Set(5, 7, face); c.Set(6, 7, face); c.Set(10, 7, face); c.Set(11, 7, face);
+            c.FillRect(5, 3, 7, 1, face);
+            c.Set(6, 4, face); c.Set(8, 4, face); c.Set(10, 4, face);
+            return c;
+        }
+
+        private static PixelCanvas PineLit(int variant, bool lit, out int pivotX)
+        {
+            var c = new PixelCanvas(26, 44);
+            pivotX = 13 - Tile / 2;
+            c.FillRect(11, 0, 4, 6, RgbColor.FromHex("#5B3A22"));
+            var green = RgbColor.FromHex("#1F6B3A");
+            var light = RgbColor.FromHex("#2E8B4A");
+            for (int tier = 0; tier < 3; tier++)
+            {
+                int baseY = 5 + tier * 10, half = 12 - tier * 3;
+                for (int y = 0; y < 14; y++)
+                {
+                    int span = half - y * half / 14;
+                    for (int x = -span; x <= span; x++) c.Set(13 + x, baseY + y, x < -span / 3 ? light : green);
+                }
+            }
+            // Snow on the tips, lights and a star.
+            for (int tier = 0; tier < 3; tier++) c.FillRect(13 - (12 - tier * 3), 5 + tier * 10, 2 * (12 - tier * 3) + 1, 1, RgbColor.FromHex("#F4F8FB"));
+            uint h = (uint)(variant * 2654435761u);
+            for (int i = 0; i < 12; i++)
+            {
+                int y = 7 + i * 2 + (int)(h >> i) % 2;
+                int span = Math.Max(1, 10 - y / 4);
+                int x = 13 + (int)((h >> (i * 2)) % (uint)(2 * span)) - span;
+                var bulb = RgbColor.FromHex(Bright[(i + variant) % Bright.Length]);
+                c.Set(x, y, lit ? bulb.Lighten(0.2f) : bulb.Darken(0.25f));
+            }
+            var star = lit ? RgbColor.FromHex("#FFE066") : RgbColor.FromHex("#E9C46A");
+            c.FillRect(12, 38, 3, 5, star);
+            c.FillRect(10, 40, 7, 1, star);
+            return c;
+        }
+
+        private static PixelCanvas Snowman(int variant, out int pivotX)
+        {
+            var c = new PixelCanvas(18, 30);
+            pivotX = 9 - Tile / 2;
+            var snow = RgbColor.FromHex("#F4F8FB");
+            var shade = RgbColor.FromHex("#C9DCEB");
+            c.FillCircle(9, 6, 6.5f, shade);
+            c.FillCircle(8, 7, 5.5f, snow);
+            c.FillCircle(9, 15, 4.8f, shade);
+            c.FillCircle(8, 16, 4f, snow);
+            c.FillCircle(9, 22, 3.6f, snow);
+            c.Set(8, 23, Outline); c.Set(10, 23, Outline);
+            c.FillRect(10, 22, 3, 1, RgbColor.FromHex("#F77F00"));
+            var scarf = RgbColor.FromHex(variant % 2 == 0 ? "#C1121F" : "#1D4ED8");
+            c.FillRect(5, 19, 8, 2, scarf);
+            c.FillRect(11, 16, 2, 3, scarf);
+            c.FillRect(6, 25, 7, 1, Outline);
+            c.FillRect(7, 26, 5, 4, Outline);
+            c.Set(9, 15, Outline); c.Set(9, 12, Outline); c.Set(9, 9, Outline);
+            return c;
+        }
+
+        private static PixelCanvas BigEgg(int variant, out int pivotX)
+        {
+            var c = new PixelCanvas(12, 15);
+            pivotX = 0;
+            string[] pastel = { "#F4A6C0", "#BDE0FE", "#FFF1A8", "#B9FBC0", "#CDB4DB" };
+            var col = RgbColor.FromHex(pastel[Math.Abs(variant) % pastel.Length]);
+            var band = RgbColor.FromHex(pastel[(Math.Abs(variant) + 2) % pastel.Length]).Darken(0.15f);
+            for (int y = 0; y < 15; y++)
+                for (int x = 0; x < 12; x++)
+                {
+                    float dx = (x + 0.5f - 6f) / 5.5f, dy = (y + 0.5f - 6f) / (y < 6 ? 6f : 8.5f);
+                    if (dx * dx + dy * dy > 1f) continue;
+                    bool zig = y == 6 + ((x / 2) % 2) || y == 7 + ((x / 2) % 2);
+                    c.Set(x, y, zig ? band : (x < 4 && y > 6 ? col.Lighten(0.2f) : col));
+                }
+            return c;
+        }
+
+        private static PixelCanvas Bunting(CityProp p, bool lit)
+        {
+            int w = Math.Max(2, p.W) * Tile;
+            var c = new PixelCanvas(w, 34);
+            var pole = RgbColor.FromHex("#6B6F78");
+            c.FillRect(1, 0, 2, 34, pole);
+            c.FillRect(w - 3, 0, 2, 34, pole);
+            string[] cols = { "#C1121F", "#F4F1DE", "#1D4ED8" };
+            for (int x = 3; x < w - 3; x++)
+            {
+                float t = (x - 3f) / (w - 6f);
+                int y = 31 - (int)(Math.Sin(t * Math.PI) * 5);
+                c.Set(x, y, Outline);
+                int k = (x - 3) / 8;
+                int inFlag = (x - 3) % 8;
+                if (inFlag < 7)
+                {
+                    int depth = 6 - Math.Abs(inFlag - 3) * 2;
+                    var flag = RgbColor.FromHex(cols[k % 3]);
+                    for (int d = 1; d <= depth; d++) c.Set(x, y - d, lit ? flag.Lighten(0.1f) : flag);
+                }
+            }
+            return c;
+        }
+
+        private static PixelCanvas Arcade(int variant, bool lit, out int pivotX)
+        {
+            var c = new PixelCanvas(16, 30);
+            pivotX = 0;
+            var body = RgbColor.FromHex(Bright[Math.Abs(variant) % Bright.Length]).Darken(0.35f);
+            c.FillRect(1, 0, 14, 27, body);
+            c.FillRect(1, 0, 2, 27, body.Darken(0.25f));
+            c.FillRect(1, 27, 14, 3, RgbColor.FromHex(Bright[(Math.Abs(variant) + 1) % Bright.Length]));
+            var screen = lit ? RgbColor.FromHex(Bright[(Math.Abs(variant) + 2) % Bright.Length]).Lighten(0.3f) : RgbColor.FromHex("#1B263B");
+            c.FillRect(3, 15, 10, 9, Outline);
+            c.FillRect(4, 16, 8, 7, screen);
+            c.FillRect(2, 10, 12, 3, RgbColor.FromHex("#2B2D42"));
+            c.Set(5, 11, RgbColor.FromHex("#D62828"));
+            c.Set(10, 11, RgbColor.FromHex("#FFD166"));
+            c.Set(11, 12, RgbColor.FromHex("#4CC9F0"));
+            return c;
+        }
+
+        private static PixelCanvas LanternPost(int variant, bool lit, out int pivotX)
+        {
+            var c = new PixelCanvas(14, 42);
+            pivotX = 7 - Tile / 2;
+            c.FillRect(6, 0, 2, 38, RgbColor.FromHex("#4E3A28"));
+            c.FillRect(2, 37, 10, 1, RgbColor.FromHex("#4E3A28"));
+            var paper = RgbColor.FromHex(variant % 3 == 0 ? "#F59E0B" : "#D62828");
+            var glow = lit ? paper.Lighten(0.35f) : paper;
+            foreach (int x in new[] { 3, 10 })
+            {
+                c.FillCircle(x, 32, 3f, glow);
+                c.FillRect(x - 2, 28, 5, 1, Outline);
+                c.FillRect(x - 2, 35, 5, 1, Outline);
+                c.Set(x, 27, RgbColor.FromHex("#FFD166"));
+            }
+            return c;
+        }
+
+        private static PixelCanvas Stall(CityProp p, bool lit)
+        {
+            int w = Math.Max(2, p.W) * Tile;
+            var c = new PixelCanvas(w, 34);
+            var wood = RgbColor.FromHex("#8B5A2B");
+            c.FillRect(1, 0, 2, 26, wood);
+            c.FillRect(w - 3, 0, 2, 26, wood);
+            c.FillRect(0, 6, w, 8, wood.Darken(0.15f));
+            c.FillRect(0, 13, w, 2, wood.Lighten(0.15f));
+            // Goods on the counter.
+            for (int x = 4; x < w - 4; x += 5) c.FillCircle(x, 17, 2, RgbColor.FromHex(Bright[(x / 5 + p.Variant) % Bright.Length]));
+            // Striped awning.
+            var a = RgbColor.FromHex(Bright[Math.Abs(p.Variant) % Bright.Length]);
+            var b = RgbColor.FromHex("#F4F1DE");
+            for (int y = 24; y < 33; y++)
+                for (int x = 0; x < w; x++)
+                    c.Set(x, y, (x / 4) % 2 == 0 ? a : b);
+            for (int x = 0; x < w; x += 4) c.FillRect(x, 22, 2, 2, (x / 4) % 2 == 0 ? a : b);
+            if (lit) c.FillRect(2, 21, w - 4, 1, RgbColor.FromHex("#FFE8A3"));
+            return c;
+        }
+
+        private static PixelCanvas Ramp(CityProp p)
+        {
+            int w = Math.Max(1, p.W) * Tile;
+            var c = new PixelCanvas(w, 16);
+            bool left = p.Variant == 0;
+            var face = RgbColor.FromHex("#9AA0A6");
+            var dark = RgbColor.FromHex("#6B6F78");
+            for (int x = 0; x < w; x++)
+            {
+                int t = left ? x : w - 1 - x;
+                int top = 2 + (int)(12 * Math.Pow(t / (float)(w - 1), 2));
+                for (int y = 0; y < top; y++) c.Set(x, y, y == top - 1 ? RgbColor.FromHex("#D9D9D9") : (y % 4 == 0 ? dark : face));
+            }
+            c.FillRect(left ? w - 2 : 0, 0, 2, 15, RgbColor.FromHex("#3A3A48")); // coping
+            return c;
         }
 
         private static PixelCanvas Tree(int variant, out int pivotX, out int pivotY)

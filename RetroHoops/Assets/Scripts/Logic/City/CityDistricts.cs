@@ -24,12 +24,16 @@ namespace CallerRetroBall.Logic
         public const string FirstCallers = "first_callers";
         public const string Blacktop = "blacktop";
         public const string Gym = "baller_gym";
+        public const string HoopHeights = "hoop_heights";
+        public const string HolidayPark = "holiday_park";
 
         public static readonly CityDistrictDefinition[] All =
         {
             new CityDistrictDefinition { Id = FirstCallers, Name = "FIRST CALLERS NEIGHBORHOOD", Blurb = "Home, the crew's HQ and the Baller Gym.", Build = BuildFirstCallers },
             new CityDistrictDefinition { Id = Blacktop, Name = "BLACKTOP DISTRICT", Blurb = "Street courts, crews and spectators.", Build = BuildBlacktop },
             new CityDistrictDefinition { Id = Gym, Name = "BALLER GYM", Blurb = "Practice Lab, the Halloween court and the locker room.", Interior = true, Build = BuildGym },
+            new CityDistrictDefinition { Id = HoopHeights, Name = "HOOP HEIGHTS", Blurb = "Six courts, six looks, and the best crews in the city.", Build = BuildHoopHeights },
+            new CityDistrictDefinition { Id = HolidayPark, Name = "HOLIDAY PARK", Blurb = "A court for every holiday, open all year.", Build = BuildHolidayPark },
         };
 
         public static CityDistrictDefinition Find(string id) => Array.Find(All, d => d.Id == id);
@@ -108,10 +112,10 @@ namespace CallerRetroBall.Logic
         /// hangout spot for the crowd beside it.
         /// </summary>
         private static CityCourt Court(CityMap m, string id, string courtId, string name, int x, int y, int w, int h, CityCourtUse use,
-                                       CityGround floor = CityGround.Asphalt)
+                                       CityGround floor = CityGround.Asphalt, CityCourtLook? look = null)
         {
             m.Fill(x, y, w, h, floor);
-            var court = new CityCourt { Id = id, CourtId = courtId, Name = name, X = x, Y = y, W = w, H = h, Use = use };
+            var court = new CityCourt { Id = id, CourtId = courtId, Name = name, X = x, Y = y, W = w, H = h, Use = use, Look = look ?? CityCourtLook.Plain };
             m.Courts.Add(court);
             m.AddProp(CityPropKind.Hoop, x + w / 2, y + h - 1, 1, 1, true);
             m.Portals.Add(new CityPortal
@@ -171,7 +175,8 @@ namespace CallerRetroBall.Logic
             Trees(m, 34, 24, 34, 30, 30, 42, 20, 42);
 
             // SW: the First Callers' home court.
-            var court = Court(m, "court.first_callers", "court.first_callers_home", "FIRST CALLERS COURT", 2, 3, 11, 10, CityCourtUse.Rise);
+            var court = Court(m, "court.first_callers", "court.first_callers_home", "FIRST CALLERS COURT", 2, 3, 11, 10, CityCourtUse.Rise,
+                              look: new CityCourtLook { Floor = -1, Logo = true });
             Fence(m, 1, 2, 13, true, 5, 3);
             Fence(m, 1, 13, 13, true);
             Fence(m, 1, 3, 10, false);
@@ -201,7 +206,14 @@ namespace CallerRetroBall.Logic
             m.Portals.Add(new CityPortal { Id = "road.blacktop", Kind = CityPortalKind.District, Label = "TO BLACKTOP DISTRICT", Target = Blacktop,
                                            TargetSpawn = "from_first_callers", X = 34.6f, Y = 17, W = 1.4f, H = 6 });
 
+            // 17 Oct 2026: up the avenue to Hoop Heights, down it to Holiday Park.
+            m.Portals.Add(new CityPortal { Id = "road.heights", Kind = CityPortalKind.District, Label = "TO HOOP HEIGHTS", Target = HoopHeights,
+                                           TargetSpawn = "from_first_callers", X = 16, Y = 42.6f, W = 4, H = 1.4f });
+            m.Portals.Add(new CityPortal { Id = "road.holiday", Kind = CityPortalKind.District, Label = "TO HOLIDAY PARK", Target = HolidayPark,
+                                           TargetSpawn = "from_first_callers", X = 16, Y = 0, W = 4, H = 1.4f });
             m.AddSpawn("home", 5.5f, 33.2f, 0);
+            m.AddSpawn("from_heights", 17.5f, 40.8f, 0);
+            m.AddSpawn("from_holiday", 17.5f, 2.8f, 1);
             m.AddSpawn("hq", 7.5f, 24.6f, 0);
             m.AddSpawn("gym.door", 27.5f, 30.4f, 0);
             m.AddSpawn("court.first_callers", 7.5f, 1.2f, 1);
@@ -230,7 +242,8 @@ namespace CallerRetroBall.Logic
             m.Fill(0, 41, 48, 1, CityGround.Sidewalk);
 
             // SW: Sunset Cage (fully fenced, one gate).
-            Court(m, "court.sunset_cage", "court.sunset_cage", "SUNSET CAGE", 3, 3, 13, 11, CityCourtUse.Streets);
+            Court(m, "court.sunset_cage", "court.sunset_cage", "SUNSET CAGE", 3, 3, 13, 11, CityCourtUse.Streets,
+                  look: new CityCourtLook { Floor = (int)FloorStyle.Rubber, Logo = true });
             Fence(m, 2, 2, 15, true, 6, 3);
             Fence(m, 2, 14, 15, true);
             Fence(m, 2, 3, 11, false);
@@ -248,14 +261,16 @@ namespace CallerRetroBall.Logic
             m.Hangouts["court.overpass_park.side"] = new Vec2(28.5f, 10f);
 
             // NW: Static Lot (a car-park court) with parked cars.
-            Court(m, "court.static_lot", "court.static_lot", "STATIC LOT", 3, 26, 12, 10, CityCourtUse.Streets);
+            Court(m, "court.static_lot", "court.static_lot", "STATIC LOT", 3, 26, 12, 10, CityCourtUse.Streets,
+                  look: new CityCourtLook { Floor = (int)FloorStyle.Tiles });
             m.AddProp(CityPropKind.Car, 16, 30, 2, 1, true, 3);
             m.AddProp(CityPropKind.Car, 16, 27, 2, 1, true, 4);
             m.AddProp(CityPropKind.Lamp, 2, 37, 1, 1, true);
             m.Hangouts["court.static_lot.side"] = new Vec2(17f, 34f);
 
             // NE: Pier Nine, out on the boardwalk.
-            Court(m, "court.pier_nine", "court.pier_nine", "PIER NINE", 31, 27, 13, 11, CityCourtUse.Streets);
+            Court(m, "court.pier_nine", "court.pier_nine", "PIER NINE", 31, 27, 13, 11, CityCourtUse.Streets,
+                  look: new CityCourtLook { Floor = (int)FloorStyle.Hardwood, Logo = true });
             m.Fill(30, 26, 15, 1, CityGround.Pier);
             m.Fill(30, 38, 15, 3, CityGround.Pier);
             Fence(m, 30, 39, 15, true, 6, 3);
@@ -350,6 +365,156 @@ namespace CallerRetroBall.Logic
             m.Hangouts["gym.floor"] = new Vec2(12f, 16f);
             m.Hangouts["gym.lobby"] = new Vec2(8f, 5f);
             m.Hangouts["gym.bleachers"] = new Vec2(4f, 12f);
+            return m;
+        }
+
+        // ------------------------------------------------------------------ Hoop Heights (52 × 72)
+
+        /// <summary>17 Oct 2026 (Omari): six courts, each with its own look, up the avenue from First Callers.</summary>
+        private static CityMap BuildHoopHeights()
+        {
+            var m = new CityMap(HoopHeights, 52, 72, CityGround.Sidewalk);
+            HRoad(m, 27);
+            HRoad(m, 50);
+            VRoad(m, 24);
+            Crossings(m, 24, 27);
+            Crossings(m, 24, 50);
+
+            // Row 1 west: Coin-Op Court, a neon grid between the arcade cabinets and the laundromat.
+            m.Fill(1, 3, 21, 15, CityGround.Asphalt);
+            Court(m, "court.coin_op", "court.coin_op", "COIN-OP COURT", 4, 6, 13, 11, CityCourtUse.Streets,
+                  look: new CityCourtLook { Floor = (int)FloorStyle.NeonGrid, Neon = true, Logo = true });
+            m.AddBuilding(new CityBuilding { Id = "laundromat", Name = "COIN LAUNDRY", X = 4, Y = 19, W = 13, H = 5, Style = 4, Sign = "OPEN 24 HOURS", Seed = 31 });
+            foreach (int y in new[] { 7, 10, 13 }) m.AddProp(CityPropKind.Arcade, 2, y, 1, 1, true, y);
+            foreach (int y in new[] { 7, 10, 13 }) m.AddProp(CityPropKind.Arcade, 18, y, 1, 1, true, y + 1);
+            m.AddProp(CityPropKind.Lamp, 1, 17, 1, 1, true);
+            m.AddProp(CityPropKind.Lamp, 20, 17, 1, 1, true);
+            m.Hangouts["court.coin_op.side"] = new Vec2(20.5f, 11f);
+
+            // Row 1 east: Skate Bowl, ramps all round the deep end.
+            Court(m, "court.skate_bowl", "court.skate_bowl", "SKATE BOWL", 34, 6, 13, 11, CityCourtUse.Streets,
+                  look: new CityCourtLook { Floor = (int)FloorStyle.Tiles, Logo = true });
+            m.AddProp(CityPropKind.Ramp, 31, 7, 2, 1, true, 0);
+            m.AddProp(CityPropKind.Ramp, 31, 12, 2, 1, true, 0);
+            m.AddProp(CityPropKind.Ramp, 48, 7, 2, 1, true, 1);
+            m.AddProp(CityPropKind.Ramp, 48, 12, 2, 1, true, 1);
+            m.AddProp(CityPropKind.Bench, 36, 19, 2, 1, true);
+            m.AddProp(CityPropKind.Bench, 42, 19, 2, 1, true);
+            Trees(m, 31, 20, 49, 20, 50, 2, 30, 2);
+            m.Hangouts["court.skate_bowl.side"] = new Vec2(32f, 17.5f);
+
+            // Row 2 west: Lantern Market, tiles under the paper lanterns.
+            Court(m, "court.lantern_market", "court.lantern_market", "LANTERN MARKET", 4, 34, 13, 11, CityCourtUse.Streets,
+                  look: new CityCourtLook { Floor = (int)FloorStyle.Tiles, Logo = true });
+            foreach (int y in new[] { 35, 39, 43 }) { m.AddProp(CityPropKind.LanternPost, 2, y, 1, 1, true, y); m.AddProp(CityPropKind.LanternPost, 18, y, 1, 1, true, y + 1); }
+            m.AddProp(CityPropKind.Stall, 4, 46, 3, 1, true, 0);
+            m.AddProp(CityPropKind.Stall, 9, 46, 3, 1, true, 1);
+            m.AddProp(CityPropKind.Stall, 14, 46, 3, 1, true, 2);
+            m.Hangouts["court.lantern_market.side"] = new Vec2(20.5f, 40f);
+
+            // Row 2 east: Night Market, the stalls after closing.
+            Court(m, "court.night_market", "court.night_market", "NIGHT MARKET", 33, 34, 13, 11, CityCourtUse.Streets,
+                  look: new CityCourtLook { Floor = -1, Logo = true });
+            m.AddProp(CityPropKind.Stall, 48, 35, 3, 1, true, 3);
+            m.AddProp(CityPropKind.Stall, 48, 40, 3, 1, true, 4);
+            m.AddProp(CityPropKind.Stall, 34, 46, 3, 1, true, 5);
+            m.AddProp(CityPropKind.Stall, 42, 46, 3, 1, true, 0);
+            foreach (int y in new[] { 36, 42 }) m.AddProp(CityPropKind.LanternPost, 31, y, 1, 1, true, y);
+            m.Hangouts["court.night_market.side"] = new Vec2(30.5f, 39f);
+
+            // Row 3 west: Rooftop Ring, a fenced deck with a parapet.
+            m.Fill(2, 56, 17, 15, CityGround.Tile);
+            Court(m, "court.rooftop_ring", "court.rooftop_ring", "ROOFTOP RING", 4, 58, 13, 11, CityCourtUse.Streets,
+                  look: new CityCourtLook { Floor = -1, Logo = true });
+            Fence(m, 2, 70, 17, true);
+            Fence(m, 2, 56, 17, true, 7, 3);
+            Fence(m, 2, 57, 13, false);
+            Fence(m, 18, 57, 13, false);
+            m.AddProp(CityPropKind.Lamp, 0, 57, 1, 1, true);
+            m.AddProp(CityPropKind.Cooler, 20, 66, 1, 1, true);
+            m.Hangouts["court.rooftop_ring.side"] = new Vec2(21f, 62f);
+
+            // Row 3 east: Starlight Rink, maple with neon edges and a mirror-ball glow.
+            Court(m, "court.starlight_rink", "court.starlight_rink", "STARLIGHT RINK", 33, 58, 13, 11, CityCourtUse.Streets,
+                  look: new CityCourtLook { Floor = (int)FloorStyle.Hardwood, Neon = true, Logo = true });
+            m.AddProp(CityPropKind.Bleachers, 47, 59, 1, 8, true);
+            m.AddProp(CityPropKind.Lamp, 31, 57, 1, 1, true);
+            m.AddProp(CityPropKind.Lamp, 31, 69, 1, 1, true);
+            m.Hangouts["court.starlight_rink.side"] = new Vec2(30.5f, 63f);
+
+            foreach (int y in new[] { 25, 32, 48, 55 }) { m.AddProp(CityPropKind.Lamp, 21, y, 1, 1, true); m.AddProp(CityPropKind.Lamp, 30, y, 1, 1, true); }
+            m.Portals.Add(new CityPortal { Id = "road.first_callers", Kind = CityPortalKind.District, Label = "TO FIRST CALLERS", Target = FirstCallers,
+                                           TargetSpawn = "from_heights", X = 24, Y = 0, W = 4, H = 1.4f });
+            m.AddSpawn("from_first_callers", 25.5f, 2.6f, 1);
+            m.AddSpawn("court.coin_op", 10.5f, 4.6f, 1);
+            m.AddSpawn("court.skate_bowl", 40.5f, 4.6f, 1);
+            m.AddSpawn("court.lantern_market", 10.5f, 32.8f, 1);
+            m.AddSpawn("court.night_market", 39.5f, 32.8f, 1);
+            m.AddSpawn("court.rooftop_ring", 10.5f, 55.2f, 1);
+            m.AddSpawn("court.starlight_rink", 39.5f, 56.8f, 1);
+            m.Hangouts["plaza.south"] = new Vec2(22f, 8f);
+            m.Hangouts["plaza.north"] = new Vec2(29.5f, 60f);
+            return m;
+        }
+
+        // ------------------------------------------------------------------ Holiday Park (44 × 48)
+
+        /// <summary>17 Oct 2026 (Omari): the four Holiday Game courts, dressed for their holiday, open all year.</summary>
+        private static CityMap BuildHolidayPark()
+        {
+            var m = new CityMap(HolidayPark, 44, 48, CityGround.Grass);
+            HRoad(m, 22);
+            VRoad(m, 20);
+            Crossings(m, 20, 22);
+
+            // NW: Candy Cane Court in the snow, with lit trees and snowmen.
+            m.Fill(0, 27, 19, 21, CityGround.Snow);
+            Court(m, "court.holiday_christmas", Holidays.ChristmasCourtId, "CANDY CANE COURT", 3, 31, 13, 11, CityCourtUse.Holiday,
+                  look: new CityCourtLook { Floor = -1, Theme = HolidayTheme.Christmas, Logo = true });
+            foreach (var (x, y) in new[] { (1, 44), (17, 44), (1, 33), (17, 37) }) m.AddProp(CityPropKind.PineLit, x, y, 1, 1, true, x + y);
+            m.AddProp(CityPropKind.Snowman, 17, 30, 1, 1, true);
+            m.AddProp(CityPropKind.Snowman, 1, 29, 1, 1, true, 1);
+            m.Fill(9, 27, 2, 4, CityGround.Sidewalk);
+            m.Hangouts["court.holiday_christmas.side"] = new Vec2(17.5f, 41f);
+
+            // NE: Pumpkin Patch Court under the bare trees.
+            m.Fill(25, 27, 19, 21, CityGround.Dirt);
+            Court(m, "court.holiday_halloween", Holidays.HalloweenCourtId, "PUMPKIN PATCH COURT", 28, 31, 13, 11, CityCourtUse.Holiday,
+                  look: new CityCourtLook { Floor = -1, Theme = HolidayTheme.Halloween, Logo = true });
+            foreach (var (x, y) in new[] { (26, 30), (42, 30), (26, 37), (42, 36), (30, 44), (38, 44), (34, 45) }) m.AddProp(CityPropKind.Pumpkin, x, y, 1, 1, true, x * 3 + y);
+            m.AddProp(CityPropKind.LanternPost, 26, 43, 1, 1, true, 7);
+            m.AddProp(CityPropKind.LanternPost, 42, 43, 1, 1, true, 8);
+            m.Fill(34, 27, 2, 4, CityGround.Sidewalk);
+            m.Hangouts["court.holiday_halloween.side"] = new Vec2(26.5f, 40f);
+
+            // SW: Egg Hunt Court in the spring grass.
+            Court(m, "court.holiday_easter", Holidays.EasterCourtId, "EGG HUNT COURT", 3, 5, 13, 11, CityCourtUse.Holiday,
+                  look: new CityCourtLook { Floor = (int)FloorStyle.Rubber, Theme = HolidayTheme.Easter, Logo = true });
+            foreach (var (x, y) in new[] { (1, 4), (17, 6), (1, 12), (17, 13), (6, 18), (12, 18), (15, 2) }) m.AddProp(CityPropKind.Egg, x, y, 1, 1, false, x + y);
+            m.AddProp(CityPropKind.Bush, 1, 8, 1, 1, true);
+            m.AddProp(CityPropKind.Bush, 17, 9, 1, 1, true);
+            Trees(m, 2, 19, 16, 19);
+            m.Hangouts["court.holiday_easter.side"] = new Vec2(17.5f, 16f);
+
+            // SE: Firework Court on the plaza, bunting over both ends.
+            m.Fill(25, 0, 19, 21, CityGround.Sidewalk);
+            Court(m, "court.holiday_fourth", Holidays.FourthCourtId, "FIREWORK COURT", 28, 5, 13, 11, CityCourtUse.Holiday,
+                  look: new CityCourtLook { Floor = (int)FloorStyle.Tiles, Theme = HolidayTheme.FourthOfJuly, Logo = true });
+            m.AddProp(CityPropKind.Bunting, 27, 18, 15, 1, false, 0);
+            m.AddProp(CityPropKind.Bunting, 27, 2, 15, 1, false, 1);
+            m.AddProp(CityPropKind.Bench, 26, 8, 1, 2, true);
+            m.AddProp(CityPropKind.Bench, 42, 8, 1, 2, true);
+            m.Hangouts["court.holiday_fourth.side"] = new Vec2(25.5f, 13f);
+
+            foreach (int x in new[] { 4, 14, 28, 38 }) { m.AddProp(CityPropKind.Lamp, x, 20, 1, 1, true); m.AddProp(CityPropKind.Lamp, x, 27, 1, 1, true); }
+            m.Portals.Add(new CityPortal { Id = "road.first_callers", Kind = CityPortalKind.District, Label = "TO FIRST CALLERS", Target = FirstCallers,
+                                           TargetSpawn = "from_holiday", X = 20, Y = 46.6f, W = 4, H = 1.4f });
+            m.AddSpawn("from_first_callers", 21.5f, 45f, 0);
+            m.AddSpawn("court.holiday_christmas", 9.5f, 29.2f, 1);
+            m.AddSpawn("court.holiday_halloween", 34.5f, 29.2f, 1);
+            m.AddSpawn("court.holiday_easter", 9.5f, 3.2f, 1);
+            m.AddSpawn("court.holiday_fourth", 34.5f, 3.2f, 1);
+            m.Hangouts["park.center"] = new Vec2(21.5f, 35f);
             return m;
         }
 

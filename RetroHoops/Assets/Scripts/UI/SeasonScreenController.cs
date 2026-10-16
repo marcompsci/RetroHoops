@@ -171,7 +171,7 @@ namespace CallerRetroBall.UI
             UiKit.Size(UiKit.Label(_content, "With " + string.Join(" & ", mates.ConvertAll(m => m.DisplayName)) +
                                    "  ·  " + CrewEngine.Pool(career, c).Count + " players available", 28f, Theme.Muted), 50f);
 
-            var diffs = c.Difficulties;
+            var diffs = CityCrews.Pickable(c);
             int di = Mathf.Max(0, diffs.FindIndex(d => d.id == career.settings.difficultyId));
             UiControls.ChoiceRow(_content, "DIFFICULTY", diffs.ConvertAll(d => d.displayName.ToUpperInvariant()).ToArray(), di, i =>
             {

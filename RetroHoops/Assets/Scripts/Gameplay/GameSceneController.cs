@@ -2451,6 +2451,16 @@ namespace CallerRetroBall.Gameplay
                         }
                     }
                 }
+                // 17 Oct 2026: BALLER CITY: crews beaten and missions done by a game started in the city.
+                if (rewarded && CityDistricts.TryParseReturn(_request.ReturnTo, out _, out _))
+                {
+                    var cityResult = CityMissions.ApplyGame(App.Career, _request, summary.HumanWon, summary.Margin, summary.HumanLine?.stats);
+                    if (cityResult.Crew != null && summary.HumanWon) title = cityResult.Crew.Name + " " + Loc.T("DOWN");
+                    else if (!summary.HumanWon && CityCrews.FromContext(_request.ContextId) is CityCrewDef lost) title = lost.Name + " " + Loc.T("WINS");
+                    string cityNote = cityResult.Note();
+                    if (!string.IsNullOrEmpty(cityNote)) note = string.IsNullOrEmpty(note) ? cityNote : note + "\n" + cityNote;
+                    if (cityResult.Completed.Count > 0 || cityResult.CrewFirstWin) Sfx(SfxId.Fanfare);
+                }
                 var street = Street.FromContext(_request.ContextId);
                 if (rewarded && street != null)
                 {

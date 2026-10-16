@@ -50,12 +50,30 @@ namespace CallerRetroBall.Logic
                 return list;
             }
 
+            // 17 Oct 2026: a holiday court plays its Holiday Game (and its crew) instead of pickup.
+            if (court.Use == CityCourtUse.Holiday)
+            {
+                var h = Holidays.All.Find(x => x.CourtId == court.CourtId);
+                var mine = Secrets.PlayableTeams(c, career.secrets);
+                var theirs = Secrets.OpponentTeams(c, career.secrets);
+                if (h != null && mine.Count > 0 && theirs.Count > 0)
+                {
+                    var opp = theirs[(int)(StableHash.Of(court.Id + ":" + day) % (uint)theirs.Count)];
+                    list.Add(new CityActivity { Label = Loc.T("HOLIDAY GAME"), Primary = true,
+                                                Detail = h.Name + "  ·  " + Loc.T("vs") + " " + opp.FullName.ToUpperInvariant(),
+                                                Request = Tag(Holidays.Request(h.Theme, mine[0].id, opp.id, diff), back) });
+                }
+                AddCrew(list, court, career, c, back);
+                return list;
+            }
+
             // A street court: pickup against today's crew, plus anything the court's legends and tour crews offer.
             var opponents = Streets.Opponents(c);
             if (opponents.Count > 0)
             {
                 var opp = opponents[(int)(StableHash.Of(court.Id + ":" + day) % (uint)opponents.Count)];
                 var pickup = Streets.Pickup(c, career, opp.id, court.CourtId);
+                if (c.Court(court.CourtId) != null) pickup.CourtId = court.CourtId; // played right here, whatever court this is
                 list.Add(new CityActivity
                 {
                     Label = "PICKUP 3 ON 3", Primary = true,
@@ -63,6 +81,8 @@ namespace CallerRetroBall.Logic
                     Request = Tag(pickup, back),
                 });
             }
+
+            AddCrew(list, court, career, c, back);
 
             var s = career.streets;
             if (s != null && StreetsHome.Claimed(s) && s.homeCourt == court.CourtId)
@@ -172,6 +192,12 @@ namespace CallerRetroBall.Logic
                         : new CityActivity { Label = "CHALLENGE", Locked = "Reach " + Street.RepNames[Math.Min(Street.RepNames.Length - 1, ch.Tier)] + " rep in THE PARK." });
                     break;
                 }
+                case CityNpcRole.Crew:
+                {
+                    var a = ForCrewMember(map, npc, career, c, back);
+                    if (a != null) list.Add(a);
+                    break;
+                }
                 case CityNpcRole.TourLeader:
                 {
                     var stop = StreetsTour.Find(npc.Ref);
@@ -183,6 +209,36 @@ namespace CallerRetroBall.Logic
                 }
             }
             return list;
+        }
+
+        /// <summary>17 Oct 2026: the court's CPU crew (BALLER or LEGENDARY), if it has one.</summary>
+        private static void AddCrew(List<CityActivity> list, CityCourt court, CareerSaveData career, ContentCatalog c, string back)
+        {
+            var crew = CityCrews.AtCourt(court.CourtId);
+            if (crew == null) return;
+            string label = Loc.T("CREW:") + " " + crew.Name;
+            string locked = CityCrews.LockedReason(career.city, crew);
+            bool beaten = career.city != null && career.city.crewsBeaten.Contains(crew.Id);
+            list.Add(locked != null
+                ? new CityActivity { Label = label, Locked = locked }
+                : new CityActivity
+                {
+                    Label = label,
+                    Detail = Loc.T(crew.Style) + "  ·  " + Loc.T(crew.TierName) + "  ·  " + Loc.T(crew.StyleBlurb) + (beaten ? "  ·  " + Loc.T("BEATEN") : ""),
+                    Request = Tag(CityCrews.Challenge(c, career, crew), back),
+                });
+        }
+
+        /// <summary>17 Oct 2026: calling out a crew member you meet in the city.</summary>
+        public static CityActivity ForCrewMember(CityMap map, CityNpc npc, CareerSaveData career, ContentCatalog c, string back)
+        {
+            var crew = CityCrews.Find(npc.Ref);
+            if (crew == null) return null;
+            string locked = CityCrews.LockedReason(career.city, crew);
+            return locked != null
+                ? new CityActivity { Label = "CHALLENGE", Locked = locked }
+                : new CityActivity { Label = "CHALLENGE", Primary = true, Detail = crew.Name + "  ·  " + Loc.T(crew.Style) + "  ·  " + Loc.T(crew.TierName),
+                                     Request = Tag(CityCrews.Challenge(c, career, crew), back) };
         }
 
         private static MatchRequest Tag(MatchRequest r, string back)

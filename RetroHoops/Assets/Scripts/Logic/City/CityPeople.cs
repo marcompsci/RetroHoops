@@ -3,7 +3,7 @@ using System.Collections.Generic;
 
 namespace CallerRetroBall.Logic
 {
-    public enum CityNpcRole { Teammate = 0, Rival = 1, Legend = 2, TourLeader = 3 }
+    public enum CityNpcRole { Teammate = 0, Rival = 1, Legend = 2, TourLeader = 3, /** 17 Oct 2026: a CPU crew member. */ Crew = 4 }
 
     /// <summary>Someone who lives in Baller City: a real player from the game (your crew, the rival crew, legends).</summary>
     public sealed class CityNpc
@@ -74,6 +74,21 @@ namespace CallerRetroBall.Logic
                 if (p != null)
                     list.Add(new CityNpc { Id = "legend." + ch.Id, Player = p, Team = team, Role = CityNpcRole.Legend, Ref = ch.Id,
                                            Haunts = new[] { spot, spot + ".side", "blacktop/pier.rail" } });
+            }
+
+            // 17 Oct 2026: the CPU crews, three to a court.
+            foreach (var crew in CityCrews.All)
+            {
+                string spot = CourtSpot(crew.CourtId);
+                if (spot == null) continue;
+                var team = CityCrews.Register(c, crew);
+                for (int k = 0; k < team.rosterPlayerIds.Count; k++)
+                {
+                    var p = c.Player(team.rosterPlayerIds[k]);
+                    if (p != null)
+                        list.Add(new CityNpc { Id = "crew." + crew.Id + "." + k, Player = p, Team = team, Role = CityNpcRole.Crew, Ref = crew.Id,
+                                               Haunts = k == 2 ? new[] { spot, spot + ".side" } : new[] { spot, spot, spot + ".side" } });
+                }
             }
 
             var streets = d?.streets;
@@ -310,6 +325,14 @@ namespace CallerRetroBall.Logic
                 {
                     var ch = Street.Find(npc.Ref);
                     return ch != null ? "\"" + ch.Trash + "\"" : "Who's next?";
+                }
+                case CityNpcRole.Crew:
+                {
+                    var crew = CityCrews.Find(npc.Ref);
+                    if (crew == null) return "This court is ours.";
+                    bool beaten = d?.city != null && d.city.crewsBeaten.Contains(crew.Id);
+                    if (beaten) return h % 2 == 0 ? "Alright, you got us once. Run it back?" : "Respect. " + crew.Name + " don't forget.";
+                    return h % 2 == 0 ? "\"" + crew.Trash + "\"" : crew.Name + ". " + crew.StyleBlurb;
                 }
                 default:
                 {

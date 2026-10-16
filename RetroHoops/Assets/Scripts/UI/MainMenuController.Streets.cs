@@ -114,7 +114,7 @@ namespace CallerRetroBall.UI
             if (courts.Count > 0)
                 UiControls.ChoiceRow(column, "COURT", courts.ConvertAll(k => k.displayName.ToUpperInvariant()).ToArray(), court, i => court = i);
 
-            var difficulties = c.Difficulties;
+            var difficulties = CityCrews.Pickable(c);
             int diff = Mathf.Max(0, difficulties.FindIndex(d => d.id == career.settings.difficultyId));
             UiControls.ChoiceRow(column, "DIFFICULTY", difficulties.ConvertAll(d => d.displayName.ToUpperInvariant()).ToArray(), diff, i => diff = i);
             UiKit.Size(UiKit.Label(column, "Touch: TRICK (where CALL usually is) and SHOWSTOPPER when your meter is full.\nKeyboard: C trick · V showstopper",

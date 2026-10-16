@@ -69,7 +69,10 @@ namespace CallerRetroBall.Tests
         [Test]
         public void ThreeDifficulties_InOrder_AndNoneBoostMovement()
         {
-            Assert.AreEqual(3, _catalog.Difficulties.Count);
+            Assert.AreEqual(5, _catalog.Difficulties.Count); // 17 Oct 2026: + BALLER and LEGENDARY (city crews)
+            Assert.AreEqual(3, CityCrews.Pickable(_catalog).Count);
+            Assert.AreEqual("Baller", _catalog.Difficulties[3].displayName);
+            Assert.AreEqual("Legendary", _catalog.Difficulties[4].displayName);
             Assert.AreEqual("Rookie", _catalog.Difficulties[0].displayName);
             Assert.AreEqual("Caller", _catalog.Difficulties[1].displayName);
             Assert.AreEqual("Legend", _catalog.Difficulties[2].displayName);

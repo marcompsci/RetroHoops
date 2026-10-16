@@ -119,10 +119,22 @@ namespace CallerRetroBall.City
             var glow = MakeSprite(CityArtGenerator.Glow(40), "city.glow", new Vector2(0.5f, 0.5f));
             foreach (var p in Map.Props)
             {
-                if (p.Kind != CityPropKind.Lamp) continue;
+                // Streetlights, paper lanterns, arcade screens, Christmas trees and jack-o'-lanterns all light up.
+                float size, height;
+                Color tint;
+                switch (p.Kind)
+                {
+                    case CityPropKind.Lamp: size = 1f; height = 1.2f; tint = new Color(1f, 0.85f, 0.5f, 0f); break;
+                    case CityPropKind.LanternPost: size = 0.7f; height = 1.0f; tint = new Color(1f, 0.55f, 0.3f, 0f); break;
+                    case CityPropKind.Arcade: size = 0.45f; height = 0.7f; tint = new Color(0.5f, 0.9f, 1f, 0f); break;
+                    case CityPropKind.PineLit: size = 0.8f; height = 1.2f; tint = new Color(1f, 0.9f, 0.6f, 0f); break;
+                    case CityPropKind.Pumpkin: size = 0.35f; height = 0.4f; tint = new Color(1f, 0.6f, 0.2f, 0f); break;
+                    default: continue;
+                }
                 var g = NewRenderer("Glow", glow);
-                g.transform.localPosition = new Vector3(p.X + 0.5f, p.Y + 1.2f, 0f);
-                g.color = new Color(1f, 0.85f, 0.5f, 0f);
+                g.transform.localPosition = new Vector3(p.X + 0.5f, p.Y + height, 0f);
+                g.transform.localScale = new Vector3(size, size, 1f);
+                g.color = tint;
                 g.sortingOrder = 30001;
                 _glows.Add(g);
             }

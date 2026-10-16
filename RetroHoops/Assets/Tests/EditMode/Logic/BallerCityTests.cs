@@ -16,7 +16,7 @@ namespace CallerRetroBall.Tests
         [Test]
         public void EveryDistrict_HasWalkableSpawns_AndEverythingInBounds()
         {
-            Assert.AreEqual(3, CityDistricts.All.Length);
+            Assert.AreEqual(5, CityDistricts.All.Length);
             foreach (var def in CityDistricts.All)
             {
                 var m = CityDistricts.Map(def.Id);

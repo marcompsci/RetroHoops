@@ -139,7 +139,7 @@ namespace CallerRetroBall.UI
             });
 
             Header(column, "GAME");
-            var diffs = c.Difficulties;
+            var diffs = CityCrews.Pickable(c);
             int di = Mathf.Max(0, diffs.FindIndex(d => d.id == s.difficultyId));
             UiControls.ChoiceRow(column, "DIFFICULTY", diffs.ConvertAll(d => d.displayName.ToUpperInvariant()).ToArray(), di, i =>
             {

@@ -755,6 +755,9 @@ namespace CallerRetroBall.Logic
                 reactionTime = 0.20f, decisionQuality = 0.90f, shotQualityThreshold = 0.48f,
                 errorRate = 0.05f, movementScale = 1.0f, releaseAccuracy = 0.75f,
             });
+            // 17 Oct 2026: BALLER CITY's crews play at BALLER or LEGENDARY (not offered in the game's own pickers).
+            c.Difficulties.Add(CityCrews.Baller);
+            c.Difficulties.Add(CityCrews.Legendary);
         }
 
         // ------------------------------------------------------------------ progression

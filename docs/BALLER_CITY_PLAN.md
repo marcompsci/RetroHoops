@@ -147,3 +147,37 @@ To do on device (not yet executed):
 - Ambient pedestrians and traffic (pooled), birds and sounds per district.
 - NPC conversations that react to tour stars, the Park rep and homecourt status in more detail.
 - Seasonal decorations (Halloween pumpkins in October, using `Holidays.InSeason`).
+
+---
+
+## 7. Update, 17 Oct 2026: missions, more courts, Holiday Park and the CPU crews
+
+- **Two new districts.** Both connect through the avenue in First Callers (north and south).
+  - **HOOP HEIGHTS** (52×72): six courts, each with its own look:
+    - Coin-Op Court: a neon grid floor with arcade cabinets.
+    - Skate Bowl: tiles with ramps.
+    - Lantern Market: tiles under paper lanterns, with market stalls.
+    - Night Market: asphalt with stalls.
+    - Rooftop Ring: a fenced deck.
+    - Starlight Rink: maple with neon edges and bleachers.
+  - **HOLIDAY PARK** (44×48): the four Holiday Game courts, dressed for their holiday and open all year:
+    - Candy Cane Court: candy-cane lines, snow, lit trees and snowmen.
+    - Pumpkin Patch Court: cobwebs, a moon in the key, bats and jack-o'-lanterns.
+    - Egg Hunt Court: painted eggs.
+    - Firework Court: a striped key, stars and bunting.
+- **Every court has its own design.** `CityCourtLook` sets the floor style (asphalt, hardwood, neon grid, tiles, rubber), a centre logo, neon edges and the holiday dressing. These are painted by `CityArtGenerator` from each court's own catalog colours. The city has 17 game courts (plus the gym floor), and a test checks no two look the same.
+- **CPU crews** (`CityCrews`, 14 crews). Every court in the two new districts, plus four Blacktop courts, has a crew of three players who all play one style:
+  - The styles: sharpshooters, high flyers, pass first, defense, iso handles, run and gun, big men, crafty vets, two-way, closers and tricksters.
+  - They are built from the game's own archetypes and defensive schemes, so the AI really plays that way.
+  - Each crew is **BALLER** (rated about 82) or **LEGENDARY** (about 89). These are two new difficulty levels above Legend: faster reactions, better decisions and release timing, and never extra speed (the content validator's fairness rule).
+  - BALLER and LEGENDARY are kept out of the normal difficulty pickers.
+  - LEGENDARY crews open after you beat 3 BALLER crews.
+  - Games use THE STREETS rules on the crew's court.
+  - The crews walk their courts in the city; you can CHALLENGE them in person or from the court card.
+- **Missions** (`CityMissions`): 21 missions in 5 chapters (NEW IN TOWN, MAKE A NAME, CREW HUNTER, HOLIDAY SEASON, LEGENDARY).
+  - They cover exploring, talking, winning on new courts, beating specific crews, holiday wins, single-game lines (points, shots from beyond the arc, assists, steals plus blocks, ankle breakers, winning margin) and a gym drill.
+  - Each one pays SP and fans once. The next chapter opens when one is done.
+  - Find them under MENU ▸ MISSIONS in the city. The end-of-game screen of a city game lists crews beaten and missions completed.
+- **Saves:** the mission and crew progress is in the city save. Unknown ids and impossible numbers are dropped on load.
+
+Tests: `BallerCityMissionsTests` (17) plus the updated `BallerCityTests`. The full logic suite is 978 passing, the Unity reference compile is clean, and the Spanish text and App Store audits pass. Not yet run on the phone.
