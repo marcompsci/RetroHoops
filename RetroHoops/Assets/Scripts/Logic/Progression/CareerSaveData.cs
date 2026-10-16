@@ -295,6 +295,8 @@ namespace CallerRetroBall.Logic
         public StreetSaveData street = new StreetSaveData();
         /// <summary>15 Oct 2026: THE STREETS record.</summary>
         public StreetsSaveData streets = new StreetsSaveData();
+        /// <summary>16 Oct 2026: BALLER CITY (where you are, onboarding).</summary>
+        public CitySaveData city = new CitySaveData();
         /// <summary>Phase 37 CLUTCH scenarios: best stars.</summary>
         public ClutchSaveData clutch = new ClutchSaveData();
         /// <summary>Phase 39 welcome-back bonus: last day claimed, days in a row, best run.</summary>

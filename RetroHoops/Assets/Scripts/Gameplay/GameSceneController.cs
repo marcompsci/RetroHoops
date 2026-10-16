@@ -441,6 +441,7 @@ namespace CallerRetroBall.Gameplay
             _hud.PauseRequested += () => SetPaused(true);
             _hud.ResumeRequested += () => SetPaused(false);
             _hud.QuitRequested += Quit;
+            StartCity();
             _hud.PhotoRequested += () =>
             {
                 if (_link != null) { _hud.Toast("NOT IN A TWO-PHONE GAME", 1.2f); return; }
@@ -634,7 +635,7 @@ namespace CallerRetroBall.Gameplay
 
         private void Update()
         {
-            if (_match == null) return;
+            if (_match == null || _leaving) return;
             PowerMonitor.Gameplay = Replaying || (!_paused && !_finalShown && _photo == null);
             UI.ControllerCursor.Suppressed = !_paused && !_finalShown && !Replaying;
             // Phase 35: the coach's sideline and the tape controls step aside for the end screen, pause, replays and photos.
@@ -3462,6 +3463,7 @@ namespace CallerRetroBall.Gameplay
                 SceneFlow.GoTo(AllStarHost());
                 return;
             }
+            if (ContinueToCity()) return;
             SceneFlow.GoTo(_request.Mode == GameMode.Rise || _request.Mode == GameMode.Rival ? SceneNames.Season : SceneNames.MainMenu);
         }
 

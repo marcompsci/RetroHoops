@@ -25,6 +25,20 @@ namespace CallerRetroBall.Tests
         [UnityTest] public IEnumerator LockerRoom_Builds() { yield return Load(SceneNames.LockerRoom); Assert.IsNotNull(App.Career); }
         [UnityTest] public IEnumerator Settings_Builds() { yield return Load(SceneNames.Settings); Assert.IsNotNull(App.Career.settings); }
 
+        // 16 Oct 2026: BALLER CITY builds in every district, and you stand somewhere you can walk.
+        [UnityTest]
+        public IEnumerator City_BuildsInEveryDistrict()
+        {
+            foreach (var d in CityDistricts.All)
+            {
+                App.EnsureInitialized();
+                App.Career.city.Arrive(d.Id, null);
+                yield return Load(SceneNames.City);
+                Assert.IsNotNull(Object.FindAnyObjectByType<CallerRetroBall.City.CityController>(), d.Id);
+                Assert.IsTrue(CityDistricts.Map(d.Id).Walkable(new Vec2(App.Career.city.x, App.Career.city.y)), d.Id);
+            }
+        }
+
         private static IEnumerator LoadGame(MatchRequest request)
         {
             App.EnsureInitialized();

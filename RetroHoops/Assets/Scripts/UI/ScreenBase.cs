@@ -49,7 +49,16 @@ namespace CallerRetroBall.UI
         protected abstract void Build();
 
         /// <summary>Default back behaviour returns to the main menu.</summary>
-        protected virtual void OnBack() => SceneFlow.GoTo(SceneNames.MainMenu);
+        protected virtual void OnBack()
+        {
+            // 16 Oct 2026: opened from BALLER CITY (the HQ, your front door, the gym's locker room): back to the city.
+            if (App.BackToCity)
+            {
+                if (SceneFlow.GoTo(SceneNames.City)) App.BackToCity = false;
+                return;
+            }
+            SceneFlow.GoTo(SceneNames.MainMenu);
+        }
 
         protected virtual void Update()
         {

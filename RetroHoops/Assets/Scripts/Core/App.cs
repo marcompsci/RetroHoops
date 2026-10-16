@@ -129,6 +129,8 @@ namespace CallerRetroBall.Core
         public static bool OpenGauntletOnMenu { get; set; }
         /// <summary>After a Live game: open LIVE on the menu.</summary>
         public static bool OpenLiveOnMenu { get; set; }
+        /// <summary>16 Oct 2026: a screen opened from BALLER CITY (the Rise hub, the Locker Room): Back returns to the city.</summary>
+        public static bool BackToCity { get; set; }
 
         /// <summary>Simulation steps per second: 120 on 120 Hz screens with High Frame Rate on, else 60.</summary>
         public static int SimulationRate { get; private set; } = 60;

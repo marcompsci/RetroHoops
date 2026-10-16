@@ -27,6 +27,8 @@ namespace CallerRetroBall.Gameplay
         public event Action PhotoRequested;
         /// <summary>14 Oct 2026: PHONE on the pause menu (music, texts, feed).</summary>
         public event Action PhoneRequested;
+        /// <summary>16 Oct 2026: LEAVE COURT (walk off into Baller City). Shown only when the match controller turns it on.</summary>
+        public event Action LeaveCourtRequested;
 
         private TextMeshProUGUI _teamA, _teamB, _scoreA, _scoreB, _clock, _shotClock, _toast;
         private GameObject _pausePanel;
@@ -180,9 +182,65 @@ namespace CallerRetroBall.Gameplay
             UiKit.Button(column, "RESUME", () => ResumeRequested?.Invoke(), ButtonStyle.Primary, 150f);
             UiKit.Button(column, "PHOTO MODE", () => PhotoRequested?.Invoke(), ButtonStyle.Secondary, 130f, 48f);
             UiKit.Button(column, "PHONE", () => PhoneRequested?.Invoke(), ButtonStyle.Secondary, 130f, 48f);
-            UiKit.Button(column, "QUIT TO MENU", () => QuitRequested?.Invoke(), ButtonStyle.Ghost, 130f, 48f);
+            _pauseColumn = column;
+            _pauseQuit = UiKit.Button(column, "QUIT TO MENU", () => QuitRequested?.Invoke(), ButtonStyle.Ghost, 130f, 48f);
             _pausePanel.SetActive(false);
         }
+
+        private RectTransform _pauseColumn;
+        private UnityEngine.UI.Button _pauseQuit;
+        private bool _leaveCourt;
+
+        /// <summary>16 Oct 2026 (BALLER CITY): adds LEAVE COURT to the pause menu and the end screens.</summary>
+        public void EnableLeaveCourt()
+        {
+            if (_leaveCourt || _pauseColumn == null) return;
+            _leaveCourt = true;
+            var b = UiKit.Button(_pauseColumn, "LEAVE COURT", () => LeaveCourtRequested?.Invoke(), ButtonStyle.Secondary, 130f, 48f);
+            if (_pauseQuit != null) b.transform.SetSiblingIndex(_pauseQuit.transform.GetSiblingIndex());
+        }
+
+        private void LeaveCourtButton()
+        {
+            if (_leaveCourt) UiKit.Button(_finalColumn, "LEAVE COURT", () => LeaveCourtRequested?.Invoke(), ButtonStyle.Secondary, 110f, 44f);
+        }
+
+        /// <summary>Hides the end screen (the walk-off plays over the court).</summary>
+        public void HideFinal()
+        {
+            if (_finalPanel != null) _finalPanel.SetActive(false);
+        }
+
+        private GameObject _confirm;
+
+        /// <summary>A yes/no card over everything (LEAVE COURT during a live game).</summary>
+        public void Confirm(string title, string body, string yes, Action onYes, Action onNo)
+        {
+            if (_confirm != null) Destroy(_confirm);
+            var canvas = UiKit.CreateScreenCanvas("ConfirmCanvas", 60);
+            _confirm = canvas.gameObject;
+            var scrim = UiKit.Panel(canvas.transform, new Color(0.04f, 0.04f, 0.09f, 0.88f), name: "Scrim");
+            UiKit.Stretch(scrim.rectTransform);
+            scrim.raycastTarget = true;
+            var safe = UiKit.SafeArea(canvas.transform);
+            var column = UiKit.Column(safe, 26f, null, "Confirm");
+            UiKit.Band(column, 0.3f, 0.72f, 120f);
+            column.GetComponent<UnityEngine.UI.VerticalLayoutGroup>().childAlignment = TextAnchor.MiddleCenter;
+            UiKit.Size(UiKit.ShadowLabel(column, title, 76f, Theme.Cream, Theme.Pink, 6f).transform.parent.GetComponent<RectTransform>(), 120f);
+            UiKit.Size(UiKit.Label(column, body, 38f, Theme.Cream, TextAlignmentOptions.Center, false), 150f);
+            UiKit.Button(column, yes, () => { CloseConfirm(); onYes?.Invoke(); }, ButtonStyle.Primary, 140f);
+            UiKit.Button(column, "CANCEL", () => { CloseConfirm(); onNo?.Invoke(); }, ButtonStyle.Ghost, 120f, 44f);
+        }
+
+        public bool ConfirmOpen => _confirm != null;
+
+        private void CloseConfirm()
+        {
+            if (_confirm != null) Destroy(_confirm);
+            _confirm = null;
+        }
+
+        private void OnDestroy() => CloseConfirm();
 
         private GameObject _replayButton;
         private float _replayButtonUntil;
@@ -316,6 +374,7 @@ namespace CallerRetroBall.Gameplay
             if (SaveTapeRequested != null)
                 UiKit.Button(_finalColumn, "SAVE GAME TAPE", () => SaveTapeRequested?.Invoke(), ButtonStyle.Secondary, 100f, 36f);
             UiKit.Button(_finalColumn, "REMATCH", () => RematchRequested?.Invoke(), ButtonStyle.Primary, 140f);
+            LeaveCourtButton();
             UiKit.Button(_finalColumn, "HOME", () => QuitRequested?.Invoke(), ButtonStyle.Ghost, 120f, 48f);
             Open();
         }
@@ -362,6 +421,7 @@ namespace CallerRetroBall.Gameplay
                 UiKit.Button(_finalColumn, continueLabel, () => ContinueRequested?.Invoke(), ButtonStyle.Primary, 140f);
             if (allowRematch)
                 UiKit.Button(_finalColumn, "REMATCH", () => RematchRequested?.Invoke(), continueLabel == null ? ButtonStyle.Primary : ButtonStyle.Secondary, 120f, 48f);
+            LeaveCourtButton();
             UiKit.Button(_finalColumn, "HOME", () => QuitRequested?.Invoke(), ButtonStyle.Ghost, 110f, 44f);
             Open();
         }
@@ -451,6 +511,7 @@ namespace CallerRetroBall.Gameplay
             Title(title, result);
             if (newBest) UiKit.Size(UiKit.Label(_finalColumn, "NEW PERSONAL BEST!", 48f, Theme.Cyan, TextAlignmentOptions.Center, true), 76f);
             UiKit.Button(_finalColumn, againLabel, () => RematchRequested?.Invoke(), ButtonStyle.Primary, 140f);
+            LeaveCourtButton();
             UiKit.Button(_finalColumn, "HOME", () => QuitRequested?.Invoke(), ButtonStyle.Ghost, 110f, 44f);
             Open();
         }

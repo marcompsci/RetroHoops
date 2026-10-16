@@ -320,6 +320,7 @@ namespace CallerRetroBall.EditorTools
                 Debug.Log("[ReleaseTools] Minimum iOS raised from " + PlayerSettings.iOS.targetOSVersionString + " to 15.0");
                 PlayerSettings.iOS.targetOSVersionString = "15.0";
             }
+            ProjectSetup.EnsureScenesForBuild();
             var scenes = EditorBuildSettings.scenes.Where(s => s.enabled).Select(s => s.path).ToArray();
             if (scenes.Length == 0)
             {

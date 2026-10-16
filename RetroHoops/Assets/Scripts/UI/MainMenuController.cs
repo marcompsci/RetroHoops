@@ -73,6 +73,7 @@ namespace CallerRetroBall.UI
 
         protected override void Build()
         {
+            App.BackToCity = false; // back at the menu: screens opened from here come back here
             var career = App.Career;
             var strip = UiKit.Label(Body, career.nickname.ToUpperInvariant() + "   <color=#FFD166>" + career.signalPoints + " SP</color>   <color=#4CC9F0>" + career.fans + " FANS</color>",
                                     32f, Theme.Cream, TextAlignmentOptions.Center, true);
@@ -95,7 +96,11 @@ namespace CallerRetroBall.UI
             UiKit.Band(column, 0.21f, 0.708f, 110f);
             column.GetComponent<VerticalLayoutGroup>().childAlignment = TextAnchor.MiddleCenter;
 
-            UiKit.Button(column, "PLAY", ShowPlayMenu, ButtonStyle.Primary, 150f, 64f);
+            // 16 Oct 2026 (Omari): BALLER CITY, right next to PLAY.
+            var playRow = UiKit.Row(column, 20f, "PlayCity");
+            UiKit.Size(playRow, 150f);
+            UiKit.Button(playRow, "PLAY", ShowPlayMenu, ButtonStyle.Primary, 150f, 64f);
+            UiKit.Button(playRow, "BALLER CITY", () => { App.BackToCity = false; SceneFlow.GoTo(SceneNames.City); }, ButtonStyle.Primary, 150f, 56f);
 
             // 15 Oct 2026 (Omari): THE STREETS, up top next to RISE MODE.
             var topRow = UiKit.Row(column, 20f, "StreetsRise");

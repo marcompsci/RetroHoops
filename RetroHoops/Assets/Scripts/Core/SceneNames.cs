@@ -9,7 +9,9 @@ namespace CallerRetroBall.Core
         public const string Season = "SeasonScene";
         public const string LockerRoom = "LockerRoomScene";
         public const string Settings = "SettingsScene";
+        /// <summary>16 Oct 2026: BALLER CITY.</summary>
+        public const string City = "CityScene";
 
-        public static readonly string[] All = { Boot, MainMenu, Game, Season, LockerRoom, Settings };
+        public static readonly string[] All = { Boot, MainMenu, Game, Season, LockerRoom, Settings, City };
     }
 }

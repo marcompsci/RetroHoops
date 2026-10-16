@@ -119,6 +119,28 @@ namespace CallerRetroBall.Gameplay
 
         public void ClearOverride() => _override = false;
 
+        /// <summary>
+        /// 16 Oct 2026 (LEAVE COURT): a drawn-only walk or wave with the game stopped (the simulation isn't touched).
+        /// </summary>
+        public void SyncScripted(float dt, Vec2 ground, Facing8 facing, bool walking, bool wave)
+        {
+            transform.position = CourtSpace.ToWorldSnapped(ground);
+            _animTime += dt;
+            var view = CharacterSpriteGenerator.ViewFor(CourtSpace.Facing(facing), out bool flip);
+            int frame = walking ? CharacterSpriteGenerator.IdleFrames + (int)(_animTime * RunFps * 0.7f) % CharacterSpriteGenerator.RunFrames
+                : wave ? ((int)(_animTime * 4f) % 2 == 0 ? CharacterSpriteGenerator.ShootFrame : 0)
+                : (int)(_animTime * IdleFps) % CharacterSpriteGenerator.IdleFrames;
+            _body.sprite = _frames[(int)view, frame];
+            _body.flipX = flip;
+            _body.transform.localPosition = Vector3.zero;
+            int order = CourtSpace.SortingOrder(ground);
+            _body.sortingOrder = order;
+            _shadow.sortingOrder = order - 2;
+            _ring.sortingOrder = order - 1;
+            _ring.enabled = false;
+            SyncHead((int)view, frame, flip);
+        }
+
         /// <summary>Called by the match controller after each simulation update.</summary>
         public void Sync(float dt, bool controlled, bool shooting = false, float jump01 = 0f, FlairPose flair = default)
         {

@@ -54,7 +54,7 @@ namespace CallerRetroBall.EditorTools
         public static void RebuildScenes()
         {
             if (!EditorUtility.DisplayDialog("Rebuild scenes?",
-                    "This overwrites all six scenes in Assets/Scenes with fresh generated versions.", "Rebuild", "Cancel"))
+                    "This overwrites all seven scenes in Assets/Scenes with fresh generated versions.", "Rebuild", "Cancel"))
                 return;
             if (!EditorSceneManager.SaveCurrentModifiedScenesIfUserWantsTo()) return;
             CreateScenes(overwrite: true);
@@ -322,6 +322,7 @@ namespace CallerRetroBall.EditorTools
             { SceneNames.Season, typeof(SeasonScreenController) },
             { SceneNames.LockerRoom, typeof(LockerRoomController) },
             { SceneNames.Settings, typeof(SettingsController) },
+            { SceneNames.City, typeof(City.CityController) },
         };
 
         public static int CreateScenes(bool overwrite)
@@ -351,6 +352,24 @@ namespace CallerRetroBall.EditorTools
                 created++;
             }
             return created;
+        }
+
+        /// <summary>
+        /// 16 Oct 2026 (BALLER CITY): release builds create any scene that's missing (CityScene on a project set up
+        /// before it existed) and put every scene in Build Settings. Existing scenes are never touched.
+        /// </summary>
+        public static void EnsureScenesForBuild()
+        {
+            bool missing = SceneNames.All.Any(n => !File.Exists(ScenePath(n)));
+            if (missing)
+            {
+                string open = EditorSceneManager.GetActiveScene().path;
+                int made = CreateScenes(overwrite: false);
+                Debug.Log("[CallerRetroBall] Created " + made + " missing scene(s) for the build.");
+                if (!string.IsNullOrEmpty(open) && File.Exists(open)) EditorSceneManager.OpenScene(open);
+            }
+            var listed = EditorBuildSettings.scenes.Where(x => x.enabled).Select(x => x.path).ToArray();
+            if (!SceneNames.All.Select(ScenePath).SequenceEqual(listed)) ConfigureBuildSettings();
         }
 
         private static void ConfigureBuildSettings()
