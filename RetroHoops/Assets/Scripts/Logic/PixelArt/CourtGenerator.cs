@@ -53,9 +53,7 @@ namespace CallerRetroBall.Logic.PixelArt
             int w = TextureWidth(g), h = TextureHeight(g);
             var c = new PixelCanvas(w, h);
             var rng = new SeededRandom(seed);
-            var style = court.floorStyle >= 0 ? (FloorStyle)court.floorStyle
-                      : court.circuit == CourtCircuit.League ? FloorStyle.Hardwood
-                      : court.circuit == CourtCircuit.Secret ? FloorStyle.NeonGrid : FloorStyle.Asphalt;
+            var style = GameplayFx.StyleOf(court);
             bool hardwood = style == FloorStyle.Hardwood;
             bool grid = style == FloorStyle.NeonGrid;
 

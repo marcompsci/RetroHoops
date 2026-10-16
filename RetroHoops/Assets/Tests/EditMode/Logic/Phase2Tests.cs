@@ -490,7 +490,8 @@ namespace CallerRetroBall.Tests
                                     if (y <= CharacterSpriteGenerator.ArtScale) feetOnFloor = true;
                                 }
                         Assert.Greater(opaque, 80 * CharacterSpriteGenerator.ArtScale * CharacterSpriteGenerator.ArtScale, p.id + " view " + v + " frame " + f);
-                        Assert.IsTrue(feetOnFloor, p.id + " frame floats above the floor");
+                        // G2 (16 Oct 2026): the dunk frame is drawn airborne on purpose (knees tucked); every other frame stands on the floor.
+                        if (f != CharacterSpriteGenerator.DunkFrame) Assert.IsTrue(feetOnFloor, p.id + " frame floats above the floor");
                     }
             }
         }

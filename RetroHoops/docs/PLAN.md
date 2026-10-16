@@ -900,6 +900,28 @@
 - **10 Oct (Omari asked): Franchise ► CREATE A PLAYER.** ROSTER ► CREATE A PLAYER builds your own player: first and last name, number, skin tone, hair, hair colour, build, height, style of play and a starting level, with a live preview in your club's colours (or start from your Locker Room player). ROOKIE (OVR ~64, age 20, high ceiling, league minimum, allowed over the cap), STARTER (~72, age 24) or STAR (~80, age 26) at market salary with cap room needed. Up to three per franchise, any time except the playoffs, if there's a roster spot; he joins the end of your bench (move him to #1 to control him). Created players can be edited later (name, number, look; not ratings), are saved with the franchise, grow and age like everyone, and AI GMs never ask for them in trades. `Logic/Progression/FranchiseCreate.cs`, `UI/FranchiseScreen.Create.cs`. 827 logic tests pass (7 new in `FranchiseCreateTests.cs`).
 - **10 Oct (Omari asked): Rise ► CREATE A PLAYER.** The Rise hub has CREATE A PLAYER (MY PLAYER or A TEAMMATE) and YOUR CREW shows YOU with CREATE/EDIT MY PLAYER plus CREATED TEAMMATES. MY PLAYER edits the player you control in Rise (same as Locker Room ► CREATE; the name is your nickname; training carries over). Up to three created teammates (first/last name, number, look, style), free to put in either crew spot, at the original First Callers' level (style baseline −8); EDIT or REMOVE any time (an original First Caller takes the spot back). Saved in rise.made, registered in the catalog on load. Logic in RiseCreate.cs, UI in PlayerMaker.cs; 4 tests in RiseCreateTests.
 
+### Graphics G1–G3 (16 Oct 2026): character detail, action frames, gameplay effects
+- **G1 character detail pass** (`CharacterSpriteGenerator.Polish.cs`, runs on the 2x frame before lighting): a dark seam
+  separates each arm from the jersey (back edge only in side view), trim piping round tank-top armholes, small cloth
+  creases at the jersey's sides (clear of the number), a darker shorts hem, crew socks with a trim band above the shoes
+  (only where the leg still shows skin), eye whites and a warm cheek on front faces, and a one-pixel twill drop shadow
+  under jersey numbers.
+- **G2 action frames** (`CharacterSpriteGenerator.Actions.cs`): four frames appended after the chest thump, so every
+  older index is unchanged — 10 DEFENSE (crouched, wide base, both hands up), 11 SLIDE (wider step, lead arm low in the
+  passing lane), 12 DUNK (knees tucked, ball arm all the way up; drawn airborne on purpose), 13 PASS (two-hand chest
+  pass). Sheets are now 14 frames wide (448 x 144). `Stances.For` picks them: the passer holds PASS for 0.24 s;
+  a defender within 2.4 m of the ball handler sets in DEFENSE and shuffles DEFENSE/SLIDE at 7 steps a second while
+  moving slower than 3 m/s; sprinting still runs. The dunk uses DUNK on the way up (hanging on the rim keeps the
+  two-hands frame) and the ball rides over the raised hand.
+- **G3 gameplay effects** (`GameplayFx`, `BallTrail`): faint floor reflections of every player on hardwood (16%),
+  neon glass (13%) and tile (8%) floors, none outdoors; player shadows shrink to 65% and fade to half as a player
+  reaches the top of a jump; a three-ghost afterimage trail behind shots, passes and big bounces; a puff of floor
+  dust when a player at speed cuts 70 degrees or more; sweat drops off players whose stamina is under 35%.
+  Trail, dust and sweat are off with Reduce Motion and Battery Saver.
+- Tests: `GraphicsPassTests` (16). Two older tests updated for the wider sheet: Phase 30's frame count (10 → 14) and
+  Phase 2's feet-on-the-floor check, which now exempts the airborne dunk frame.
+- Not yet seen on a device: everything here was checked with logic tests, UnityCheck and rendered previews only.
+
 ## Deviations from the brief (deliberate)
 
 - "Oakland Voltage" → **Eastbay Voltage** (real city + electric branding sat too close to real pro-sports naming).

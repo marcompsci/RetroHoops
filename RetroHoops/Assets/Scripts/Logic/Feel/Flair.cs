@@ -11,7 +11,7 @@ namespace CallerRetroBall.Logic
     /// The views add these on top of what the simulation says; gameplay never reads them.
     /// </summary>
     /// <summary>Phase 30: special sprite frames a pose can ask for (see CharacterSpriteGenerator).</summary>
-    public enum PoseFrame { None = 0, Crossover = 1, StepBack = 2, ChestThump = 3 }
+    public enum PoseFrame { None = 0, Crossover = 1, StepBack = 2, ChestThump = 3, Defense = 4, Slide = 5, Dunk = 6, Pass = 7 }
 
     public struct FlairPose
     {

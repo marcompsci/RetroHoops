@@ -18,6 +18,8 @@ namespace CallerRetroBall.Logic.PixelArt
             public bool Number;
             public int NumX, NumY, NumW;
             public int HeadLeft, HeadBottom, HeadW, HeadTop;
+            /// <summary>16 Oct 2026 graphics phase G1: torso box (1x) for the detail pass.</summary>
+            public int TorsoLeft, TorsoW, TorsoBottom, TorsoTop, ShortsBottom;
         }
 
         public const float ShadeAmount = 0.24f;
@@ -134,6 +136,19 @@ namespace CallerRetroBall.Logic.PixelArt
             int w = text.Length * 3 + (text.Length - 1);
             int left = cx * 2 - w / 2;
             int top = info.NumY * 2 + (view == CharacterView.Front ? 4 : 5); // front: one row lower, clear of the collar
+            // G1: a one-pixel drop shadow down and right of each digit so the number reads like stitched twill.
+            var drop = jersey.Darken(0.32f);
+            for (int i = 0; i < text.Length; i++)
+            {
+                var g = Digits[text[i] - '0'];
+                for (int row = 0; row < 5; row++)
+                    for (int col = 0; col < 3; col++)
+                        if (g[row * 3 + col] == '1')
+                        {
+                            int x = left + i * 4 + col + 1, y = top - row - 1;
+                            if (d.Get(x, y).Equals(jersey)) d.Set(x, y, drop);
+                        }
+            }
             for (int i = 0; i < text.Length; i++)
             {
                 var g = Digits[text[i] - '0'];

@@ -22,6 +22,37 @@ namespace CallerRetroBall.Gameplay
         private Sprite[,] _heads;
         private SpriteRenderer _head;
         private const float BigHeadScale = 1.7f;
+        private SpriteRenderer _reflection;
+
+        /// <summary>
+        /// G3 graphics: a faint upside-down copy of the player in a shiny floor (hardwood, neon glass, tiles). 0 = off.
+        /// </summary>
+        public void EnableReflection(float alpha)
+        {
+            if (alpha <= 0f || _reflection != null) return;
+            _reflection = NewRenderer(transform, "Reflection", _body.sprite);
+            _reflection.flipY = true;
+            _reflection.color = new Color(1f, 1f, 1f, alpha);
+        }
+
+        /// <summary>Shadow, reflection and big head follow the body (G3: the shadow shrinks and fades in the air).</summary>
+        private void SyncExtras(int view, int frame, bool flip, float liftWorld, float jump01, int order)
+        {
+            GameplayFx.ShadowForJump(jump01, out float scale, out float alpha);
+            _shadow.transform.localScale = new Vector3(scale, scale, 1f);
+            var sc = _shadow.color;
+            if (!Mathf.Approximately(sc.a, alpha)) _shadow.color = new Color(sc.r, sc.g, sc.b, alpha);
+            if (_reflection != null)
+            {
+                _reflection.sprite = _body.sprite;
+                _reflection.flipX = flip;
+                // Mirrored about the feet (the sprite's pivot is one art pixel above them): the higher the jump, the deeper the image.
+                const float px = 1f / CourtSpace.PixelsPerUnit;
+                _reflection.transform.localPosition = new Vector3(_body.transform.localPosition.x, -liftWorld - 2f * px, 0f);
+                _reflection.sortingOrder = order - 3;
+            }
+            SyncHead(view, frame, flip);
+        }
 
         /// <summary>BIG HEADS secret: draws an enlarged copy of the head above the body.</summary>
         public void EnableBigHead(Sprite[,] heads)
@@ -102,7 +133,7 @@ namespace CallerRetroBall.Gameplay
             _shadow.sortingOrder = order - 2;
             _ring.sortingOrder = order - 1;
             _ring.enabled = controlled;
-            SyncHead((int)view, frame, flip);
+            SyncExtras((int)view, frame, flip, lift, f.Jump01, order);
         }
 
         // Drawn-only position and lift for one frame (a dunk gliding to the rim); cleared every frame.
@@ -138,7 +169,7 @@ namespace CallerRetroBall.Gameplay
             _shadow.sortingOrder = order - 2;
             _ring.sortingOrder = order - 1;
             _ring.enabled = false;
-            SyncHead((int)view, frame, flip);
+            SyncExtras((int)view, frame, flip, 0f, 0f, order);
         }
 
         /// <summary>Called by the match controller after each simulation update.</summary>
@@ -152,7 +183,8 @@ namespace CallerRetroBall.Gameplay
             _animTime += dt;
             var view = CharacterSpriteGenerator.ViewFor(CourtSpace.Facing(motion.facing), out bool flip);
             if (flair.FlipOverride) flip = !flip;
-            int posed = shooting || jump01 > 0.05f ? -1 : CharacterSpriteGenerator.FrameFor(flair.Frame);
+            // The dunk frame (G2) is the one pose that holds in the air.
+            int posed = (shooting || jump01 > 0.05f) && flair.Frame != PoseFrame.Dunk ? -1 : CharacterSpriteGenerator.FrameFor(flair.Frame);
             int frame = posed >= 0 ? posed
                 : shooting || jump01 > 0.05f || flair.ArmsUp ? CharacterSpriteGenerator.ShootFrame
                 : moving ? CharacterSpriteGenerator.IdleFrames + (int)(_animTime * RunFps) % CharacterSpriteGenerator.RunFrames
@@ -170,7 +202,7 @@ namespace CallerRetroBall.Gameplay
             _shadow.sortingOrder = order - 2;
             _ring.sortingOrder = order - 1;
             _ring.enabled = controlled;
-            SyncHead((int)view, frame, flip);
+            SyncExtras((int)view, frame, flip, lift, _override ? Mathf.Clamp01(_overrideLiftPx / 12f) : jump01, order);
         }
     }
 }

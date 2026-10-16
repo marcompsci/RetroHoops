@@ -277,7 +277,7 @@ namespace CallerRetroBall.Tests
                 foreach (var kit in new[] { CallerRetroBall.Logic.KitLook.Classic(RgbColor.FromHex("#C1121F"), RgbColor.White, RgbColor.FromHex("#FFD166"), null, TeamPattern.Solid, null) })
                 {
                     var sheet = CallerRetroBall.Logic.PixelArt.CharacterSpriteGenerator.GenerateSheet(look, kit);
-                    Assert.AreEqual(CallerRetroBall.Logic.PixelArt.CharacterSpriteGenerator.SheetFrameWidth * 10, sheet.Width, "10 frames per view");
+                    Assert.AreEqual(CallerRetroBall.Logic.PixelArt.CharacterSpriteGenerator.SheetFrameWidth * 14, sheet.Width, "14 frames per view (G2 appended defence, slide, dunk and pass after these)");
                     for (int v = 0; v < 3; v++)
                         foreach (int f in new[] { CallerRetroBall.Logic.PixelArt.CharacterSpriteGenerator.CrossoverFrame,
                                                   CallerRetroBall.Logic.PixelArt.CharacterSpriteGenerator.StepBackFrame,

@@ -52,6 +52,12 @@ namespace CallerRetroBall.Gameplay
         private bool _finalShown;
         private int _lastShooter = -1;
         private float _shootPoseUntil;
+        /// <summary>G2 graphics: when each player's chest-pass frame ends (drawing only).</summary>
+        private float[] _passPoseUntil = new float[0];
+        /// <summary>G3 graphics: each player's velocity a moment ago (for dust off hard cuts) and next sweat drop.</summary>
+        private Vec2[] _cutVel = new Vec2[0];
+        private float[] _sweatAt = new float[0];
+        private float _cutSampleAt;
         private int _lastLabelState = -1;
         private PracticeSession _practice;
         // Phase 17: H-O-R-S-E.
@@ -523,6 +529,10 @@ namespace CallerRetroBall.Gameplay
             }
 
             _playerViews = new PlayerView[_match.Players.Length];
+            _passPoseUntil = new float[_match.Players.Length];
+            _cutVel = new Vec2[_match.Players.Length];
+            _sweatAt = new float[_match.Players.Length];
+            float reflect = GameplayFx.ReflectionAlpha(GameplayFx.StyleOf(court));
             _dress = new KitLook[_match.Players.Length];
             var ringColor = new Color(1f, 0.82f, 0.4f, 1f);
             bool contrast = career != null && career.settings.colorblindContrast;
@@ -593,6 +603,7 @@ namespace CallerRetroBall.Gameplay
                 _dress[i] = dress;
                 var frames = _art.PlayerFrames(p.Def, dress);
                 _playerViews[i] = PlayerView.Create(world, p, frames, _art, ring);
+                _playerViews[i].EnableReflection(reflect);
                 if (career != null && Secrets.IsOn(career.secrets, Secrets.BigHeads))
                     _playerViews[i].EnableBigHead(_art.HeadFrames(frames, p.Def.appearance));
             }
@@ -1580,6 +1591,7 @@ namespace CallerRetroBall.Gameplay
                         break;
                     case MatchEventType.PassThrown:
                         if (_match.AlleyOopInFlight) Sfx(SfxId.Lob, 0.7f);
+                        if (e.PlayerIndex >= 0 && e.PlayerIndex < _passPoseUntil.Length) _passPoseUntil[e.PlayerIndex] = Time.unscaledTime + Stances.PassPoseSeconds;
                         break;
                     case MatchEventType.ShotReleased:
                         _lastShooter = e.PlayerIndex;
@@ -1790,6 +1802,19 @@ namespace CallerRetroBall.Gameplay
             }
         }
 
+        /// <summary>
+        /// G2 graphics: the one-hand dunk frame carries the ball in the raised hand (to the right of the head, or the
+        /// left when the sprite is mirrored), so the ball rides over that hand instead of the middle of the head.
+        /// </summary>
+        private int DunkHandX(DunkFrame dunk, FlairPose pose)
+        {
+            if (dunk.Gather || dunk.Landing || dunk.OnRim || dunk.Dropping || pose.Frame != PoseFrame.None) return 0;
+            var view = CharacterSpriteGenerator.ViewFor(CourtSpace.Facing(_match.Players[_leaper].Motion.facing), out bool flip);
+            if (pose.FlipOverride) flip = !flip;
+            int x = view == CharacterView.Side ? 1 : 3;
+            return flip ? -x : x;
+        }
+
         private void SyncViews(float dt, bool snapCamera)
         {
             CourtSpace.Flip = _match.Flipped;
@@ -1842,6 +1867,7 @@ namespace CallerRetroBall.Gameplay
                         {
                             if (!_reduceMotion) flair = Dunks.Pose(_dunkStyle, Mathf.Min(0.999f, (now - _leapStart) / Mathf.Max(0.01f, _slamU * _leapDuration)));
                             flair.ArmsUp = true; // reaching for the rim
+                            if (flair.Frame == PoseFrame.None) flair.Frame = PoseFrame.Dunk; // G2: knees tucked, one hand up
                         }
                         _playerViews[i].SetOverride(dunk.Ground, dunk.LiftPx);
                         leap = 1f;
@@ -1849,11 +1875,21 @@ namespace CallerRetroBall.Gameplay
                     jump = Mathf.Max(jump, leap);
                 }
                 if (_skyHigh) jump *= 2f; // SKY HIGH secret: looks only
+                if (flair.Frame == PoseFrame.None && !flair.ArmsUp && !shooting && jump <= 0.05f && i != _leaper)
+                {
+                    // G2: defensive stance and slide near the ball, the chest-pass frame after a pass.
+                    var me = _match.Players[i];
+                    var holder = _match.Holder;
+                    float guard = holder != null && holder.Team != me.Team ? (holder.Position - me.Position).Magnitude : float.MaxValue;
+                    bool passing = i < _passPoseUntil.Length && now < _passPoseUntil[i];
+                    flair.Frame = Stances.For(_match.Phase == MatchPhase.Live, me.Team == _match.DefenseTeam, guard, me.Motion.velocity.Magnitude, passing, now);
+                }
                 _playerViews[i].Sync(dt, _match.IsHumanControlled(i), shooting, jump, flair);
             }
 
             int holderOrder = _match.Holder != null ? CourtSpace.SortingOrder(_match.Holder.Position) : 0;
             var ballOffset = _match.HumanHasBall ? new Vector2Int(move.BallOffsetX, move.BallLift + move.Lift) : Vector2Int.zero;
+            _ballView.TrailOn = !_reduceMotion && !Core.PowerMonitor.SavingPower;
             _ballView.Sync(_match.Ball, holderOrder, ballOffset);
             if (dunking && dunk.BallInHands)
             {
@@ -1864,9 +1900,10 @@ namespace CallerRetroBall.Gameplay
                     // The gather: the ball brought down to the hip before he goes up.
                     ? CourtSpace.ToWorldSnapped(dunk.Ground) + new Vector3(2f, reach * 0.45f, 0f) / CourtSpace.PixelsPerUnit
                     : CourtSpace.ToWorldSnapped(dunk.Ground)
-                      + new Vector3(pose.BallOffsetX, dunk.LiftPx + reach + 2 + System.Math.Max(0, pose.BallLift), 0f) / CourtSpace.PixelsPerUnit;
+                      + new Vector3(pose.BallOffsetX + DunkHandX(dunk, pose), dunk.LiftPx + reach + 2 + System.Math.Max(0, pose.BallLift), 0f) / CourtSpace.PixelsPerUnit;
                 _ballView.SyncInHands(hands, CourtSpace.SortingOrder(dunk.Ground, 2));
             }
+            SpawnMotionFx(now);
             if (_rainbowBall) _ballView.Tint(ToColor(ArcadeColors.RainbowAt(now)));
             else _ballView.Tint(_match.Ball.IsHeld && _match.IsHeatedUp(_match.Ball.HolderIndex) ? ToColor(ArcadeColors.FlameAt(now, 1)) : Color.white);
             SpawnFlames(now);
@@ -1960,6 +1997,34 @@ namespace CallerRetroBall.Gameplay
             bool second = _hoop2T != null && (target - _hoop2Base).sqrMagnitude < (target - _hoopBase).sqrMagnitude;
             _hoopT.position = _hoopBase + (second ? Vector3.zero : down);
             if (_hoop2T != null) _hoop2T.position = _hoop2Base + (second ? down : Vector3.zero);
+        }
+
+        /// <summary>
+        /// G3 graphics: a puff of floor dust when a player plants and cuts hard, and sweat drops off tired players
+        /// (stamina low). Off with Reduce Motion and Battery Saver.
+        /// </summary>
+        private void SpawnMotionFx(float now)
+        {
+            if (_reduceMotion || Core.PowerMonitor.SavingPower || _cutVel.Length != _match.Players.Length) return;
+            if (_match.Phase != MatchPhase.Live) { _cutSampleAt = now + GameplayFx.CutWindow; return; }
+            bool sample = now >= _cutSampleAt;
+            if (sample) _cutSampleAt = now + GameplayFx.CutWindow;
+            for (int i = 0; i < _match.Players.Length; i++)
+            {
+                var p = _match.Players[i];
+                var v = p.Motion.velocity;
+                if (sample)
+                {
+                    if (GameplayFx.CutStrength(_cutVel[i], v) >= GameplayFx.DustAt)
+                        _bursts.Spawn(CourtSpace.ToWorldSnapped(p.Position, 0.05f), new Color32(0xC9, 0xC4, 0xB8, 200), 4, 1.1f, 0.28f);
+                    _cutVel[i] = v;
+                }
+                if (GameplayFx.Sweaty(p.Stamina, p.Motion.IsMoving) && now >= _sweatAt[i])
+                {
+                    _sweatAt[i] = now + GameplayFx.SweatEvery;
+                    _bursts.Spawn(CourtSpace.ToWorldSnapped(p.Position, 1.75f), new Color32(0xBF, 0xE6, 0xFF, 230), 1, 0.9f, 0.4f);
+                }
+            }
         }
 
         /// <summary>HEAT CHECK: embers rise off heated-up players (and the ball they carry).</summary>
