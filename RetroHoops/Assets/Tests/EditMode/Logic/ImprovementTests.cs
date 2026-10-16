@@ -157,5 +157,96 @@ namespace CallerRetroBall.Tests
             var back = SaveCodec.Decode(SaveCodec.Encode(d), cat, out _);
             Assert.AreEqual("0|1|1|1", back.settings.houseRules);
         }
+        // ---- I3: gear and legacy
+
+        private static MatchSummary Game(int pts, int fgm, int fga, int steals, int us, int them, GameMode mode = GameMode.QuickCall)
+        {
+            var s = new MatchSummary { mode = mode, teamAId = "team.a", teamBId = "team.b", scoreA = us, scoreB = them, humanTeam = 0, winner = us > them ? 0 : 1, day = 7, playerOfTheGame = -1 };
+            s.lines.Add(new SummaryLine { team = 0, isHuman = true, stats = new PlayerStatLine { points = pts, fieldGoalsMade = fgm, fieldGoalsAttempted = fga, steals = steals } });
+            return s;
+        }
+
+        [Test]
+        public void I3_Moments_KeepTheBigNights()
+        {
+            var list = MomentsBook.FromGame(Game(22, 6, 6, 4, 21, 8), true, true);
+            Assert.AreEqual(5, list.Count);
+            foreach (var k in new[] { MomentKind.BuzzerBeater, MomentKind.BigGame, MomentKind.PerfectNight, MomentKind.Lockdown, MomentKind.Blowout })
+                Assert.IsTrue(list.Exists(m => m.kind == k), k.ToString());
+            Assert.AreEqual("team.b", list[0].opponentId);
+            Assert.AreEqual(21, list[0].scoreFor);
+            Assert.AreEqual(0, MomentsBook.FromGame(Game(5, 2, 6, 0, 21, 19), false, false).Count, "an ordinary win");
+            Assert.AreEqual(MomentKind.GameWinner, MomentsBook.FromGame(Game(5, 2, 6, 0, 21, 19), true, false)[0].kind);
+            Assert.AreEqual(0, MomentsBook.FromGame(Game(5, 2, 6, 0, 18, 21), true, false).Count, "no game-winner in a loss");
+            Assert.AreEqual(0, MomentsBook.FromGame(Game(25, 9, 9, 5, 21, 2, GameMode.Versus), true, true).Count, "2 player games don't count");
+            Assert.AreEqual(0, MomentsBook.FromGame(Game(25, 9, 9, 5, 21, 2, GameMode.Practice), true, true).Count);
+            Assert.IsFalse(MomentsBook.FromGame(Game(22, 3, 9, 0, 40, 38, GameMode.FullCourt), false, false).Exists(m => m.kind == MomentKind.BigGame), "Full Court needs 30");
+            StringAssert.Contains("BIG GAME: 22 PTS", MomentsBook.Line(list[1], "SPL"));
+            StringAssert.Contains("vs SPL 21-8", MomentsBook.Line(list[1], "SPL"));
+        }
+
+        [Test]
+        public void I3_Moments_NewestFirst_CappedAndSaved()
+        {
+            var cat = DefaultContent.Create();
+            var d = new CareerSaveData();
+            for (int i = 0; i < MomentsBook.Keep + 5; i++)
+                MomentsBook.Add(d, new System.Collections.Generic.List<MomentEntry> { new MomentEntry { day = i, kind = MomentKind.GameWinner, mode = GameMode.Streets, scoreFor = 21, scoreAgainst = 20 } });
+            Assert.AreEqual(MomentsBook.Keep, d.moments.Count);
+            Assert.AreEqual(MomentsBook.Keep + 4, d.moments[0].day, "newest first");
+            Assert.AreEqual(MomentsBook.Keep, MomentsBook.Count(d, MomentKind.GameWinner));
+            var back = SaveCodec.Decode(SaveCodec.Encode(d), cat, out _);
+            Assert.AreEqual(MomentsBook.Keep, back.moments.Count);
+            Assert.AreEqual(d.moments[0].day, back.moments[0].day);
+            Assert.AreEqual(GameMode.Streets, back.moments[0].mode);
+            Assert.AreEqual(MomentKind.GameWinner, back.moments[0].kind);
+        }
+
+        [Test]
+        public void I3_Gear_IsSoldEquippedAndSaved()
+        {
+            var cat = DefaultContent.Create();
+            var gear = cat.Cosmetics.FindAll(x => x.slot == CosmeticSlot.Gear);
+            Assert.GreaterOrEqual(gear.Count, 7);
+            Assert.AreEqual(1, gear.FindAll(x => x.unlockedByDefault).Count, "one free default (no gear)");
+            foreach (var g in gear)
+                if (!g.unlockedByDefault) Assert.AreNotEqual(GearParts.None, Gear.Parts(g.id), g.id + " has parts");
+            Assert.AreEqual(GearParts.None, Gear.Parts(Gear.NoneId));
+            Assert.IsTrue(CityShop.Catalog(cat).Exists(x => x.slot == CosmeticSlot.Gear), "the corner store can stock gear");
+            Assert.AreEqual("GEAR", CityShop.SlotName(CosmeticSlot.Gear));
+            var d = new CareerSaveData();
+            d.ownedCosmetics.Add("cosmetic.gear.goggles"); // equipping needs owning (the load puts unowned gear back to none)
+            d.SetEquipped(CosmeticSlot.Gear, "cosmetic.gear.goggles");
+            Assert.AreEqual("cosmetic.gear.goggles", d.Equipped(CosmeticSlot.Gear));
+            Assert.AreEqual("cosmetic.gear.goggles", SaveCodec.Decode(SaveCodec.Encode(d), cat, out _).equippedGear);
+            Assert.IsTrue(ContentValidator.Validate(cat).Errors.Count == 0, "content still valid");
+        }
+
+        [Test]
+        public void I3_Gear_ChangesOnlyTheLimbsAndFace()
+        {
+            var cat = DefaultContent.Create();
+            var look = cat.Players[0].appearance;
+            var plain = KitLook.Classic(RgbColor.FromHex("#1FB5A6"), RgbColor.FromHex("#FF6F59"), RgbColor.White, null, TeamPattern.Solid, null);
+            var bare = CallerRetroBall.Logic.PixelArt.CharacterSpriteGenerator.GenerateSheet(look, plain, 4);
+            var sleeveCol = RgbColor.FromHex("#1C1C24");
+            var sleeved = plain; sleeved.Gear = GearParts.ArmSleeves | GearParts.LegSleeves; sleeved.GearColor = sleeveCol;
+            var s = CallerRetroBall.Logic.PixelArt.CharacterSpriteGenerator.GenerateSheet(look, sleeved, 4);
+            int before = 0, after = 0, jerseyBefore = 0, jerseyAfter = 0;
+            for (int i = 0; i < s.Pixels.Length; i++)
+            {
+                if (bare.Pixels[i].Equals(sleeveCol)) before++;
+                if (s.Pixels[i].Equals(sleeveCol)) after++;
+                if (bare.Pixels[i].Equals(plain.Jersey)) jerseyBefore++;
+                if (s.Pixels[i].Equals(plain.Jersey)) jerseyAfter++;
+            }
+            Assert.Greater(after, before + 200, "sleeves on arms and legs");
+            Assert.AreEqual(jerseyBefore, jerseyAfter, "the jersey is untouched");
+            var goggles = plain; goggles.Gear = GearParts.Goggles; goggles.GearColor = RgbColor.FromHex("#FFD166");
+            var g = CallerRetroBall.Logic.PixelArt.CharacterSpriteGenerator.GenerateSheet(look, goggles, 4);
+            int rims = 0;
+            foreach (var px in g.Pixels) if (px.Equals(goggles.GearColor)) rims++;
+            Assert.Greater(rims, 40, "goggle rims on the front and side views");
+        }
     }
 }

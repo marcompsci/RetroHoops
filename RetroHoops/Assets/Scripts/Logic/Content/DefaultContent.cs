@@ -859,6 +859,15 @@ namespace CallerRetroBall.Logic
             c.Cosmetics.Add(Cosmetic("cosmetic.dunk.windmill", "Windmill", CosmeticSlot.DunkPackage, 450, 500, false, "#FFFFFF", "#FFFFFF"));
             c.Cosmetics.Add(Cosmetic("cosmetic.dunk.cradle", "Cradle Rock", CosmeticSlot.DunkPackage, 500, 750, false, "#FFFFFF", "#FFFFFF"));
             c.Cosmetics.Add(Cosmetic("cosmetic.dunk.three_sixty", "Three-Sixty", CosmeticSlot.DunkPackage, 650, 1000, false, "#FFFFFF", "#FFFFFF"));
+            // I3 GEAR (16 Oct 2026): looks only. colorA is the sleeve / ink / goggle colour.
+            c.Cosmetics.Add(Cosmetic(Gear.NoneId, "No Gear", CosmeticSlot.Gear, 0, 0, true, "#FFFFFF", "#FFFFFF"));
+            c.Cosmetics.Add(Cosmetic("cosmetic.gear.shooter_sleeves", "Shooter Sleeves", CosmeticSlot.Gear, 150, 50, false, "#1C1C24", "#FFFFFF"));
+            c.Cosmetics.Add(Cosmetic("cosmetic.gear.cloud_sleeves", "Cloud Sleeves", CosmeticSlot.Gear, 150, 100, false, "#F2F2F2", "#FFFFFF"));
+            c.Cosmetics.Add(Cosmetic("cosmetic.gear.knee_sleeves", "Knee Sleeves", CosmeticSlot.Gear, 120, 50, false, "#1C1C24", "#FFFFFF"));
+            c.Cosmetics.Add(Cosmetic("cosmetic.gear.full_compression", "Full Compression", CosmeticSlot.Gear, 300, 400, false, "#2B2B44", "#FFFFFF"));
+            c.Cosmetics.Add(Cosmetic("cosmetic.gear.ink_sleeve", "Ink Sleeve", CosmeticSlot.Gear, 250, 300, false, "#22406E", "#FFFFFF"));
+            c.Cosmetics.Add(Cosmetic("cosmetic.gear.goggles", "Sport Goggles", CosmeticSlot.Gear, 200, 200, false, "#FFD166", "#FFFFFF"));
+            c.Cosmetics.Add(Cosmetic("cosmetic.gear.vet_package", "Vet Package", CosmeticSlot.Gear, 350, 600, false, "#E8E8EC", "#FFFFFF"));
 
             // Hoops Pass gear (Weekly.cs): never sold, only unlocked on the free pass track.
             c.Cosmetics.Add(PassGear("cosmetic.pass.jersey.vapor_court", "Vapor Court", CosmeticSlot.JerseyPalette, "#FF4FA3", "#3BD5FF"));

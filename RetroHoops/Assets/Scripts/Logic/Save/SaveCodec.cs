@@ -37,6 +37,7 @@ namespace CallerRetroBall.Logic
                 {
                     ["jersey"] = d.equippedJersey, ["shoes"] = d.equippedShoes, ["banner"] = d.equippedBanner,
                     ["celebration"] = d.equippedCelebration, ["move"] = d.equippedMove, ["dunk"] = d.equippedDunk,
+                    ["gear"] = d.equippedGear,
                 },
                 ["totals"] = new Dictionary<string, object>
                 {
@@ -171,6 +172,11 @@ namespace CallerRetroBall.Logic
                     ["pts"] = e.points, ["ast"] = e.assists, ["reb"] = e.rebounds, ["result"] = e.result,
                 }),
                 ["appliedMatchIds"] = Strings(d.appliedMatchIds),
+                ["moments"] = List(d.moments ?? new List<MomentEntry>(), m => new Dictionary<string, object>
+                {
+                    ["day"] = m.day, ["kind"] = (int)m.kind, ["mode"] = (int)m.mode, ["opp"] = m.opponentId,
+                    ["for"] = m.scoreFor, ["against"] = m.scoreAgainst, ["v"] = m.value,
+                }),
             };
             return MiniJson.Write(o);
         }
@@ -493,6 +499,7 @@ namespace CallerRetroBall.Logic
                 d.equippedCelebration = Str(eq, "celebration", null);
                 d.equippedMove = Str(eq, "move", null);
                 d.equippedDunk = Str(eq, "dunk", null);
+                d.equippedGear = Str(eq, "gear", null);
 
                 var t = Obj(o, "totals");
                 d.totals = new CareerTotals
@@ -652,6 +659,20 @@ namespace CallerRetroBall.Logic
                         points = Int(h, "pts", 0), assists = Int(h, "ast", 0), rebounds = Int(h, "reb", 0),
                     });
                     if (d.history.Count >= Records.HistoryLength) break;
+                }
+                foreach (var item in Arr(o, "moments"))
+                {
+                    if (!(item is Dictionary<string, object> m)) continue;
+                    int kind = Int(m, "kind", -1), mode = Int(m, "mode", 0);
+                    if (kind < 0 || kind > (int)MomentKind.Blowout) continue;
+                    d.moments.Add(new MomentEntry
+                    {
+                        day = Int(m, "day", 0), kind = (MomentKind)kind,
+                        mode = mode >= 0 && mode <= (int)GameMode.Streets ? (GameMode)mode : GameMode.QuickCall,
+                        opponentId = Str(m, "opp", null), scoreFor = Math.Max(0, Int(m, "for", 0)), scoreAgainst = Math.Max(0, Int(m, "against", 0)),
+                        value = Math.Max(0, Int(m, "v", 0)),
+                    });
+                    if (d.moments.Count >= MomentsBook.Keep) break;
                 }
                 foreach (var item in Arr(o, "seasons"))
                 {

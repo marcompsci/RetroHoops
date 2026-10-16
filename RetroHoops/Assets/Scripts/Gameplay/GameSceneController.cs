@@ -575,6 +575,7 @@ namespace CallerRetroBall.Gameplay
             bool awayAlternate = ColorAccess.ResolveAwayKit(homeJersey, ref awayJersey, ref awayTrim, filter);
             var jersey = Cosmetic(career?.equippedJersey);
             var shoes = Cosmetic(career?.equippedShoes);
+            var myGear = Cosmetic(career?.equippedGear);
             for (int i = 0; i < _match.Players.Length; i++)
             {
                 var p = _match.Players[i];
@@ -611,6 +612,12 @@ namespace CallerRetroBall.Gameplay
                     if (contrast) dress.Pattern = PatternFor(p.Team, setup); // Team Patterns still wins for readability
                 }
                 else dress = KitLook.Classic(primary, trim, team.accent, shoeColor, pattern, shorts);
+                if (i == _match.ControlledIndex && myGear != null && !Demo)
+                {
+                    // I3 GEAR: your sleeves, ink or goggles (you only, like your shoes).
+                    dress.Gear = Gear.Parts(myGear.id);
+                    dress.GearColor = myGear.colorA;
+                }
                 _dress[i] = dress;
                 var frames = _art.PlayerFrames(p.Def, dress);
                 _playerViews[i] = PlayerView.Create(world, p, frames, _art, ring);
@@ -2460,6 +2467,9 @@ namespace CallerRetroBall.Gameplay
             {
                 _resultApplied = true;
                 rewarded = !customClutch && Career.ApplyMatch(App.Career, summary, grant);
+                // I3 LEGACY: your game-winners, buzzer-beaters and big nights go in the MOMENTS book.
+                if (rewarded)
+                    MomentsBook.Add(App.Career, MomentsBook.FromGame(summary, _endedOnWinner && _lastMadePlayer >= 0 && _match.IsHumanControlled(_lastMadePlayer), _endedOnBuzzer));
                 int recruitsBefore = App.Career.rise.recruitable.Count;
                 if (rewarded && _request.Mode == GameMode.Rival)
                 {

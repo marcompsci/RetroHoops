@@ -922,6 +922,28 @@
   Phase 2's feet-on-the-floor check, which now exempts the airborne dunk frame.
 - Not yet seen on a device: everything here was checked with logic tests, UnityCheck and rendered previews only.
 
+### Improvements I1–I3 (16 Oct 2026): what App Store basketball players ask for
+Research (App Store listings and reviews of Hoop Land, the 2K Arcade editions, NBA 2K Mobile, NBA Infinite, Basketball
+Stars, Basketball Battle and Basketball Arena; TouchArcade, Common Sense Media, a 2026 review-complaint analysis).
+Most common asks: no pay-to-win, energy or forced ads (Retro Hoops already has none); a CPU that doesn't feel rigged;
+celebrations and a crowd that reacts; flexible game settings; deeper customisation; records and history that last;
+offline and couch play (already here). Built:
+- **I1 BIG MOMENTS** (`BigMoments.cs`): when the winners' last basket ends the game, teammates run in and mob the shooter
+  for 2.4 s before the result screen (GAME WINNER!, or BUZZER BEATER! when the clock showed 1.5 s or less at release;
+  off with Reduce Motion, in replays and two-phone games, which still get the call and the crowd). The home crowd
+  (your side) chants DE-FENSE when the other team needs 3 or fewer or it's within 3 in the last 30 s, M-V-P for your
+  heated-up scorer with the ball, LET'S GO <TEAM> when you're down 4+, at most every 9 s, and the fans clap along.
+- **I2 FAIR PLAY** (`FairPlay.cs`): the result screen adds up the make chance of every shot at release, for both sides,
+  and shows makes against the odds ("YOU 9/14 (ODDS SAID 8.2) · SPL 7/15 (ODDS SAID 7.4)") with a verdict on the other
+  team's shooting. **HOUSE RULES** on Quick Call: game to 11/15/21, clock off or 2/3/4 minutes, 1s & 2s or 2s & 3s,
+  win by 2 — remembered in Settings (`settings.houseRules`).
+- **I3 GEAR & LEGACY** (`Moments.cs`, `CharacterSpriteGenerator.Gear.cs`): a new GEAR cosmetic slot (Locker Room and the
+  Corner Store, SP or street cash): Shooter Sleeves, Cloud Sleeves, Knee Sleeves, Full Compression, Ink Sleeve, Sport
+  Goggles, Vet Package (looks only, worn by you like shoes). A MOMENTS book in the Locker Room's records: your
+  game-winners and buzzer-beaters, 20-point games (30 in Full Court), perfect shooting nights (5+ shots), 4-steal games
+  and 12+ point wins, with opponent and score (newest 40 kept, saved).
+- Tests: `ImprovementTests` (11). Not yet seen on a device.
+
 ## Deviations from the brief (deliberate)
 
 - "Oakland Voltage" → **Eastbay Voltage** (real city + electric branding sat too close to real pro-sports naming).

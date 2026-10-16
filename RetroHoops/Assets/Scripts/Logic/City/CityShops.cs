@@ -21,6 +21,7 @@ namespace CallerRetroBall.Logic
                 case CosmeticSlot.CourtBanner: return "COURT BANNER";
                 case CosmeticSlot.Celebration: return "CELEBRATION";
                 case CosmeticSlot.DribbleMove: return "DRIBBLE MOVE";
+                case CosmeticSlot.Gear: return "GEAR";
                 default: return "DUNK PACKAGE";
             }
         }

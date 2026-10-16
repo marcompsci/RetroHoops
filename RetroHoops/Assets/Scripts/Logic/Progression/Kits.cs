@@ -75,6 +75,9 @@ namespace CallerRetroBall.Logic
         public ShortsLength Length;
         public bool ShortsStripe, Waistband, ShoeStripeOn;
         public ShoeTop Top;
+        /// <summary>I3: sleeves, ink and goggles on this player (none on everyone but you), in <see cref="GearColor"/>.</summary>
+        public GearParts Gear;
+        public RgbColor GearColor;
 
         /// <summary>The classic look (tank, V-neck, low tops) in the given colours: exactly the original sprites.</summary>
         public static KitLook Classic(RgbColor jersey, RgbColor trim, RgbColor accent, RgbColor? shoes, TeamPattern pattern, RgbColor? shorts)

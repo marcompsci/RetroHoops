@@ -267,6 +267,10 @@ namespace CallerRetroBall.Logic
         public string equippedMove;
         /// <summary>Dunk package (how your dunks look; Season 5).</summary>
         public string equippedDunk;
+        /// <summary>I3: sleeves, ink or goggles (<see cref="Gear"/>).</summary>
+        public string equippedGear;
+        /// <summary>I3 LEGACY: the MOMENTS book, newest first (<see cref="MomentsBook"/>).</summary>
+        public List<MomentEntry> moments = new List<MomentEntry>();
         public CareerTotals totals = new CareerTotals();
         public PracticeBests practice = new PracticeBests();
         public SettingsData settings = new SettingsData();
@@ -368,6 +372,7 @@ namespace CallerRetroBall.Logic
                 case CosmeticSlot.CourtBanner: return equippedBanner;
                 case CosmeticSlot.Celebration: return equippedCelebration;
                 case CosmeticSlot.DunkPackage: return equippedDunk;
+                case CosmeticSlot.Gear: return equippedGear;
                 default: return equippedMove;
             }
         }
@@ -381,6 +386,7 @@ namespace CallerRetroBall.Logic
                 case CosmeticSlot.CourtBanner: equippedBanner = id; break;
                 case CosmeticSlot.Celebration: equippedCelebration = id; break;
                 case CosmeticSlot.DunkPackage: equippedDunk = id; break;
+                case CosmeticSlot.Gear: equippedGear = id; break;
                 default: equippedMove = id; break;
             }
         }

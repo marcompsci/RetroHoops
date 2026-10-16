@@ -157,9 +157,11 @@ namespace CallerRetroBall.Logic.PixelArt
                     _skipHead = true;
                     DrawFrame(frame, (CharacterView)v, f, look, p);
                     _skipHead = false;
+                    var limbs = kit.Gear != GearParts.None ? LimbMask(frame, p) : null;
                     var big = SpriteDetail.Scale2x(frame);
                     DrawHead2x(big, (CharacterView)v, Mod(look.hairStyle, HairStyleCount), p);
                     Polish(big, (CharacterView)v, f, p);
+                    if (limbs != null) ApplyGear(big, (CharacterView)v, limbs, p);
                     var hi = SpriteDetail.Finish(big, _info, (CharacterView)v, p.Jersey, p.Trim, p.Skin, number);
                     FrameOrigin((CharacterView)v, f, out int ox, out int oy);
                     for (int y = 0; y < SheetFrameHeight; y++)

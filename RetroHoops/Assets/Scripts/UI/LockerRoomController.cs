@@ -456,8 +456,8 @@ namespace CallerRetroBall.UI
         {
             var c = App.Catalog;
             var career = App.Career;
-            var slots = new[] { CosmeticSlot.JerseyPalette, CosmeticSlot.Shoes, CosmeticSlot.CourtBanner, CosmeticSlot.Celebration, CosmeticSlot.DribbleMove, CosmeticSlot.DunkPackage };
-            string[] slotNames = { "JERSEY PALETTE", "SHOES", "COURT BANNER", "CELEBRATION", "DRIBBLE MOVE", "DUNK PACKAGE" };
+            var slots = new[] { CosmeticSlot.JerseyPalette, CosmeticSlot.Shoes, CosmeticSlot.Gear, CosmeticSlot.CourtBanner, CosmeticSlot.Celebration, CosmeticSlot.DribbleMove, CosmeticSlot.DunkPackage };
+            string[] slotNames = { "JERSEY PALETTE", "SHOES", "GEAR", "COURT BANNER", "CELEBRATION", "DRIBBLE MOVE", "DUNK PACKAGE" };
             if (career.kits.designed)
                 UiKit.Size(UiKit.Label(_content, "Your KIT tab design is what your team wears. Jerseys and shoes you own here show up there as presets.",
                                        28f, Theme.Cyan), 80f);
@@ -568,6 +568,25 @@ namespace CallerRetroBall.UI
             Line("GREENS", r.greens.ToString());
             Line("BIGGEST WIN", r.biggestWin > 0 ? "+" + r.biggestWin : "-");
             Line("WIN STREAK", r.winStreak + "  (best " + r.bestWinStreak + ")");
+
+            // I3 LEGACY: the nights themselves, not just the numbers.
+            Header("MOMENTS");
+            if (career.moments == null || career.moments.Count == 0)
+                UiKit.Size(UiKit.Label(_content, "Hit a game-winner, drop 20, go perfect from the floor: your big nights land here.", 26f, Theme.Muted, TextAlignmentOptions.Left, false), 70f);
+            else
+            {
+                Line("GAME WINNERS", (MomentsBook.Count(career, MomentKind.GameWinner) + MomentsBook.Count(career, MomentKind.BuzzerBeater)).ToString()
+                     + "  (" + MomentsBook.Count(career, MomentKind.BuzzerBeater) + " " + Logic.Loc.T("AT THE BUZZER") + ")");
+                int shownM = 0;
+                foreach (var m in career.moments)
+                {
+                    if (shownM++ >= 15) break;
+                    var oppM = App.Catalog.Team(m.opponentId);
+                    UiKit.Size(UiKit.Label(_content, MomentsBook.Line(m, oppM?.abbreviation), 26f,
+                                           m.kind == MomentKind.BuzzerBeater || m.kind == MomentKind.GameWinner ? Theme.Gold : Theme.Cream,
+                                           TextAlignmentOptions.Left, true), 42f);
+                }
+            }
 
             if (career.seasons.Count > 0)
             {
