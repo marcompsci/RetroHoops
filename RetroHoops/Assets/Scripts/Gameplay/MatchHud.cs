@@ -440,6 +440,8 @@ namespace CallerRetroBall.Gameplay
 
             TeamComparison(s);
             ShotChart(s);
+            if (!string.IsNullOrEmpty(FairPlayLine))
+                UiKit.Size(UiKit.Label(_finalColumn, FairPlayLine, 26f, Theme.Muted, TextAlignmentOptions.Center, true), 84f);
             BoxScore(s, 0);
             BoxScore(s, 1);
 
@@ -563,6 +565,8 @@ namespace CallerRetroBall.Gameplay
 
         /// <summary>Set by the match controller when there's a highlight to show on the post-game card.</summary>
         public bool HasPlayOfTheGame { get; set; }
+        /// <summary>I2 FAIR PLAY: expected vs real makes for both sides (null = hide).</summary>
+        public string FairPlayLine { get; set; }
         /// <summary>Phase 40: plays in the HIGHLIGHTS reel (the button shows when there are 2 or more).</summary>
         public int HighlightCount { get; set; }
         /// <summary>Phase 31: SAVE GAME TAPE on the end screens (two-phone, Live and watched games).</summary>

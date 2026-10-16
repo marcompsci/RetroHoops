@@ -69,6 +69,7 @@ namespace CallerRetroBall.Logic
                     ["pbpVoice"] = d.settings.playByPlayVoice,
                     ["tapToShoot"] = d.settings.tapToShoot,
                     ["reduceMotion"] = d.settings.reduceMotion,
+                    ["houseRules"] = d.settings.houseRules ?? "",
                 },
                 ["rise"] = EncodeRise(d.rise),
                 ["classic"] = EncodeClassic(d.classic),
@@ -531,6 +532,7 @@ namespace CallerRetroBall.Logic
                     playByPlayVoice = Bool(st, "pbpVoice", true),
                     tapToShoot = Bool(st, "tapToShoot", false),
                     reduceMotion = Bool(st, "reduceMotion", false),
+                    houseRules = Str(st, "houseRules", "") ?? "",
                 };
                 d.rise = DecodeRise(Obj(o, "rise"));
                 d.classic = DecodeClassic(Obj(o, "classic"));

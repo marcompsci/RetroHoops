@@ -67,6 +67,8 @@ namespace CallerRetroBall.Gameplay
         private float _chantAt = -99f, _chantUntil = -99f;
         /// <summary>The game-winner (or buzzer-beater) that ended this game, for the Moments book (I3).</summary>
         private bool _endedOnWinner, _endedOnBuzzer;
+        /// <summary>I2 FAIR PLAY: both teams' expected makes (from the make chance at release) against their real makes.</summary>
+        private readonly FairPlayTally _fair = new FairPlayTally();
         private int _lastLabelState = -1;
         private PracticeSession _practice;
         // Phase 17: H-O-R-S-E.
@@ -1555,6 +1557,7 @@ namespace CallerRetroBall.Gameplay
             int streetsTeam = _link != null && _link.Seat == 1 ? 1 : human; // THE STREETS: the guest phone is team B
             foreach (var e in _match.Events)
             {
+                if (!Theater && _watch == null) _fair.Apply(e); // I2 FAIR PLAY: the odds of every shot, both sides
                 NoteHighlight(e);
                 if (e.Type == MatchEventType.ShotMade || e.Type == MatchEventType.ShotMissed) NoteScouting();
                 stop = HitStop.Combine(stop, HitStop.For(e, _match.Ball.ShotType, _reduceMotion));
@@ -2434,6 +2437,7 @@ namespace CallerRetroBall.Gameplay
                 if (couchTitle != null) winner = couchTitle;
                 // Two-phone and (Phase 33) Live games stay connected for a rematch.
                 bool linked = _link != null;
+                _hud.FairPlayLine = _fair.Line(0, s.TeamA.abbreviation, s.TeamB.abbreviation);
                 _hud.ShowPostGame(winner, vs, default, false, linked ? linkNote : couchNote, null, (_link == null && !couch) || linked);
                 if (!linked) HangUp();
                 return;
@@ -2794,6 +2798,7 @@ namespace CallerRetroBall.Gameplay
             _hud.HasPlayOfTheGame = _recorder.BestPlay != null;
             _hud.HighlightCount = _recorder.Highlights.Count;
             bool run = IsRun;
+            _hud.FairPlayLine = _fair.Line(_match.Setup.HumanTeam, Loc.T("YOU"), (_match.Setup.HumanTeam == 0 ? _match.Setup.TeamB : _match.Setup.TeamA)?.abbreviation ?? "CPU");
             _hud.ShowPostGame(title, summary, grant, rewarded, note, run ? "CONTINUE" : null, !run);
             if (_cashOut != null)
             {

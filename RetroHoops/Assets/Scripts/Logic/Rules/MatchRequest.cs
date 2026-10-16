@@ -55,6 +55,8 @@ namespace CallerRetroBall.Logic
         public string AwayTeamId;
         public string CourtId;
         public string RulesId = DefaultContent.DefaultRulesId;
+        /// <summary>I2 HOUSE RULES (Quick Call): rules built from your choices; null = the catalog's <see cref="RulesId"/>.</summary>
+        public GameRulesDef RulesOverride;
         public string DifficultyId = DefaultContent.DefaultDifficultyId;
         /// <summary>0 = use a time-based seed. Set for reproducible test matches.</summary>
         public uint Seed;

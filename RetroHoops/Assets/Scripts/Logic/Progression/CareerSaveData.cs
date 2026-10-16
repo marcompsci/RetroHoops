@@ -39,6 +39,8 @@ namespace CallerRetroBall.Logic
         public bool tapToShoot;
         /// <summary>No screen shake, sparks, or score bounce.</summary>
         public bool reduceMotion;
+        /// <summary>I2 HOUSE RULES for Quick Call (<see cref="HouseRules.Pack"/>); empty = the default game.</summary>
+        public string houseRules = "";
         /// <summary>"en" or "es".</summary>
         public string language = Loc.English;
         /// <summary>CRT look: 0 = off, 1 = soft scanlines, 2 = strong (scanlines + vignette).</summary>

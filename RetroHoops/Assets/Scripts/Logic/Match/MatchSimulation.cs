@@ -115,7 +115,7 @@ namespace CallerRetroBall.Logic
             {
                 TeamA = c.Team(request.HomeTeamId),
                 TeamB = c.Team(request.AwayTeamId),
-                Rules = c.Find(c.Rules, rulesId) ?? new GameRulesDef(),
+                Rules = request.RulesOverride ?? c.Find(c.Rules, rulesId) ?? new GameRulesDef(),
                 FullCourt = full,
                 TeamSize = full ? Logic.FullCourt.TeamSize : (request.TeamSize >= 2 && request.TeamSize <= 4 ? request.TeamSize : MatchSimulation.PlayersPerTeam),
                 StreetRules = request.StreetRules || request.Mode == GameMode.Streets || request.StreetsStyle,

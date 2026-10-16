@@ -473,12 +473,21 @@ namespace CallerRetroBall.UI
             var names = difficulties.ConvertAll(d => d.displayName.ToUpperInvariant()).ToArray();
             UiControls.ChoiceRow(column, "DIFFICULTY", names, diffIndex, i => diffIndex = i);
 
+            // I2 HOUSE RULES: your game, your way (remembered for next time).
+            var houseBase = c.Find(c.Rules, DefaultContent.DefaultRulesId);
+            var house = HouseRules.Parse(App.Career.settings.houseRules, houseBase);
+            UiControls.ChoiceRow(column, "GAME TO", HouseRules.TargetNames, house.Target, i => house.Target = i);
+            UiControls.ChoiceRow(column, "CLOCK", HouseRules.ClockNames, house.Clock, i => house.Clock = i);
+            UiControls.ChoiceRow(column, "SCORING", HouseRules.ScoringNames, house.Scoring, i => house.Scoring = i);
+            UiControls.ChoiceRow(column, "WIN BY 2", HouseRules.OnOff, house.WinByTwo, i => house.WinByTwo = i);
+
             UiKit.Button(footer, "BACK", ShowPlayMenu, ButtonStyle.Ghost, 130f, 44f);
             UiKit.Button(footer, "TIP OFF", () =>
             {
                 var home = mine[myIndex];
                 var away = opponents[oppIndex];
                 App.Career.settings.difficultyId = difficulties[diffIndex].id;
+                App.Career.settings.houseRules = HouseRules.Pack(house);
                 App.SaveCareer();
                 App.PendingMatch = new MatchRequest
                 {
@@ -487,6 +496,7 @@ namespace CallerRetroBall.UI
                     AwayTeamId = away.id,
                     CourtId = courts[courtChoice] ?? home.homeCourtId,
                     DifficultyId = difficulties[diffIndex].id,
+                    RulesOverride = HouseRules.Apply(houseBase, house),
                 };
                 SceneFlow.GoTo(SceneNames.Game);
             }, ButtonStyle.Primary, 130f);
