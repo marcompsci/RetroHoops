@@ -131,6 +131,8 @@ namespace CallerRetroBall.Core
         public static bool OpenLiveOnMenu { get; set; }
         /// <summary>16 Oct 2026: a screen opened from BALLER CITY (the Rise hub, the Locker Room): Back returns to the city.</summary>
         public static bool BackToCity { get; set; }
+        /// <summary>17 Oct 2026: THE STREETS opened from a graffiti wall in BALLER CITY: its BACK returns to the city.</summary>
+        public static bool StreetsFromCity { get; set; }
 
         /// <summary>Simulation steps per second: 120 on 120 Hz screens with High Frame Rate on, else 60.</summary>
         public static int SimulationRate { get; private set; } = 60;
@@ -185,6 +187,11 @@ namespace CallerRetroBall.Core
             request.SpotBonus = Specialist.AppliesTo(request) ? Specialist.SpotBonuses(Career.shotChart) : null;
             // Phase 34: Settings ► DIFFICULTY BY MODE.
             request.DifficultyId = ModeDifficulty.Resolve(Career.settings, request, Catalog);
+            // 17 Oct 2026: a BALLER CITY crew always plays at its own level (BALLER or LEGENDARY), whatever the settings say.
+            var cityCrew = CityCrews.FromContext(request.ContextId);
+            if (cityCrew != null) request.DifficultyId = CityCrews.DifficultyFor(cityCrew);
+            // CASHED OUT: after your big scoring games the street CPUs key on you.
+            request.KeyOnHuman = StreetCash.KeyOn(Career, request);
             if (request.Mode == GameMode.Rise || request.Mode == GameMode.Rival)
             {
                 request.StartingStamina = RiseEngine.StartingStamina(Career.rise);

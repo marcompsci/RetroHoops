@@ -33,6 +33,8 @@ namespace CallerRetroBall.Logic
         Pumpkin = 18, PineLit = 19, Snowman = 20, Egg = 21, Bunting = 22, Arcade = 23, LanternPost = 24, Stall = 25, Ramp = 26,
         // 17 Oct 2026 (phase 3): shops, the beach.
         Shelf = 27, BarberChair = 28, Mirror = 29, Palm = 30, Umbrella = 31,
+        /// <summary>17 Oct 2026: a graffiti wall: THE STREETS.</summary>
+        Graffiti = 32,
     }
 
     /// <summary>

@@ -36,6 +36,9 @@ namespace CallerRetroBall.UI
             string next = level + 1 < StreetsTour.RepNames.Length ? "  ·  " + (StreetsTour.RepNeeded[level + 1] - s.rep) + " " + Loc.T("to") + " " + Loc.T(StreetsTour.RepNames[level + 1]) : "";
             UiControls.Stat(column, "REP", s.rep + "  " + Loc.T(StreetsTour.RepNames[level]) + next);
             UiControls.Stat(column, "RECORD", s.wins + "-" + s.losses + "  ·  " + Loc.T("STARS") + " " + StreetsTour.TotalStars(s) + "/" + StreetsTour.MaxStars);
+            var cash = App.Career.streetCash;
+            if (cash != null)
+                UiControls.Stat(column, "CASH", StreetCash.Money(cash.cash) + "  ·  " + Loc.T("STREAK") + " " + cash.streak + "  ·  " + Loc.T("MILESTONES") + " " + cash.achievements.Count + "/" + StreetCash.Milestones.Length);
             UiControls.Stat(column, "SHOWSTOPPERS", s.showstoppers + "  ·  " + Loc.T("TRICKS") + " " + s.tricks + "  ·  " + Loc.T("BEST BANK") + " " + s.bestBank, 56f);
 
             Mode(column, "STREET TOUR", Loc.T("Four cities, twelve crews, then THE CROWN. Beat a crew to recruit its leader.") + "  "
@@ -52,7 +55,16 @@ namespace CallerRetroBall.UI
             StreetsPhase3Rows(column);
 
             UiKit.Button(column, "HOW TO PLAY THE STREETS", ShowStreetsHowTo, ButtonStyle.Ghost, 90f, 32f);
-            UiKit.Button(footer, "BACK", CloseOverlay, ButtonStyle.Ghost, 130f, 44f);
+            // 17 Oct 2026: opened from a graffiti wall in BALLER CITY: BACK goes back to the city.
+            UiKit.Button(footer, App.StreetsFromCity ? "BACK TO THE CITY" : "BACK", () =>
+            {
+                if (App.StreetsFromCity)
+                {
+                    App.StreetsFromCity = false;
+                    SceneFlow.GoTo(SceneNames.City);
+                }
+                else CloseOverlay();
+            }, ButtonStyle.Ghost, 130f, 44f);
 
             // The first time here: how it works.
             if (!Tours.Seen(App.Career, StreetsCard))

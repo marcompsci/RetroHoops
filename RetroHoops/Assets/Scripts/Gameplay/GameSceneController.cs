@@ -167,6 +167,7 @@ namespace CallerRetroBall.Gameplay
         private bool _shootTapped;
         /// <summary>15 Oct 2026: THE STREETS (meters, combo, SHOWSTOPPER button); null in other modes.</summary>
         private StreetsHud _streetsHud;
+        private StreetPayout _cashOut;
         private bool _breakerTapped;
         private int _bestBank;
         private int _leaper = -1;
@@ -2461,6 +2462,16 @@ namespace CallerRetroBall.Gameplay
                     if (!string.IsNullOrEmpty(cityNote)) note = string.IsNullOrEmpty(note) ? cityNote : note + "\n" + cityNote;
                     if (cityResult.Completed.Count > 0 || cityResult.CrewFirstWin) Sfx(SfxId.Fanfare);
                 }
+                // 17 Oct 2026: CASHED OUT (every street game pays; 20+ points pays a secret bonus).
+                if (rewarded && StreetCash.Counts(_request))
+                {
+                    int mine = summary.HumanLine?.stats?.points ?? 0, top = 0;
+                    foreach (var line in summary.lines) if (!line.isHuman && line.stats != null) top = System.Math.Max(top, line.stats.points);
+                    var pay = StreetCash.ApplyGame(App.Career, _request, summary.HumanWon, mine, top);
+                    string payNote = pay.Note();
+                    if (!string.IsNullOrEmpty(payNote)) note = string.IsNullOrEmpty(note) ? payNote : payNote + "\n" + note;
+                    if (pay.Cash > 0) _cashOut = pay;
+                }
                 var street = Street.FromContext(_request.ContextId);
                 if (rewarded && street != null)
                 {
@@ -2608,6 +2619,12 @@ namespace CallerRetroBall.Gameplay
             _hud.HighlightCount = _recorder.Highlights.Count;
             bool run = IsRun;
             _hud.ShowPostGame(title, summary, grant, rewarded, note, run ? "CONTINUE" : null, !run);
+            if (_cashOut != null)
+            {
+                _hud.CashOut(StreetCash.Money(_cashOut.Cash), _cashOut.BigGame ? "20+ POINTS BONUS" : _cashOut.Doubled ? "3 IN A ROW: DOUBLED" : null);
+                Sfx(SfxId.Fanfare, 0.8f);
+                _cashOut = null;
+            }
         }
 
         /// <summary>Phase 37: the CLUTCH result line: stars, then which goals were met.</summary>

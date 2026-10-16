@@ -146,6 +146,14 @@ namespace CallerRetroBall.Logic
             });
         }
 
+        /// <summary>17 Oct 2026: a THE STREETS graffiti wall by the street courts (walk up to it for THE STREETS).</summary>
+        private static void StreetsWall(CityMap m, int x, int y, int variant)
+        {
+            m.AddProp(CityPropKind.Graffiti, x, y, 6, 1, true, variant);
+            m.Portals.Add(new CityPortal { Id = "streets." + x + "." + y, Kind = CityPortalKind.Station, Label = "THE STREETS", Target = "streets",
+                                           X = x, Y = y - 1.3f, W = 6, H = 1.3f });
+        }
+
         private static void Trees(CityMap m, params int[] xy)
         {
             for (int i = 0; i + 1 < xy.Length; i += 2) m.AddProp(CityPropKind.Tree, xy[i], xy[i + 1], 1, 1, true, i / 2);
@@ -300,6 +308,7 @@ namespace CallerRetroBall.Logic
             m.Portals.Add(new CityPortal { Id = "road.first_callers", Kind = CityPortalKind.District, Label = "TO FIRST CALLERS", Target = FirstCallers,
                                            TargetSpawn = "from_blacktop", X = 0, Y = 17, W = 1.4f, H = 6 });
 
+            StreetsWall(m, 34, 24, 0);
             m.Portals.Add(new CityPortal { Id = "road.boardwalk", Kind = CityPortalKind.District, Label = "TO THE BOARDWALK", Target = Boardwalk,
                                            TargetSpawn = "from_blacktop", X = 46.6f, Y = 17, W = 1.4f, H = 6 });
             m.AddSpawn("from_first_callers", 2.2f, 20.5f, 3);
@@ -459,6 +468,7 @@ namespace CallerRetroBall.Logic
             foreach (int y in new[] { 25, 32, 48, 55 }) { m.AddProp(CityPropKind.Lamp, 21, y, 1, 1, true); m.AddProp(CityPropKind.Lamp, 30, y, 1, 1, true); }
             m.Portals.Add(new CityPortal { Id = "road.first_callers", Kind = CityPortalKind.District, Label = "TO FIRST CALLERS", Target = FirstCallers,
                                            TargetSpawn = "from_heights", X = 24, Y = 0, W = 4, H = 1.4f });
+            StreetsWall(m, 13, 2, 1);
             m.Portals.Add(new CityPortal { Id = "road.downtown", Kind = CityPortalKind.District, Label = "TO DOWNTOWN", Target = Downtown,
                                            TargetSpawn = "from_heights", X = 50.6f, Y = 26, W = 1.4f, H = 6 });
             m.AddSpawn("from_first_callers", 25.5f, 2.6f, 1);
@@ -577,6 +587,7 @@ namespace CallerRetroBall.Logic
             m.Hangouts["pier.rail"] = new Vec2(12f, 35f);
 
             foreach (int x in new[] { 6, 18, 34, 46 }) { m.AddProp(CityPropKind.Lamp, x, 16, 1, 1, true); m.AddProp(CityPropKind.Lamp, x, 23, 1, 1, true); }
+            StreetsWall(m, 13, 23, 2);
             m.Portals.Add(new CityPortal { Id = "road.blacktop", Kind = CityPortalKind.District, Label = "TO BLACKTOP DISTRICT", Target = Blacktop,
                                            TargetSpawn = "from_boardwalk", X = 0, Y = 17, W = 1.4f, H = 6 });
             m.AddSpawn("from_blacktop", 2.6f, 20.5f, 3);
@@ -626,6 +637,7 @@ namespace CallerRetroBall.Logic
             m.Hangouts["court.night_bus_depot.side"] = new Vec2(33.5f, 40f);
 
             foreach (int x in new[] { 4, 14, 37, 47 }) { m.AddProp(CityPropKind.Lamp, x, 25, 1, 1, true); m.AddProp(CityPropKind.Lamp, x, 32, 1, 1, true); }
+            StreetsWall(m, 36, 20, 1);
             m.Portals.Add(new CityPortal { Id = "road.heights", Kind = CityPortalKind.District, Label = "TO HOOP HEIGHTS", Target = HoopHeights,
                                            TargetSpawn = "from_downtown", X = 0, Y = 26, W = 1.4f, H = 6 });
             m.AddSpawn("from_heights", 2.6f, 29.5f, 3);
@@ -669,6 +681,7 @@ namespace CallerRetroBall.Logic
                                            X = 24.5f, Y = 29.8f, W = 2f, H = 1.2f });
 
             foreach (int x in new[] { 6, 18, 34, 46 }) { m.AddProp(CityPropKind.Lamp, x, 20, 1, 1, true); m.AddProp(CityPropKind.Lamp, x, 27, 1, 1, true); }
+            StreetsWall(m, 3, 17, 0);
             m.Portals.Add(new CityPortal { Id = "road.holiday", Kind = CityPortalKind.District, Label = "TO HOLIDAY PARK", Target = HolidayPark,
                                            TargetSpawn = "from_school", X = 50.6f, Y = 21, W = 1.4f, H = 6 });
             m.AddSpawn("from_holiday_park", 49.4f, 24.5f, 2);

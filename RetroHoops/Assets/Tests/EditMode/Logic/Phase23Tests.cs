@@ -380,7 +380,8 @@ namespace CallerRetroBall.Tests
             var photo = PhotoMode.Compose(src, PhotoFilter.Dusk, false, null, 4);
             Assert.AreEqual(200, photo.Width);
             Assert.AreEqual(photo.Get(0, 0), photo.Get(3, 3));
-            Assert.AreEqual("HOME 1-0 ? AWAY".Replace("?", " "), PhotoMode.Clean("home 1-0 ? away"));
+            // 17 Oct 2026: the pixel font draws ? now (THE STREETS walls); @ still has no glyph and becomes a space.
+            Assert.AreEqual("HOME 1-0   AWAY", PhotoMode.Clean("home 1-0 @ away"));
             Assert.AreEqual(5, PhotoMode.ScaleFor(216));
             Assert.AreEqual(8, PhotoMode.ScaleFor(10));
             StringAssert.Contains(".png", PhotoMode.FileName(new System.DateTime(2026, 10, 4, 12, 0, 0)));

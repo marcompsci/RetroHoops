@@ -95,6 +95,8 @@ namespace CallerRetroBall.Logic
         public float StartClock;
         /// <summary>Phase 40 SMART DIFFICULTY: added to the opponents' release accuracy.</summary>
         public float AiEdge;
+        /// <summary>17 Oct 2026 CASHED OUT: 0..1, the CPU defence keys on the human (tighter on the ball, doubles near the rim).</summary>
+        public float KeyOnHuman;
         public List<PlayerDef> BenchA = new List<PlayerDef>();
         public List<PlayerDef> BenchB = new List<PlayerDef>();
         /// <summary>Finds an archetype by id (bench players coming on).</summary>
@@ -143,6 +145,7 @@ namespace CallerRetroBall.Logic
                 StartScoreB = Math.Max(0, request.StartScoreB),
                 StartClock = Math.Max(0f, request.StartClock),
                 AiEdge = Math.Max(-Adaptive.MaxEdge, Math.Min(Adaptive.MaxEdge, request.AiEdge)),
+                KeyOnHuman = Math.Max(0f, Math.Min(1f, request.KeyOnHuman)),
             };
             if (request.StartWithBall == 0 || request.StartWithBall == 1) setup.StartingOffense = request.StartWithBall;
             // Practice has no opponent: mirror the player crew so the court still has bodies.

@@ -211,6 +211,47 @@ namespace CallerRetroBall.Gameplay
             if (_finalPanel != null) _finalPanel.SetActive(false);
         }
 
+        private GameObject _cash;
+
+        /// <summary>17 Oct 2026: CASHED OUT: a big graffiti-style stamp over the end screen for a couple of seconds.</summary>
+        public void CashOut(string amount, string sub)
+        {
+            if (_cash != null) Destroy(_cash);
+            var canvas = UiKit.CreateScreenCanvas("CashOutCanvas", 65);
+            _cash = canvas.gameObject;
+            var holder = UiKit.NewRect("CashOut", canvas.transform);
+            UiKit.Place(holder, new Vector2(0.5f, 0.62f), new Vector2(980f, 420f));
+            holder.localRotation = Quaternion.Euler(0f, 0f, 6f);
+            var plate = UiKit.Panel(holder, new Color(0.08f, 0.08f, 0.12f, 0.88f), name: "Plate");
+            UiKit.Stretch(plate.rectTransform);
+            var top = UiKit.ShadowLabel(holder, "CASHED OUT", 120f, new Color32(0xF7, 0x25, 0x85, 255), new Color32(0x4C, 0xC9, 0xF0, 255), 10f);
+            var trt = (RectTransform)top.transform.parent;
+            trt.anchorMin = new Vector2(0f, 0.5f); trt.anchorMax = new Vector2(1f, 1f); trt.offsetMin = trt.offsetMax = Vector2.zero;
+            var money = UiKit.ShadowLabel(holder, amount, 110f, new Color32(0x7C, 0xE5, 0x77, 255), new Color32(0x14, 0x14, 0x1F, 255), 8f);
+            var mrt = (RectTransform)money.transform.parent;
+            mrt.anchorMin = new Vector2(0f, 0.12f); mrt.anchorMax = new Vector2(1f, 0.55f); mrt.offsetMin = mrt.offsetMax = Vector2.zero;
+            if (!string.IsNullOrEmpty(sub))
+            {
+                var s = UiKit.Label(holder, sub, 40f, Theme.Gold, TextAlignmentOptions.Center, true, "Sub");
+                s.rectTransform.anchorMin = new Vector2(0f, -0.12f); s.rectTransform.anchorMax = new Vector2(1f, 0.12f);
+                s.rectTransform.offsetMin = s.rectTransform.offsetMax = Vector2.zero;
+            }
+            StartCoroutine(FadeCash(canvas.gameObject.AddComponent<CanvasGroup>()));
+        }
+
+        private System.Collections.IEnumerator FadeCash(CanvasGroup g)
+        {
+            g.blocksRaycasts = false;
+            float start = Time.unscaledTime;
+            while (g != null && Time.unscaledTime - start < 2.8f)
+            {
+                float t = Time.unscaledTime - start;
+                g.alpha = t < 0.15f ? t / 0.15f : t > 2.2f ? 1f - (t - 2.2f) / 0.6f : 1f;
+                yield return null;
+            }
+            if (g != null) Destroy(g.gameObject);
+        }
+
         private GameObject _confirm;
 
         /// <summary>A yes/no card over everything (LEAVE COURT during a live game).</summary>
@@ -240,7 +281,11 @@ namespace CallerRetroBall.Gameplay
             _confirm = null;
         }
 
-        private void OnDestroy() => CloseConfirm();
+        private void OnDestroy()
+        {
+            CloseConfirm();
+            if (_cash != null) Destroy(_cash);
+        }
 
         private GameObject _replayButton;
         private float _replayButtonUntil;

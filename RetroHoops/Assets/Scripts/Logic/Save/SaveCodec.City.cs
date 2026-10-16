@@ -26,6 +26,39 @@ namespace CallerRetroBall.Logic
         // A position that isn't a real number is saved as "none" (MiniJson would write it as 0, a real place).
         private static double Finite(float v) => float.IsNaN(v) || float.IsInfinity(v) ? -1.0 : v;
 
+        // 17 Oct 2026: CASHED OUT.
+        private static object EncodeStreetCash(StreetCashSaveData s)
+        {
+            s = s ?? new StreetCashSaveData();
+            return new Dictionary<string, object>
+            {
+                ["cash"] = (double)s.cash, ["earned"] = (double)s.earned, ["g"] = s.games, ["w"] = s.wins, ["st"] = s.streak, ["best"] = s.bestStreak,
+                ["big"] = s.bigGames, ["top"] = s.topScorer, ["sp"] = s.bonusSp, ["heat"] = (double)s.heat,
+                ["ach"] = Strings(s.achievements ?? new List<string>()),
+            };
+        }
+
+        private static StreetCashSaveData DecodeStreetCash(Dictionary<string, object> o)
+        {
+            var s = new StreetCashSaveData();
+            if (o == null) return s;
+            double cash = Num(o, "cash", 0), earned = Num(o, "earned", 0), heat = Num(o, "heat", 0);
+            s.cash = double.IsNaN(cash) || double.IsInfinity(cash) ? 0 : (long)Math.Max(0, Math.Min(1e12, cash));
+            s.earned = double.IsNaN(earned) || double.IsInfinity(earned) ? 0 : (long)Math.Max(0, Math.Min(1e12, earned));
+            s.earned = Math.Max(s.earned, s.cash);
+            s.games = Math.Max(0, Int(o, "g", 0));
+            s.wins = Math.Max(0, Math.Min(s.games, Int(o, "w", 0)));
+            s.streak = Math.Max(0, Math.Min(s.wins, Int(o, "st", 0)));
+            s.bestStreak = Math.Max(s.streak, Math.Min(s.wins, Int(o, "best", 0)));
+            s.bigGames = Math.Max(0, Math.Min(s.games, Int(o, "big", 0)));
+            s.topScorer = Math.Max(0, Math.Min(s.games, Int(o, "top", 0)));
+            s.bonusSp = Math.Max(0, Int(o, "sp", 0));
+            s.heat = double.IsNaN(heat) ? 0f : (float)Math.Max(0, Math.Min(1, heat));
+            foreach (var id in StrList(o, "ach"))
+                if (Array.Exists(StreetCash.Milestones, m => m.Id == id) && !s.achievements.Contains(id)) s.achievements.Add(id);
+            return s;
+        }
+
         private static CitySaveData DecodeCity(Dictionary<string, object> o)
         {
             var s = new CitySaveData();

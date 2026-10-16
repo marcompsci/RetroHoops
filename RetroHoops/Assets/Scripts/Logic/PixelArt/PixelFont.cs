@@ -58,6 +58,9 @@ namespace CallerRetroBall.Logic.PixelArt
             ['&'] = new[] { ".#.", "#.#", ".#.", "#.#", ".##" },
             ['%'] = new[] { "#.#", "..#", ".#.", "#..", "#.#" },
             ['+'] = new[] { "...", ".#.", "###", ".#.", "..." },
+            ['?'] = new[] { "##.", "..#", ".#.", "...", ".#." },
+            [','] = new[] { "...", "...", "...", ".#.", "#.." },
+            ['$'] = new[] { ".##", "##.", ".#.", ".##", "##." },
         };
 
         public static bool Has(char ch) => Glyphs.ContainsKey(char.ToUpperInvariant(ch));

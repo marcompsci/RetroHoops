@@ -30,6 +30,9 @@ namespace CallerRetroBall.Logic
         }
 
         /// <summary>On-ball gap change for an AI defender guarding <paramref name="man"/> (smarter teams adjust more).</summary>
+        /// <summary>17 Oct 2026 CASHED OUT: how much closer the on-ball defender plays a keyed-on human (metres).</summary>
+        private float KeyOnGap(PlayerRuntimeState man) => Setup.KeyOnHuman > 0f && man.IsHuman && !Setup.SecondHuman ? 0.35f * Setup.KeyOnHuman : 0f;
+
         private float ScoutGap(PlayerRuntimeState defender, PlayerRuntimeState man, DifficultyDef profile)
         {
             if (defender.Team == Setup.HumanTeam && !Setup.Coach) return 0f; // your own AI teammates don't scout you

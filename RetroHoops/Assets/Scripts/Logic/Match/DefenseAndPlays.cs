@@ -584,7 +584,9 @@ namespace CallerRetroBall.Logic
         /// </summary>
         private bool TrapHotHand(PlayerRuntimeState p, AiState s, PlayerRuntimeState holder, DifficultyDef profile)
         {
-            if (holder == null || holder.Team == p.Team || IsBenched(p.Index) || !IsHeatedUp(holder.Index)) return false;
+            if (holder == null || holder.Team == p.Team || IsBenched(p.Index)) return false;
+            // 17 Oct 2026 CASHED OUT: a keyed-on human gets doubled too (only rolls the dice when the heat is on).
+            if (!IsHeatedUp(holder.Index) && !(Setup.KeyOnHuman > 0f && holder.IsHuman && _rng.NextFloat() < Setup.KeyOnHuman * 0.6f)) return false;
             if (profile == null || profile.decisionQuality < Setup.Defense.trapMinQuality) return false;
             var court = Setup.Court;
             if (court.DistanceToHoop(holder.Position) > Setup.Defense.trapRange) return false;

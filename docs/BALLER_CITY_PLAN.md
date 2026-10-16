@@ -213,3 +213,34 @@ Tests: `BallerCityMissionsTests` (17) plus the updated `BallerCityTests`. The fu
 - `BallerCityPhase3Tests` (13 tests); the full logic suite passes, 991 of 991.
 - The Unity reference compile is clean, and the Spanish text and App Store audits pass.
 - Not yet run on the phone.
+
+---
+
+## 9. Phase 4, 17 Oct 2026: THE STREETS moves into BALLER CITY, and CASHED OUT
+
+- **Main menu:** the separate THE STREETS button is gone. The BALLER CITY button carries a green graffiti "THE STREETS" tag.
+- **Graffiti walls** in the Blacktop District, Hoop Heights, Downtown, the Boardwalk and the School Yard, by the street courts.
+  - Each wall is tagged THE STREETS in outlined spray letters with drips, and says "THINK YOU CAN HANG?".
+  - Walk up to a wall for three choices:
+    - **RUN IT AT** the nearest street court (a pickup game that brings you back there afterwards).
+    - **THE STREETS HQ**: the full hub, with the Street Tour, your crew, Homecourt, gear, Live and games with friends. Its BACK button returns you to the city.
+    - **CASH & MILESTONES.**
+  - The card leads with "The street courts are meant for legends. Think you can hang?".
+- **CASHED OUT** (`StreetCash`). It counts in every street game (THE STREETS, THE PARK and the city crews):
+  - A win pays $5,000. On a streak of three or more wins in a row, every win pays $10,000.
+  - Scoring more than 20 yourself pays a secret extra $20,000, even in a loss.
+  - Bonus SP: +10 for playing, +20 for a win, +25 for leading everyone in scoring.
+  - **12 milestones**, two of them secret, with SP rewards for streaks, being the top scorer, games played, wins, and the bank ($100K, $500K, $1M).
+  - A big graffiti-style **CASHED OUT $X** stamp shows on the end screen.
+  - Street cash is play money. The Corner Store takes it for gear at the item's SP price × 100.
+  - Your bank shows in the city's top bar and in THE STREETS hub.
+- **The CPUs catch on:** each game over 20 points raises your HEAT, and ordinary games cool it off. When it passes halfway, the end screen says "Word's out. The CPUs are keying on you now."
+  - While the HEAT is up, street defences key on you: the on-ball defender plays up to 0.35 m tighter, and help defenders double you near the rim.
+  - These are only positioning and decisions. Nobody gets faster, so the fairness rule still holds, and nothing changes when the HEAT is zero.
+- **Fix:** a city crew now always plays at its own level (BALLER or LEGENDARY), even if Settings ▸ DIFFICULTY BY MODE says otherwise.
+- **Pixel font:** gained ? $ and , (a photo-mode caption test now uses @ for an unsupported character).
+
+**Tests:**
+- `StreetCashTests` (11), including one checking the defender plays you tighter when the CPUs are keying on you.
+- The full logic suite is 1,002 passing; the Unity reference compile is clean; the Spanish text and App Store audits pass.
+- Not yet run on the phone.

@@ -674,6 +674,7 @@ namespace CallerRetroBall.Logic.PixelArt
                 case CityPropKind.Mirror: return Mirror(p, lit);
                 case CityPropKind.Palm: return Palm(p.Variant, out pivotX);
                 case CityPropKind.Umbrella: return Umbrella(p.Variant, out pivotX);
+                case CityPropKind.Graffiti: return Graffiti(p, lit);
                 default: // Planter
                 {
                     var c = new PixelCanvas(Tile, 18);
@@ -877,6 +878,56 @@ namespace CallerRetroBall.Logic.PixelArt
                 for (int y = 0; y < top; y++) c.Set(x, y, y == top - 1 ? RgbColor.FromHex("#D9D9D9") : (y % 4 == 0 ? dark : face));
             }
             c.FillRect(left ? w - 2 : 0, 0, 2, 15, RgbColor.FromHex("#3A3A48")); // coping
+            return c;
+        }
+
+        /// <summary>
+        /// 17 Oct 2026 (Omari): THE STREETS graffiti wall: a brick wall tagged THE STREETS in big outlined spray letters
+        /// with drips, splats, and "THINK YOU CAN HANG?" underneath.
+        /// </summary>
+        public static PixelCanvas Graffiti(CityProp p, bool lit)
+        {
+            int w = Math.Max(4, p.W) * Tile, h = 46;
+            var c = new PixelCanvas(w, h);
+            // Brick wall with a concrete cap.
+            for (int y = 0; y < h - 4; y++)
+                for (int x = 0; x < w; x++)
+                {
+                    int row = y / 4;
+                    bool mortar = y % 4 == 0 || (x + (row % 2) * 4) % 8 == 0;
+                    var brick = (Hash(x / 8, row, 3) & 3) == 0 ? RgbColor.FromHex("#6E2E26") : RgbColor.FromHex("#7E362C");
+                    c.Set(x, y, mortar ? RgbColor.FromHex("#4E241E") : brick);
+                }
+            c.FillRect(0, h - 4, w, 4, RgbColor.FromHex("#8E9196"));
+            c.FillRect(0, h - 4, w, 1, RgbColor.FromHex("#6B6F78"));
+            // Spray splats behind the letters.
+            string[][] palettes = { new[] { "#F72585", "#4CC9F0", "#FFD166" }, new[] { "#7CE577", "#C74DFF", "#FF8C42" }, new[] { "#FF8C42", "#4CC9F0", "#F4F1DE" } };
+            var pal = palettes[Math.Abs(p.Variant) % palettes.Length];
+            var main = RgbColor.FromHex(pal[0]);
+            var outline = RgbColor.FromHex(pal[1]);
+            var accent = RgbColor.FromHex(pal[2]);
+            for (int i = 0; i < 6; i++)
+            {
+                uint hsh = Hash(i, p.Variant, 11);
+                c.FillCircle(6 + (int)(hsh % (uint)(w - 12)), 10 + (int)((hsh >> 8) % 24), 3f + (hsh >> 16) % 3, RgbColor.FromHex(pal[i % 3]).Darken(0.35f));
+            }
+            // THE STREETS: outline, then the letters, then a highlight; drips under some letters.
+            const string tag = "THE STREETS";
+            int scale = PixelFont.Measure(tag, 2) <= w - 6 ? 2 : 1;
+            int top = h - 9;
+            for (int dx = -1; dx <= 1; dx++)
+                for (int dy = -1; dy <= 1; dy++)
+                    if (dx != 0 || dy != 0) PixelFont.DrawCentered(c, tag, w / 2 + dx, top + dy, outline, scale);
+            PixelFont.DrawCentered(c, tag, w / 2 + 1, top - 1, RgbColor.FromHex("#14141F"), scale);
+            PixelFont.DrawCentered(c, tag, w / 2, top, lit ? main.Lighten(0.2f) : main, scale);
+            int left = w / 2 - PixelFont.Measure(tag, scale) / 2;
+            for (int i = 0; i < 5; i++)
+            {
+                int x = left + 3 + i * PixelFont.Measure(tag, scale) / 5;
+                int len = 2 + (int)(Hash(i, p.Variant, 5) % 5);
+                for (int y = 0; y < len; y++) c.Set(x, top - 5 * scale - y, main);
+            }
+            PixelFont.DrawCentered(c, "THINK YOU CAN HANG?", w / 2, 9, accent);
             return c;
         }
 

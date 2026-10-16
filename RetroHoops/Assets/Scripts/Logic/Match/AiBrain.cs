@@ -482,7 +482,7 @@ namespace CallerRetroBall.Logic
                 // On the ball: tight, and closer still when he's rising up to shoot.
                 s.Intent = AiIntent.Guard;
                 var toHoop = court.Hoop - man.Position;
-                float gap = ChargingIndex == man.Index ? 0.7f : Math.Max(0.6f, SchemeOnBallGap(p.Team) + ScoutGap(p, man, profile));
+                float gap = ChargingIndex == man.Index ? 0.7f : Math.Max(0.6f, SchemeOnBallGap(p.Team) + ScoutGap(p, man, profile) - KeyOnGap(man));
                 // Full Court: contain the ball in the backcourt (give a cushion) unless pressing.
                 if (Setup.FullCourt && man.Position.y > FullCourt.MidY && _scheme[p.Team] != DefenseScheme.Pressure) gap = Math.Max(gap, 2.2f);
                 s.Target = toHoop.SqrMagnitude > 0.01f ? court.Clamp(man.Position + toHoop.Normalized * gap) : man.Position;

@@ -77,6 +77,16 @@ namespace CallerRetroBall.Logic
                     Label = Loc.T("BUY") + ": " + name + "  " + item.cost + " SP", ItemId = item.id, Price = item.cost,
                     Action = CityAction.Buy, Detail = slot, Locked = why,
                 });
+                // 17 Oct 2026: or pay with street cash (CASHED OUT), once you have some.
+                long price = StreetCash.Price(item);
+                long have = d.streetCash?.cash ?? 0;
+                if (have > 0)
+                    list.Add(new CityActivity
+                    {
+                        Label = Loc.T("PAY CASH") + ": " + name + "  " + StreetCash.Money(price), ItemId = item.id, Action = CityAction.BuyWithCash,
+                        Detail = slot + "  ·  " + Loc.T("street cash"),
+                        Locked = check == CosmeticCheck.NeedsFans ? why : have < price ? Loc.T("Needs") + " " + StreetCash.Money(price) + " (" + StreetCash.Money(have) + ")." : null,
+                    });
             }
             return list;
         }
@@ -93,6 +103,22 @@ namespace CallerRetroBall.Logic
                 d.city.purchases++;
             }
             return result;
+        }
+
+        /// <summary>Buys (and puts on) an item from today's shelves with street cash (an item's SP price × 100).</summary>
+        public static CosmeticCheck BuyWithCash(CareerSaveData d, ContentCatalog c, string itemId, int day)
+        {
+            var item = Stock(c, day).Find(x => x.id == itemId);
+            if (item == null || d == null) return CosmeticCheck.Unknown;
+            if (d.ownedCosmetics.Contains(item.id)) return CosmeticCheck.AlreadyOwned;
+            if (item.passOnly) return CosmeticCheck.PassOnly;
+            if (d.fans < item.fansRequired) return CosmeticCheck.NeedsFans;
+            if (!StreetCash.Spend(d, StreetCash.Price(item))) return CosmeticCheck.NotEnoughPoints;
+            d.ownedCosmetics.Add(item.id);
+            d.SetEquipped(item.slot, item.id);
+            if (d.city == null) d.city = new CitySaveData();
+            d.city.purchases++;
+            return CosmeticCheck.Ok;
         }
 
         public static bool Equip(CareerSaveData d, ContentCatalog c, string itemId) => Career.Equip(d, c?.Cosmetics.Find(x => x.id == itemId));

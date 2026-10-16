@@ -4,7 +4,7 @@ using System.Collections.Generic;
 namespace CallerRetroBall.Logic
 {
     /// <summary>What a city choice does when picked.</summary>
-    public enum CityAction { PlayMatch = 0, OpenRiseHub = 1, OpenLockerRoom = 2, Info = 3, /** 17 Oct 2026 (phase 3): the shops. */ Buy = 4, Equip = 5, Haircut = 6 }
+    public enum CityAction { PlayMatch = 0, OpenRiseHub = 1, OpenLockerRoom = 2, Info = 3, /** 17 Oct 2026 (phase 3): the shops. */ Buy = 4, Equip = 5, Haircut = 6, /** 17 Oct 2026: THE STREETS walls. */ OpenStreets = 7, StreetsBoard = 8, BuyWithCash = 9 }
 
     /// <summary>
     /// One thing you can do at a court, a door, a station or with a person: a label, a line of detail, and either a
@@ -166,6 +166,9 @@ namespace CallerRetroBall.Logic
                 case "barber.chair":
                     list.AddRange(CityBarber.Choices(career));
                     break;
+                case "streets":
+                    list.AddRange(StreetsWall(map, portal, career, c, day));
+                    break;
                 case "school":
                     list.Add(new CityActivity { Label = "BALLER CITY HIGH", Detail = "Classes are out. The courts out front are open.", Action = CityAction.Info });
                     break;
@@ -220,6 +223,37 @@ namespace CallerRetroBall.Logic
                     break;
                 }
             }
+            return list;
+        }
+
+        /// <summary>
+        /// 17 Oct 2026 (Omari): a THE STREETS graffiti wall. Run it right here (pickup on the nearest street court),
+        /// open THE STREETS (tour, crew, homecourt, gear, live and friends), or see your cash and milestones.
+        /// </summary>
+        public static List<CityActivity> StreetsWall(CityMap map, CityPortal portal, CareerSaveData career, ContentCatalog c, int day)
+        {
+            var list = new List<CityActivity>();
+            CityCourt nearest = null;
+            float best = float.MaxValue;
+            foreach (var k in map.Courts)
+            {
+                if (k.Use != CityCourtUse.Streets) continue;
+                float d = Vec2.Distance(new Vec2(k.X + k.W * 0.5f, k.Y + k.H * 0.5f), portal.Center);
+                if (d < best) { best = d; nearest = k; }
+            }
+            if (nearest != null && career != null && c != null)
+            {
+                var run = ForCourt(map, nearest, career, c, day).Find(a => a.Label == "PICKUP 3 ON 3" && a.Request != null);
+                if (run != null)
+                    list.Add(new CityActivity { Label = Loc.T("RUN IT AT") + " " + nearest.Name, Detail = run.Detail, Request = run.Request, Primary = true });
+            }
+            list.Add(new CityActivity { Label = "THE STREETS HQ", Detail = "Street Tour, your crew, Homecourt, gear, Live and games with friends.", Action = CityAction.OpenStreets });
+            var cash = career?.streetCash;
+            list.Add(new CityActivity
+            {
+                Label = "CASH & MILESTONES", Action = CityAction.StreetsBoard,
+                Detail = cash == null ? null : StreetCash.Money(cash.cash) + "  ·  " + Loc.T("STREAK") + " " + cash.streak + "  ·  " + cash.achievements.Count + "/" + StreetCash.Milestones.Length,
+            });
             return list;
         }
 

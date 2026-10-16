@@ -219,7 +219,8 @@ namespace CallerRetroBall.City
             _world.SetHour(_hour);
             var def = CityDistricts.Find(_map.DistrictId);
             string block = Loc.T(CityClock.Name(_block));
-            string sky = _weather == CityWeatherKind.Clear ? "" : "  ·  " + Loc.T(CityWeather.Name(_weather));
+            string sky = (_weather == CityWeatherKind.Clear ? "" : "  ·  " + Loc.T(CityWeather.Name(_weather)))
+                         + (App.Career.streetCash != null && App.Career.streetCash.cash > 0 ? "  ·  " + StreetCash.Money(App.Career.streetCash.cash) : "");
             _hud.SetPlace(def?.Name ?? "", _map.Interior ? Loc.T("INSIDE") + "  ·  " + block : block + "  ·  " + now.ToString("h:mm tt", System.Globalization.CultureInfo.InvariantCulture) + sky);
         }
 
@@ -314,9 +315,20 @@ namespace CallerRetroBall.City
                     Leave(SceneNames.LockerRoom);
                     break;
                 case CityAction.Buy:
+                case CityAction.BuyWithCash:
                 case CityAction.Equip:
                 case CityAction.Haircut:
                     HandleShop(a);
+                    break;
+                case CityAction.OpenStreets:
+                    // THE STREETS hub (tour, crew, homecourt, gear, live, friends); its BACK comes back here.
+                    SavePosition();
+                    App.StreetsFromCity = true;
+                    App.OpenStreetsOnMenu = true;
+                    Leave(SceneNames.MainMenu);
+                    break;
+                case CityAction.StreetsBoard:
+                    OpenStreetsBoard();
                     break;
                 default:
                     if (!string.IsNullOrEmpty(a.Detail)) _hud.Toast(a.Detail, 3f);

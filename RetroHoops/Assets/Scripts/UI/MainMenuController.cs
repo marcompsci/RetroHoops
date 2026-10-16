@@ -100,12 +100,17 @@ namespace CallerRetroBall.UI
             var playRow = UiKit.Row(column, 20f, "PlayCity");
             UiKit.Size(playRow, 150f);
             UiKit.Button(playRow, "PLAY", ShowPlayMenu, ButtonStyle.Primary, 150f, 64f);
-            UiKit.Button(playRow, "BALLER CITY", () => { App.BackToCity = false; SceneFlow.GoTo(SceneNames.City); }, ButtonStyle.Primary, 150f, 56f);
+            var city = UiKit.Button(playRow, "BALLER CITY", () => { App.BackToCity = false; App.StreetsFromCity = false; SceneFlow.GoTo(SceneNames.City); }, ButtonStyle.Primary, 150f, 56f);
+            // 17 Oct 2026 (Omari): THE STREETS lives inside BALLER CITY now: a graffiti tag on the button says so.
+            var tag = UiKit.ShadowLabel(city.transform, "THE STREETS", 30f, new Color32(0x7C, 0xE5, 0x77, 255), new Color32(0x14, 0x14, 0x1F, 255), 4f);
+            var tagRt = (RectTransform)tag.transform.parent;
+            tagRt.anchorMin = tagRt.anchorMax = new Vector2(0.78f, 0.98f);
+            tagRt.sizeDelta = new Vector2(240f, 44f);
+            tagRt.localRotation = Quaternion.Euler(0f, 0f, -8f);
 
-            // 15 Oct 2026 (Omari): THE STREETS, up top next to RISE MODE.
+            // 17 Oct 2026 (Omari): THE STREETS moved inside BALLER CITY (the graffiti walls by the street courts).
             var topRow = UiKit.Row(column, 20f, "StreetsRise");
             UiKit.Size(topRow, 124f);
-            UiKit.Button(topRow, "THE STREETS", ShowStreets, ButtonStyle.Primary, 124f, 50f);
             UiKit.Button(topRow, "RISE MODE", () => SceneFlow.GoTo(SceneNames.Season), ButtonStyle.Secondary, 124f, 50f);
             // In season (October, December, Easter week, early July): a shortcut to that Holiday Game.
             var season = Holidays.InSeason(System.DateTime.Now);

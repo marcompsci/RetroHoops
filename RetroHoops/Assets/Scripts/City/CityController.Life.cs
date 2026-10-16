@@ -157,6 +157,13 @@ namespace CallerRetroBall.City
                     if (result == CosmeticCheck.Ok) Audio.AudioManager.Play(SfxId.Fanfare, 0.5f);
                     break;
                 }
+                case CityAction.BuyWithCash:
+                {
+                    var result = CityShop.BuyWithCash(career, App.Catalog, a.ItemId, _day);
+                    _hud.Toast(result == CosmeticCheck.Ok ? Loc.T("PAID IN CASH") : result == CosmeticCheck.NotEnoughPoints ? Loc.T("NOT ENOUGH CASH") : Loc.T("CAN'T BUY THAT"), 1.8f);
+                    if (result == CosmeticCheck.Ok) Audio.AudioManager.Play(SfxId.Fanfare, 0.5f);
+                    break;
+                }
                 case CityAction.Equip:
                     if (CityShop.Equip(career, App.Catalog, a.ItemId)) _hud.Toast("PUT ON", 1.4f);
                     break;
@@ -175,6 +182,29 @@ namespace CallerRetroBall.City
             AnnounceMissions(CityMissions.Check(career));
             App.SaveCareer();
             if (_cardPortal != null) ShowPortalCard(_cardPortal);
+        }
+
+        // ------------------------------------------------------------------ THE STREETS: cash and milestones
+
+        private void OpenStreetsBoard()
+        {
+            var s = App.Career.streetCash ?? (App.Career.streetCash = new StreetCashSaveData());
+            var list = new List<CityActivity>();
+            foreach (var m in StreetCash.Milestones)
+            {
+                bool done = s.achievements.Contains(m.Id);
+                list.Add(new CityActivity
+                {
+                    Label = (done ? Loc.T("DONE") + ": " : "") + (m.Secret && !done ? "???" : Loc.T(m.Name)) + "  +" + m.Sp + " SP",
+                    Detail = m.Secret && !done ? Loc.T("A secret. Play big to find out.") : Loc.T(m.Detail),
+                    Action = CityAction.Info,
+                });
+            }
+            string line = Loc.T("The street courts are meant for legends. Think you can hang?") + "\n"
+                          + Loc.T("BANK") + " " + StreetCash.Money(s.cash) + "  ·  " + Loc.T("EARNED") + " " + StreetCash.Money(s.earned)
+                          + "  ·  " + Loc.T("STREAK") + " " + s.streak + " (" + Loc.T("BEST") + " " + s.bestStreak + ")\n"
+                          + Loc.T("Win: $5,000. Three in a row: $10,000 a win.");
+            _hud.ShowCard("CASHED OUT", line, list, a => { }, null);
         }
 
         // ------------------------------------------------------------------ the map
