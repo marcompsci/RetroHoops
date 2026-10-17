@@ -237,6 +237,7 @@ namespace CallerRetroBall.Logic
             k.length = Mod(k.length, LengthNames.Length);
             k.top = Mod(k.top, TopNames.Length);
             k.name = CustomTeams.Clean(k.name, 10, "KIT").ToUpperInvariant();
+            if (!TextSafety.IsClean(k.name)) k.name = "KIT"; // shared kit codes (App Review 1.2)
         }
 
         public static KitLook Look(KitData k)

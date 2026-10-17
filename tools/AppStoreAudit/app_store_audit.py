@@ -77,7 +77,11 @@ check("Privacy manifest's collected data matches the Live server switch (off = n
 # 5. No debug-only features in release builds.
 settings = read("Assets", "Scripts", "UI", "SettingsController.cs")
 dev = settings.find("DEV: UNLOCK ALL")
-check("DEV: UNLOCK ALL only in editor / debug builds", dev < 0 or "#if UNITY_EDITOR || DEBUG" in settings[max(0, dev - 200):dev])
+check("DEV: UNLOCK ALL only in editor / development builds", dev < 0 or "#if UNITY_EDITOR || DEVELOPMENT_BUILD" in settings[max(0, dev - 200):dev])
+# 16 Oct 2026 compliance gate: DEBUG isn't a symbol Unity promises to leave out of release players; DEVELOPMENT_BUILD is.
+loose = [os.path.relpath(p, GAME) for p in glob.glob(os.path.join(GAME, "Assets", "Scripts", "**", "*.cs"), recursive=True)
+         if re.search(r"#if[^\n]*\bDEBUG\b", open(p, encoding="utf-8").read())]
+check("No dev-only code behind #if DEBUG (use DEVELOPMENT_BUILD)", not loose, ", ".join(loose[:5]))
 check("Settings links to support and privacy", '"HELP & SUPPORT"' in settings and "LiveMode.SupportUrl" in settings)
 menu = read("Assets", "Scripts", "UI", "MainMenuController.cs")
 check("Main menu doesn't claim 'no purchases'", "no purchases" not in menu.lower().replace('says "no purchases"', "").replace("no longer says \"no purchases\"", ""))
@@ -114,8 +118,57 @@ check("No real names in the store description", not banned.search(desc))
 check("Store icon test exists (1024x1024, no alpha)", glob.glob(os.path.join(GAME, "Assets", "Tests", "**", "*ReleaseArt*"), recursive=True) != [] or "StoreIcon_Is1024Square" in " ".join(open(p, encoding="utf-8").read() for p in glob.glob(os.path.join(GAME, "Assets", "Tests", "**", "*.cs"), recursive=True)))
 check("Screenshot script makes iPhone 6.9\" and iPad 13\" sets", os.path.exists(os.path.join(ROOT, "tools", "App Store Screenshots.command")))
 
+# 9. 16 Oct 2026 Apple compliance gate (docs/apple-compliance-report.md).
+link = read("Assets", "Scripts", "Logic", "Net", "Link.cs")
+check("1.2: names from another phone go through TextSafety (hello, setup, teams, reject)",
+      all(x in link for x in ('Name = TextSafety.Field(parts[1]', 's.HostName = TextSafety.Field(', 's.GuestName = TextSafety.Field(',
+                              'nickname = TextSafety.Field(', 'lastName = TextSafety.Field(', 'Error = TextSafety.Message(')))
+check("1.2: shared kit and court names are filtered",
+      "TextSafety.IsClean(k.name)" in read("Assets", "Scripts", "Logic", "Progression", "Kits.cs")
+      and "TextSafety.IsClean(d.name)" in read("Assets", "Scripts", "Logic", "Progression", "CourtBuilder.cs"))
+hud = read("Assets", "Scripts", "Gameplay", "MatchHud.cs")
+game = read("Assets", "Scripts", "Gameplay", "GameSceneController.cs")
+check("1.2: LIVE games offer REPORT PLAYER and BLOCK PLAYER",
+      '"REPORT PLAYER"' in hud and '"BLOCK PLAYER"' in hud and "_hud.EnablePlayerSafety()" in game and "BlockOpponent" in game)
+check("1.2: matchmaking skips blocked players", "LiveSafety.IsBlocked(App.Career?.live, _link.OpponentId)" in paywall)
+check("1.2: blocked players' quick chat is hidden", "&& !OpponentBlocked" in game)
+check("1.2: quick chat is preset messages only (one byte index)", "public static byte[] Chat(int id) => new[] { (byte)LinkMessage.Chat" in link)
+check("1.2: quick chat can be turned off from LIVE", 'UiControls.ToggleRow(column, "QUICK CHAT"' in paywall)
+check("1.2: published contact (SUPPORT.md and the report email match)",
+      re.search(r'ReportEmail = "([^"]+)"', read("Assets", "Scripts", "Logic", "Progression", "LiveSafety.cs")).group(1) in read("docs", "SUPPORT.md"))
+check("5.1.1: privacy policy describes report and block", "REPORT PLAYER" in read("docs", "PRIVACY.md") and "BLOCK PLAYER" in read("docs", "PRIVACY.md"))
+music = re.search(r'"NSAppleMusicUsageDescription", "([^"]+)"', post)
+check("5.1.1(ii): Apple Music purpose string matches what it's used for (MY MIX)", music is not None and "MY MIX" in music.group(1), music.group(1) if music else "missing")
+check("ATS: post-process removes any arbitrary-loads exception", "NSAllowsArbitraryLoads" in post and "ats.values.Remove(key)" in post)
+http_hits = []
+for p in glob.glob(os.path.join(GAME, "Assets", "Scripts", "**", "*.cs"), recursive=True) + [p for p in glob.glob(os.path.join(GAME, "Assets", "Plugins", "iOS", "*.*")) if not p.endswith((".xcprivacy", ".plist"))]:
+    for i, line in enumerate(open(p, encoding="utf-8", errors="ignore"), 1):
+        if re.search(r'"http://', line):
+            http_hits.append(os.path.relpath(p, GAME) + ":" + str(i))
+check("ATS: no plain-http URLs in code", not http_hits, ", ".join(http_hits[:5]))
+check("No tracking SDKs or IDFA (AppTrackingTransparency / AdSupport) in plugins", not re.search(r"AppTrackingTransparency|AdSupport|advertisingIdentifier", plugins))
+check("Backend URL, if set, is HTTPS only", server_off or re.search(r'public const string Url = "https://', backend) is not None)
+docs_dir = os.path.join(ROOT, "docs")
+for doc in ("apple-compliance-report.md", "testflight-release-checklist.md", "app-review-notes.md", "privacy-security-audit.md", "external-tester-guide.md"):
+    check("Compliance doc exists: docs/" + doc, os.path.exists(os.path.join(docs_dir, doc)))
+reqs = read("docs", "APP_STORE_REQUIREMENTS.md")
+check("APP_STORE_REQUIREMENTS doesn't describe the old explicit-song playlist", "All 7 playlist songs are explicit" not in reqs)
+
+# Things only a person can confirm. They're listed so a skipped check never looks like a pass.
+MANUAL = [
+    "App Store Connect: App Privacy answers match PrivacyInfo.xcprivacy (Data Not Collected while the Live server is off)",
+    "App Store Connect: age rating questionnaire answered for Live play with strangers and preset quick chat",
+    "App Store Connect: screenshots show the current game (THE STREETS, BALLER CITY)",
+    "App Store Connect: Retro Hoops Pro IAP is Ready to Submit and attached to the version",
+    "Agreements: BETA_CONTRACT_MISSING resolved before external TestFlight",
+    "Xcode signed in (Settings > Accounts) so the export/upload step can run",
+    "A fresh-install playthrough on a real iPhone and iPad (onboarding, a game, Pro purchase in sandbox, restore, Live with a second account)",
+]
+
 fails = [r for r in results if not r[0]]
 for ok, name, detail in results:
     print(("PASS  " if ok else "FAIL  ") + name + (("  (" + detail + ")") if detail and not ok else ""))
-print("\n%d checks, %d failing" % (len(results), len(fails)))
+for item in MANUAL:
+    print("MANUAL  " + item + "  (not checked by this script)")
+print("\n%d automated checks, %d failing; %d manual items NOT verified here" % (len(results), len(fails), len(MANUAL)))
 sys.exit(1 if fails else 0)

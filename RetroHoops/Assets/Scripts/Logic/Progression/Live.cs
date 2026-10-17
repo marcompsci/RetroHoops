@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 
 namespace CallerRetroBall.Logic
 {
@@ -24,6 +25,8 @@ namespace CallerRetroBall.Logic
         public int pMonth, pMonthWins, pMonthScoring, pMonthActivity;
         public int pDay, pDayActivity;
         public int pStreak, pBestStreak;
+        /// <summary>16 Oct 2026: Game Center ids of players you blocked (<see cref="LiveSafety"/>). This device only.</summary>
+        public List<string> blocked = new List<string>();
     }
 
     /// <summary>What a finished Live season paid.</summary>
@@ -226,6 +229,7 @@ namespace CallerRetroBall.Logic
                 pWins = s.pWins, pScoring = s.pScoring, pActivity = s.pActivity,
                 pMonth = Math.Max(0, s.pMonth), pMonthWins = s.pMonthWins, pMonthScoring = s.pMonthScoring, pMonthActivity = s.pMonthActivity,
                 pDay = Math.Max(0, s.pDay), pDayActivity = s.pDayActivity, pStreak = s.pStreak, pBestStreak = s.pBestStreak,
+                blocked = LiveSafety.Sanitize(s.blocked),
             };
         }
 

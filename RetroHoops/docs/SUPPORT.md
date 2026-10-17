@@ -14,7 +14,10 @@ Open **PLAY ▸ RETRO HOOPS PRO** and tap **RESTORE PURCHASES**, signed in with 
 Purchases are handled by Apple: go to reportaproblem.apple.com.
 
 **How do I delete my Live data?**
-In the game: **PLAY ▸ LIVE ▸ DELETE MY LIVE DATA**. This erases your Live rating, results and player link from the Live server. Your offline career on the device isn't affected.
+This version doesn't send Live data anywhere: your Live rating and record are kept only in your game save on the device (and in your own iCloud if iCloud Sync is on), and Settings ▸ RESET SAVE erases them. If a later version switches the Live ratings server on, **PLAY ▸ LIVE ▸ DELETE MY LIVE DATA** will appear and erase what the server keeps.
+
+**Someone in a Live game was abusive. What can I do?**
+Pause the game or wait for the end screen and tap **BLOCK PLAYER**: their quick chat is hidden and Retro Hoops won't start a Live game or rematch with them again on that device (**PLAY ▸ LIVE ▸ UNBLOCK ALL** undoes it). Tap **REPORT PLAYER** to email us their Game Center name and player id with what happened; we review every report, and we only see what you send. Quick chat only has preset messages, and you can turn it off on the LIVE screen.
 
 **My career is missing on a new phone.**
 Turn on **Settings ▸ iCloud Sync** in Retro Hoops on both devices (and iCloud for the app in iOS Settings). The newer career is offered when the game starts.

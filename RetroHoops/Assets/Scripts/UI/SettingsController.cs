@@ -211,7 +211,7 @@ namespace CallerRetroBall.UI
             UiKit.Button(column, "HELP & SUPPORT", () => Application.OpenURL(LiveMode.SupportUrl), ButtonStyle.Secondary, 90f, 32f);
             UiKit.Button(column, "PRIVACY POLICY", () => Application.OpenURL(LiveMode.PrivacyPolicyUrl), ButtonStyle.Ghost, 80f, 26f);
 
-#if UNITY_EDITOR || DEBUG
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
             UiKit.Button(column, "DEV: UNLOCK ALL", () => App.DevUnlockAll(), ButtonStyle.Ghost, 90f, 30f);
 #endif
 

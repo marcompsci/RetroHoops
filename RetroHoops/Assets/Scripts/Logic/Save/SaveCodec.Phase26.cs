@@ -40,6 +40,7 @@ namespace CallerRetroBall.Logic
                 ["pw"] = l.pWins, ["ps"] = l.pScoring, ["pa"] = l.pActivity,
                 ["pm"] = l.pMonth, ["pmw"] = l.pMonthWins, ["pms"] = l.pMonthScoring, ["pma"] = l.pMonthActivity,
                 ["pd"] = l.pDay, ["pda"] = l.pDayActivity, ["pst"] = l.pStreak, ["pbs"] = l.pBestStreak,
+                ["blk"] = Strings(LiveSafety.Sanitize(l.blocked)),
             };
         }
 
@@ -60,6 +61,7 @@ namespace CallerRetroBall.Logic
             l.pWins = Int(o, "pw", 0); l.pScoring = Int(o, "ps", 0); l.pActivity = Int(o, "pa", 0);
             l.pMonth = Int(o, "pm", 0); l.pMonthWins = Int(o, "pmw", 0); l.pMonthScoring = Int(o, "pms", 0); l.pMonthActivity = Int(o, "pma", 0);
             l.pDay = Int(o, "pd", 0); l.pDayActivity = Int(o, "pda", 0); l.pStreak = Int(o, "pst", 0); l.pBestStreak = Int(o, "pbs", 0);
+            l.blocked = LiveSafety.Sanitize(StrList(o, "blk"));
             l = LiveMode.Sanitize(l);
             LivePoints.Sanitize(l);
             return l;

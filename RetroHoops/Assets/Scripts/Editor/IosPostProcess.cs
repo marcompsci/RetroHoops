@@ -30,8 +30,9 @@ namespace CallerRetroBall.EditorTools
             root.SetString("LSApplicationCategoryType", "public.app-category.sports-games");
             // The share sheet's "Save Image" writes highlight GIFs to Photos (add-only access).
             root.SetString("NSPhotoLibraryAddUsageDescription", "Save your Retro Hoops highlights to Photos.");
-            // 14 Oct 2026: the in-game phone plays the Retro Hoops playlist from the player's Apple Music (MusicKit).
-            root.SetString("NSAppleMusicUsageDescription", "Play the Retro Hoops playlist from your Apple Music while you play.");
+            // The in-game phone's MY MIX plays songs the player picks from their own Apple Music (MusicKit). 16 Oct 2026
+            // compliance gate: the RETRO HOOPS playlist is the game's own offline beats now, so the reason says MY MIX.
+            root.SetString("NSAppleMusicUsageDescription", "Play songs you pick from your Apple Music in the game's MY MIX while you play.");
             // Bluetooth / MFi controllers (Xbox, PlayStation, Switch Pro and similar extended gamepads).
             root.SetBoolean("GCSupportsControllerUserInteraction", true);
             // retrohoops://kit/... (and older retroball://kit/...) links (kit QR codes) open the app straight into the Kit Studio.
@@ -57,6 +58,14 @@ namespace CallerRetroBall.EditorTools
                 bool present = false;
                 foreach (var v in bonjour.values) if (v is PlistElementString str && str.value == service) present = true;
                 if (!present) bonjour.AddString(service);
+            }
+            // App Transport Security stays fully on (every connection is HTTPS). 16 Oct 2026 compliance gate: if anything
+            // ever adds an "allow arbitrary loads" exception, take it back out rather than ship it.
+            if (root["NSAppTransportSecurity"] is PlistElementDict ats)
+            {
+                foreach (var key in new[] { "NSAllowsArbitraryLoads", "NSAllowsArbitraryLoadsInWebContent", "NSAllowsArbitraryLoadsForMedia", "NSAllowsLocalNetworking" })
+                    if (ats[key] != null) ats.values.Remove(key);
+                if (ats.values.Count == 0) root.values.Remove("NSAppTransportSecurity");
             }
             if (root["GCSupportedGameControllers"] == null)
                 root.CreateArray("GCSupportedGameControllers").AddDict().SetString("ProfileName", "ExtendedGamepad");

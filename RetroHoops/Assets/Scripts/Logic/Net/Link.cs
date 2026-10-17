@@ -308,7 +308,7 @@ namespace CallerRetroBall.Logic
             if (m == null || m.Length < 1 || m[0] != (byte)LinkMessage.Hello) return null;
             var parts = ReadText(m).Split('\n');
             if (parts.Length < 4) return null;
-            return new LiveOffer { AppVersion = parts[0], Name = parts[1], Rating = int.TryParse(parts[2], out int r) ? r : LiveMode.StartRating, TeamData = parts[3],
+            return new LiveOffer { AppVersion = parts[0], Name = TextSafety.Field(parts[1], "PLAYER"), Rating = int.TryParse(parts[2], out int r) ? r : LiveMode.StartRating, TeamData = parts[3],
                                    Style = parts.Length > 4 && parts[4] == LinkSetup.StreetsStyle ? parts[4] : "" };
         }
 
@@ -335,20 +335,20 @@ namespace CallerRetroBall.Logic
                     case "app": s.AppVersion = v; break;
                     case "content": s.Content = uint.TryParse(v, out uint c) ? c : 0; break;
                     case "seed": s.Seed = uint.TryParse(v, out uint seed) ? seed : 1; break;
-                    case "host": s.HostName = v; break;
+                    case "host": s.HostName = TextSafety.Field(v, "PLAYER"); break;
                     case "home": s.HomeTeamId = v; break;
                     case "away": s.AwayTeamId = v; break;
                     case "court": s.CourtId = v; break;
                     case "rules": s.RulesId = v; break;
                     case "difficulty": s.DifficultyId = v; break;
                     case "delay": s.Delay = int.TryParse(v, out int dl) ? Math.Max(1, Math.Min(30, dl)) : Lockstep.DefaultDelay; break;
-                    case "guest": s.GuestName = v; break;
+                    case "guest": s.GuestName = TextSafety.Field(v, "PLAYER"); break;
                     case "hostrating": s.HostRating = int.TryParse(v, out int hr) ? hr : 0; break;
                     case "guestrating": s.GuestRating = int.TryParse(v, out int gr) ? gr : 0; break;
                     case "session": s.Session = uint.TryParse(v, out uint sess) ? sess : 0; break;
                     case "cup": s.Cup = v; break;
-                    case "homename": s.HomeLabel = v; break;
-                    case "awayname": s.AwayLabel = v; break;
+                    case "homename": s.HomeLabel = TextSafety.Field(v, "HOME"); break;
+                    case "awayname": s.AwayLabel = TextSafety.Field(v, "AWAY"); break;
                     case "homedata": s.HomeTeamData = v; break;
                     case "awaydata": s.AwayTeamData = v; break;
                     case "style": s.Style = v == LinkSetup.StreetsStyle ? v : ""; break;
@@ -431,7 +431,9 @@ namespace CallerRetroBall.Logic
                 if (f.Length < 13 || parts.Length < 2) return null;
                 var t = new TeamDef
                 {
-                    id = teamId, city = f[0], nickname = f[1], abbreviation = f[2],
+                    // Names from another phone go through the word filter (App Review 1.2); colours and ratings don't.
+                    id = teamId, city = TextSafety.Field(f[0], ""), nickname = TextSafety.Field(f[1], teamId == LinkSetup.HomeId ? "Home" : "Visitors"),
+                    abbreviation = TextSafety.Field(f[2], teamId == LinkSetup.HomeId ? "HOM" : "VIS"),
                     primary = RgbColor.FromHex(f[3]), secondary = RgbColor.FromHex(f[4]), accent = RgbColor.FromHex(f[5]),
                     logoShape = (LogoShape)int.Parse(f[6]), logoMotif = (LogoMotif)int.Parse(f[7]), pattern = (TeamPattern)int.Parse(f[8]),
                     scheme = (DefenseScheme)int.Parse(f[9]), shorts = RgbColor.FromHex(f[10]), shoes = RgbColor.FromHex(f[11]),
@@ -446,7 +448,7 @@ namespace CallerRetroBall.Logic
                     if (g.Length < 6 || a.Length < 8 || l.Length < 5) return null;
                     players.Add(new PlayerDef
                     {
-                        id = playerPrefix + (i - 1), firstName = g[0], lastName = g[1], jerseyNumber = int.Parse(g[2]), archetypeId = g[3],
+                        id = playerPrefix + (i - 1), firstName = TextSafety.Field(g[0], ""), lastName = TextSafety.Field(g[1], "Player " + i), jerseyNumber = int.Parse(g[2]), archetypeId = g[3],
                         attributes = new AttributeSet(int.Parse(a[0]), int.Parse(a[1]), int.Parse(a[2]), int.Parse(a[3]), int.Parse(a[4]), int.Parse(a[5]), int.Parse(a[6]), int.Parse(a[7])),
                         appearance = new AppearanceDef(int.Parse(l[0]), int.Parse(l[1]), int.Parse(l[2]), (BodyType)int.Parse(l[3]), int.Parse(l[4])),
                     });
@@ -614,7 +616,7 @@ namespace CallerRetroBall.Logic
                         Status = LobbyStatus.Started;
                         break;
                     case LinkMessage.Reject:
-                        Error = LinkProtocol.ReadText(m);
+                        Error = TextSafety.Message(LinkProtocol.ReadText(m));
                         Status = LobbyStatus.Rejected;
                         break;
                     case LinkMessage.Bye:

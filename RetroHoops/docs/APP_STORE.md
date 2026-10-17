@@ -135,13 +135,13 @@ Answer **None** to everything: violence, sexual content, profanity, drugs, horro
 | Question | Answer |
 |---|---|
 | Unrestricted web access | No |
-| User-generated content | No. Typed nicknames are never sent online. Live opponents see only each other's Game Center name. |
-| Online play with other people | Yes, Live (Game Center matchmaking). There's no chat or messaging. |
-| Messaging or chat | No |
+| User-generated content | **Recommended: Yes** (16 Oct 2026 compliance gate). Typed nicknames are never sent to Live opponents (they see the Game Center name and a built-in team), but kit and court codes carry a short player-chosen name, and two-phone games nearby show a friend's custom team. All of it passes the on-device word filter, and Live has REPORT PLAYER / BLOCK PLAYER. |
+| Online play with other people | Yes, Live (Game Center matchmaking with people you don't know, or Game Center friends). |
+| Messaging or chat | **Recommended: Yes, preset only.** Quick chat sends one of 8 fixed phrases ("GG!", "NICE SHOT!"…); no typed text. It can be turned off (LIVE screen or the phone), and a blocked player's chat is hidden. |
 | In-app purchases | **Yes**: Retro Hoops Pro, a one-time non-consumable unlock (see `LIVE.md`) |
 | Advertising | No |
 
-The expected rating is the lowest (4+). Apple updated the questionnaire in 2025 (new 13+/16+/18+ tiers and questions about in-app controls and age assurance); answer those as None / No for this game, and re-read each question when you fill it in.
+The expected rating is the lowest (4+), but App Store Connect decides it from your answers, not this file. Apple updated the questionnaire in 2025 (new 13+/16+/18+ tiers and questions about in-app controls and age assurance). Answer the content questions (violence, profanity and so on) None, answer the capability questions as above, say Yes to in-app controls if asked (quick chat off switch, BLOCK PLAYER), and re-read each question when you fill it in. Don't declare the "social media" capability: the game has no feed of other players' posts (the phone's FEED is made up by the game).
 
 ## Export compliance
 
@@ -186,5 +186,7 @@ Use **Retro Hoops ▸ Release ▸ Capture Store Screenshot** in Play mode (see `
 Only show real gameplay. Don't add device frames that show non-Apple hardware, and don't include text that mentions other games or leagues.
 
 ## App Review notes (paste into "Notes")
+
+*16 Oct 2026: the current, fuller notes (LIVE report/block, quick chat, MY MIX, secret codes) are in `docs/app-review-notes.md` at the repo root. Use those; the paragraph below is the older short version.*
 
 > No login of our own and no ads. LIVE online play is free (Game Center matchmaking; a match needs a second device with another Game Center account). One optional in-app purchase, Retro Hoops Pro (non-consumable, $3.99), unlocks FRANCHISE mode, Rise seasons 2 and up and every Hoops Pass cosmetic: PLAY ▸ RETRO HOOPS PRO (Restore Purchases is on that screen). Everything else is free and works offline. Optional Apple services only: Game Center (Settings ▸ Game Center) and iCloud save sync (Settings ▸ iCloud Sync). All content is original and generated procedurally. To see the main modes quickly: Main menu ▸ PLAY ▸ FRANCHISE · PRO (needs the Pro purchase in the sandbox; then START FRANCHISE, then SIM GAME or PLAY GAME) and PLAY ▸ ALL-STAR CONTESTS ▸ DUNK CONTEST. Rise Mode: Main menu ▸ RISE MODE ▸ PLAY NEXT.

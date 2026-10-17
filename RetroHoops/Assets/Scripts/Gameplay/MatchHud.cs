@@ -29,6 +29,9 @@ namespace CallerRetroBall.Gameplay
         public event Action PhoneRequested;
         /// <summary>16 Oct 2026: LEAVE COURT (walk off into Baller City). Shown only when the match controller turns it on.</summary>
         public event Action LeaveCourtRequested;
+        /// <summary>16 Oct 2026 compliance gate (App Review 1.2): REPORT PLAYER and BLOCK PLAYER in LIVE games.</summary>
+        public event Action ReportPlayerRequested, BlockPlayerRequested;
+        private bool _playerSafety;
 
         private TextMeshProUGUI _teamA, _teamB, _scoreA, _scoreB, _clock, _shotClock, _toast;
         private GameObject _pausePanel;
@@ -211,6 +214,31 @@ namespace CallerRetroBall.Gameplay
         private void LeaveCourtButton()
         {
             if (_leaveCourt) UiKit.Button(_finalColumn, "LEAVE COURT", () => LeaveCourtRequested?.Invoke(), ButtonStyle.Secondary, 110f, 44f);
+            // Every end screen calls this, so LIVE games' REPORT / BLOCK sit here too.
+            if (_playerSafety)
+            {
+                var row = UiKit.Row(_finalColumn, 16f, "PlayerSafety");
+                UiKit.Size(row, 70f);
+                UiKit.Button(row, "REPORT PLAYER", () => ReportPlayerRequested?.Invoke(), ButtonStyle.Ghost, 90f, 26f);
+                UiKit.Button(row, "BLOCK PLAYER", () => BlockPlayerRequested?.Invoke(), ButtonStyle.Ghost, 90f, 26f);
+            }
+        }
+
+        /// <summary>
+        /// LIVE games (opponents Game Center found): REPORT PLAYER and BLOCK PLAYER on the pause menu and the end screens.
+        /// </summary>
+        public void EnablePlayerSafety()
+        {
+            if (_playerSafety || _pauseColumn == null) return;
+            _playerSafety = true;
+            var report = UiKit.Button(_pauseColumn, "REPORT PLAYER", () => ReportPlayerRequested?.Invoke(), ButtonStyle.Ghost, 110f, 36f);
+            var block = UiKit.Button(_pauseColumn, "BLOCK PLAYER", () => BlockPlayerRequested?.Invoke(), ButtonStyle.Ghost, 110f, 36f);
+            if (_pauseQuit != null)
+            {
+                int at = _pauseQuit.transform.GetSiblingIndex();
+                report.transform.SetSiblingIndex(at);
+                block.transform.SetSiblingIndex(at + 1);
+            }
         }
 
         /// <summary>Hides the end screen (the walk-off plays over the court).</summary>

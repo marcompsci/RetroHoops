@@ -83,6 +83,7 @@ namespace CallerRetroBall.Logic
         {
             if (d == null) return;
             d.name = CustomTeams.Clean(d.name, MaxName, "My Court");
+            if (!TextSafety.IsClean(d.name)) d.name = "My Court"; // shared court codes (App Review 1.2)
             d.floorStyle = Math.Max(0, Math.Min(FloorNames.Length - 1, d.floorStyle));
             d.floor &= 0x7FFF;
             d.lines &= 0x7FFF;

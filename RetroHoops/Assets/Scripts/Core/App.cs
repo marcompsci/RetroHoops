@@ -266,7 +266,7 @@ namespace CallerRetroBall.Core
             CrtOverlay.ApplyTint(Secrets.IsOn(Career.secrets, Secrets.PocketGreen));
         }
 
-#if UNITY_EDITOR || DEBUG
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
         /// <summary>Development only: lots of currency and every cosmetic unlocked.</summary>
         public static void DevUnlockAll()
         {
@@ -295,7 +295,7 @@ namespace CallerRetroBall.Core
                                  ". Run 'Retro Hoops ► Run Project Setup' to generate editable assets.");
             }
 
-#if UNITY_EDITOR || DEBUG
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
             var report = ContentValidator.Validate(Content.Catalog);
             if (!report.IsValid) Debug.LogError("[CallerRetroBall] " + report);
             else if (report.Warnings.Count > 0) Debug.LogWarning("[CallerRetroBall] " + report);

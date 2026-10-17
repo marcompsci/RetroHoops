@@ -506,6 +506,13 @@ namespace CallerRetroBall.Gameplay
             // 14 Oct 2026: the phone from the pause menu, and quick chat with the other player in LIVE / two-phone games.
             _hud.PhoneRequested += () => PhoneScreen.Open();
             if (_link != null && (App.Career == null || App.Career.phone.quickChat)) _hud.EnableQuickChat(SendChat);
+            // 16 Oct 2026 compliance gate (App Review 1.2): REPORT and BLOCK a LIVE opponent.
+            if (_link != null && _liveSetup != null)
+            {
+                _hud.EnablePlayerSafety();
+                _hud.ReportPlayerRequested += ReportOpponent;
+                _hud.BlockPlayerRequested += BlockOpponent;
+            }
 
             _myCelebration = Flair.CelebrationFor(App.Career?.equippedCelebration);
             _myMove = Flair.DribbleMoveFor(App.Career?.equippedMove);
@@ -890,7 +897,7 @@ namespace CallerRetroBall.Gameplay
                 if (kb.vKey.wasPressedThisFrame) _breakerTapped = true; // THE STREETS: SHOWSTOPPER
                 shootHeld |= kb.kKey.isPressed;
                 if (kb.kKey.wasPressedThisFrame) _shootTapped = true;
-#if UNITY_EDITOR || DEBUG
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
                 if (kb.bKey.wasPressedThisFrame) _match.KnockLoose(new Vec2(Random.Range(-3f, 3f), Random.Range(1f, 3f)));
 #endif
             }
@@ -3428,11 +3435,40 @@ namespace CallerRetroBall.Gameplay
             Sfx(SfxId.Click, 0.6f);
         }
 
+        /// <summary>The LIVE opponent's name as Game Center gives it (falls back to the name in the game setup).</summary>
+        private string OpponentDisplayName => !string.IsNullOrEmpty(_wire?.PeerName) ? _wire.PeerName : _opponent;
+
+        private void ReportOpponent()
+        {
+            Application.OpenURL(LiveSafety.ReportMailto(OpponentDisplayName, LinkMatch.OpponentId, App.VersionAndBuild, System.DateTime.UtcNow));
+            _hud.Toast(Loc.T("OPENING MAIL: ADD WHAT HAPPENED, THEN SEND"), 2.5f);
+        }
+
+        private void BlockOpponent()
+        {
+            var live = App.Career?.live;
+            if (live == null) return;
+            if (LiveSafety.IsBlocked(live, LinkMatch.OpponentId)) { _hud.Toast(Loc.T("ALREADY BLOCKED"), 1.5f); return; }
+            UiControls.Dialog("BLOCK PLAYER",
+                Loc.T("Block") + " " + TextSafety.Plain(OpponentDisplayName, 24) + "? " +
+                Loc.T("Their quick chat is hidden now, and Retro Hoops won't start a Live game or a rematch with them again on this device. Finish or leave this game as usual."),
+                ("BLOCK", ButtonStyle.Primary, () =>
+                {
+                    if (string.IsNullOrEmpty(LinkMatch.OpponentId)) { _hud.Toast(Loc.T("COULDN'T BLOCK: NO GAME CENTER ID"), 2f); return; }
+                    LiveSafety.Block(live, LinkMatch.OpponentId);
+                    App.SaveCareer();
+                    _hud.Toast(Loc.T("PLAYER BLOCKED"), 1.8f);
+                }),
+                ("CANCEL", ButtonStyle.Ghost, null));
+        }
+
+        private bool OpponentBlocked => _liveSetup != null && LiveSafety.IsBlocked(App.Career?.live, LinkMatch.OpponentId);
+
         private void ShowIncomingChat()
         {
             _hud.TickChat();
             if (_link == null) return;
-            bool on = App.Career == null || App.Career.phone.quickChat;
+            bool on = (App.Career == null || App.Career.phone.quickChat) && !OpponentBlocked;
             while (_link.Chats.Count > 0)
             {
                 string text = QuickChat.Text(_link.Chats.Dequeue());
@@ -3975,6 +4011,7 @@ namespace CallerRetroBall.Gameplay
             }
             if (_link != null)
             {
+                if (OpponentBlocked) { Quit(); return; } // no rematch with a blocked player
                 if (!_linkEnded && LinkMatch.Setup != null && _wire.State == LinkState.Connected) StartLinkRematch();
                 else Quit();
                 return;

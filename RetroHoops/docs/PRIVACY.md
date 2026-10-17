@@ -1,6 +1,6 @@
 # Retro Hoops privacy policy
 
-*Last updated: 15 October 2026*
+*Last updated: 16 October 2026*
 
 Retro Hoops is made by **Omari Bell** (contact: **rodlonbell16@gmail.com**).
 
@@ -12,9 +12,11 @@ Retro Hoops is made by **Omari Bell** (contact: **rodlonbell16@gmail.com**).
 
 **Retro Hoops Live server.** The current version doesn't use it (Live ratings stay on each phone). If Live's ratings server is switched on in a later version, Live games use the developer's server (hosted on Cloudflare) to confirm who you are and keep the official ratings. The server stores your Game Center player ID and display name, your Live rating, wins and losses, the scores of your Live games. It uses these only to run Live (sign-in, ratings and the leaderboard). It never sells or shares them, and there's no advertising or tracking. Cloudflare processes requests (including your IP address) to deliver them. You can erase this data any time in the game with LIVE ▸ DELETE MY LIVE DATA.
 
-**Apple Music (optional).** The phone in the game can play a playlist from your own Apple Music. If you tap CONNECT APPLE MUSIC, iOS asks your permission. The game then asks Apple Music for the playlist's songs and plays them through Apple's MusicKit. Apple handles this under its own privacy policy. Nothing about your music or your Apple Music account comes to the developer. The + buttons open songs in the Apple Music app. With MY MIX you can also pick songs from your music library, search Apple Music, or paste an Apple Music song link. The songs you add (their Apple Music ids, titles and artists) are saved only on your device, in your game save.
+**Apple Music (optional).** The game's own RETRO HOOPS playlist is made by the game and needs no Apple Music. MY MIX, on the phone in the game, can play songs you pick from your own Apple Music. If you tap CONNECT APPLE MUSIC, iOS asks your permission. The game then asks Apple Music for those songs and plays them through Apple's MusicKit. Apple handles this under its own privacy policy. Nothing about your music or your Apple Music account comes to the developer. The + buttons open songs in the Apple Music app. With MY MIX you can also pick songs from your music library, search Apple Music, or paste an Apple Music song link. The songs you add (their Apple Music ids, titles and artists) are saved only on your device, in your game save.
 
 **The phone's TEXTS and FEED.** Texts from your agent and the FEED posts are made up by the game and stay on your device. Quick chat in LIVE and two-phone games sends only a preset message (like "GG!") to the other player over the game's own connection. No typed text is sent.
+
+**Reporting and blocking Live players.** BLOCK PLAYER keeps that player's Game Center player id in your game save on your device, so the game can hide their quick chat and skip them in matchmaking; it isn't sent anywhere. REPORT PLAYER opens an email to the developer, filled in with the other player's Game Center name and player id, the game version and the time. Nothing is sent unless you send that email yourself. Reports are used only to look into the problem and are deleted when that's done. Names and team names that arrive from another phone, or in shared kit and court codes, pass through a word filter on your device before they're shown.
 
 **Two phones nearby.** When you play 2 Player on two phones, the game connects them directly over Wi-Fi or Bluetooth (Apple's Multipeer Connectivity). Only game data and the device name you see on screen are exchanged. Nothing goes over the internet.
 

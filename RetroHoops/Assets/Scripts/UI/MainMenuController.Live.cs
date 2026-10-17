@@ -64,6 +64,16 @@ namespace CallerRetroBall.UI
             if (signedIn)
                 UiKit.Button(column, "FRIENDS THIS MONTH", () => App.GameCenter.ShowLeaderboard(LiveMode.MonthlyLeaderboardId, true), ButtonStyle.Secondary, 90f, 30f);
             LivePointsBlock(column, live, signedIn);
+            // 16 Oct 2026 compliance gate (App Review 1.2): how to report or block, and undoing blocks.
+            UiKit.Size(UiKit.Label(column, Loc.T("Live opponents are found by Game Center. Quick chat is preset messages only. In a Live game, pause or finish to REPORT PLAYER or BLOCK PLAYER."),
+                                   24f, Theme.Muted, TextAlignmentOptions.Center), 90f);
+            UiControls.ToggleRow(column, "QUICK CHAT", career.phone.quickChat, v => { career.phone.quickChat = v; App.SaveCareer(); });
+            int blockedCount = LiveSafety.BlockedCount(live);
+            if (blockedCount > 0)
+                UiKit.Button(column, Loc.T("UNBLOCK ALL") + " (" + blockedCount + ")", () => UiControls.Dialog("UNBLOCK ALL",
+                    Loc.T("Unblock every player you blocked? You could be matched with them again."),
+                    ("UNBLOCK", ButtonStyle.Primary, () => { LiveSafety.UnblockAll(live); App.SaveCareer(); ShowLive(); }),
+                    ("CANCEL", ButtonStyle.Ghost, null)), ButtonStyle.Ghost, 80f, 26f);
             if (BackendConfig.Enabled)
                 UiKit.Button(column, "DELETE MY LIVE DATA", () => UiControls.Dialog("DELETE LIVE DATA",
                     "Erase your Live rating and record from the Retro Hoops server?",
@@ -284,6 +294,12 @@ namespace CallerRetroBall.UI
             // Connected: the hand-shake picks who hosts and swaps teams.
             if (_lobby == null)
             {
+                // 16 Oct 2026 compliance gate: never play someone you blocked (App Review 1.2).
+                if (LiveSafety.IsBlocked(App.Career?.live, _link.OpponentId))
+                {
+                    Fail(Loc.T("Matched with a player you blocked, so that game was skipped. Tap FIND A GAME to look again."));
+                    return;
+                }
                 int seat = _link.Seat;
                 _lobby = new LinkLobby(seat == 0, _offer, (uint)Environment.TickCount | 1u, LinkProtocol.ContentFingerprint(App.Catalog), App.Catalog);
                 _status.text = "Found " + _link.PeerName + "! Getting ready…";

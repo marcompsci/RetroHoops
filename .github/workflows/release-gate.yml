@@ -1,0 +1,25 @@
+# Retro Hoops release gate (16 Oct 2026 Apple compliance gate). Runs on every push and pull request to main.
+# It runs the checks that don't need Unity or Xcode; a green run is not App Store approval or a device test.
+name: Release gate
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  gate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Release gate
+        run: bash tools/release_gate.sh
