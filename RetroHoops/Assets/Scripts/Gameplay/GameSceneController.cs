@@ -73,6 +73,8 @@ namespace CallerRetroBall.Gameplay
         private string _momentReward;
         /// <summary>I13: tonight's opponent is your nemesis.</summary>
         private string _nemesisId;
+        /// <summary>I18: tonight's three goals (null = none).</summary>
+        private System.Collections.Generic.List<GameGoal> _goals;
         /// <summary>I15: the most your team trailed by, and whether ALL TIED UP has been called.</summary>
         private int _maxDeficit;
         private bool _tiedCalled;
@@ -446,6 +448,13 @@ namespace CallerRetroBall.Gameplay
                     string oppId = (opp == 0 ? setup.TeamA : setup.TeamB).id;
                     tape = TaleOfTheTape.Card(App.Career.history, oppId, roster);
                     // I13 NEMESIS: the team that keeps beating you.
+                    // I18 GAME GOALS and I19 REVENGE GAME on the card.
+                    if (GameGoals.Applies(_request.Mode))
+                    {
+                        _goals = GameGoals.Pick(StableHash.Of(App.Today + ":" + (int)_request.Mode + ":" + setup.TeamA.id + ":" + setup.TeamB.id + ":" + setup.Seed), setup.FullCourt);
+                        tape = tape + "\n" + GameGoals.Card(_goals);
+                    }
+                    if (_request.Revenge && Revenge.Applies(_request.Mode)) tape = Loc.T("REVENGE GAME") + "\n" + tape;
                     var nem = Nemesis.Find(App.Career.history);
                     if (nem.Exists && nem.TeamId == oppId)
                     {
@@ -2651,7 +2660,27 @@ namespace CallerRetroBall.Gameplay
             if (App.Career != null && !_resultApplied)
             {
                 _resultApplied = true;
+                var totalsBefore = CareerMilestones.Snapshot(App.Career.totals); // I20
                 rewarded = !customClutch && Career.ApplyMatch(App.Career, summary, grant);
+                if (rewarded)
+                {
+                    // I18 GAME GOALS.
+                    if (_goals != null && summary.HumanLine != null)
+                    {
+                        int goalSp = GameGoals.Score(_goals, summary.HumanLine.stats, summary.HumanWon, summary.Margin, out string goalLine);
+                        App.Career.signalPoints += goalSp;
+                        if (goalLine != null) _momentReward = (_momentReward == null ? "" : _momentReward + "\n") + goalLine;
+                    }
+                    // I19 REVENGE.
+                    if (_request.Revenge && summary.HumanWon && Revenge.Applies(_request.Mode))
+                    {
+                        App.Career.signalPoints += Revenge.BonusSP;
+                        _momentReward = (_momentReward == null ? "" : _momentReward + "\n") + Loc.T("REVENGE!") + "  +" + Revenge.BonusSP + " SP";
+                    }
+                    // I20 CAREER MILESTONES.
+                    foreach (var m in CareerMilestones.Crossed(totalsBefore, App.Career.totals))
+                        _momentReward = (_momentReward == null ? "" : _momentReward + "\n") + Loc.T("MILESTONE") + ": " + m;
+                }
                 if (rewarded && Comebacks.IsComeback(summary.HumanWon, _maxDeficit, summary.fullCourt || summary.mode == GameMode.FullCourt))
                     _momentReward = (_momentReward == null ? "" : _momentReward + "\n") + Loc.T("COMEBACK COMPLETE") + ": " + Loc.T("WERE DOWN") + " " + _maxDeficit;
                 if (rewarded && _nemesisId != null && summary.HumanWon)
@@ -3972,6 +4001,8 @@ namespace CallerRetroBall.Gameplay
                 return;
             }
             _request.Seed = 0;
+            // I19: a rematch after a loss is a revenge game.
+            _request.Revenge = !Versus && _match != null && _match.Winner >= 0 && _match.Winner != _match.Setup.HumanTeam && Revenge.Applies(_request.Mode);
             App.PendingMatch = _request;
             SceneFlow.GoTo(SceneNames.Game);
         }

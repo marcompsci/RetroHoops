@@ -70,6 +70,8 @@ namespace CallerRetroBall.Logic
         public float KeyOnHuman;
         /// <summary>I14: your shots use the forgiving meter (Settings ► FORGIVING METER).</summary>
         public bool ForgivingMeter;
+        /// <summary>I19: a rematch right after a loss (a revenge game).</summary>
+        public bool Revenge;
         /// <summary>Optional ratings for the human's player (training upgrades applied).</summary>
         public AttributeSet? HumanAttributes;
         /// <summary>Optional full replacement for the human's player (your created player: look, archetype, number).</summary>

@@ -990,6 +990,16 @@ offline and couch play (already here). Built:
 - **I17 YOUR WEEK** (`WeekInReview.cs`): the top of PLAY shows the last 7 days: record, best scoring game, big moments.
 - Tests: `SixPhasesTests` (7). 1056 logic tests pass. Not yet seen on a device.
 
+### Improvements I18–I20 (16 Oct 2026)
+- **I18 GAME GOALS** (`GameGoals.cs`): three goals for your own game on the tip-off card (points, assists, boards,
+  steals, WIN or WIN BY, greens, 1 turnover max), seeded per game; the result screen checks them and pays play SP
+  (10–20 each, +25 for all three). Full Court targets scale up. Not in practice, 2 Player, the demo or CLUTCH.
+- **I19 REVENGE GAME**: REMATCH after a loss makes the next game a revenge game (called on the tip-off card); winning
+  it pays +30 SP. Not the Daily.
+- **I20 CAREER MILESTONES**: crossing 10 / 25 / 50 / 100 / 250 / 500 / 1,000 / 2,500 / 5,000 / 10,000 career games,
+  wins, points, assists, boards, steals, blocks or greens is called on the result screen.
+- Tests: `GoalsRevengeMilestonesTests` (4). 1060 logic tests pass. Not yet seen on a device.
+
 ## Deviations from the brief (deliberate)
 
 - "Oakland Voltage" → **Eastbay Voltage** (real city + electric branding sat too close to real pro-sports naming).
