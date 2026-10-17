@@ -68,6 +68,8 @@ namespace CallerRetroBall.Logic
         public string ReturnTo;
         /// <summary>17 Oct 2026 CASHED OUT: 0..1, how hard the CPU defence keys on the human (after big scoring games).</summary>
         public float KeyOnHuman;
+        /// <summary>I14: your shots use the forgiving meter (Settings ► FORGIVING METER).</summary>
+        public bool ForgivingMeter;
         /// <summary>Optional ratings for the human's player (training upgrades applied).</summary>
         public AttributeSet? HumanAttributes;
         /// <summary>Optional full replacement for the human's player (your created player: look, archetype, number).</summary>

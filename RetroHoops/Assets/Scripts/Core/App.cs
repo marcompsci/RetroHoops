@@ -192,6 +192,8 @@ namespace CallerRetroBall.Core
             if (cityCrew != null) request.DifficultyId = CityCrews.DifficultyFor(cityCrew);
             // CASHED OUT: after your big scoring games the street CPUs key on you.
             request.KeyOnHuman = StreetCash.KeyOn(Career, request);
+            // I14 FORGIVING METER: offline games only (the Daily's leaderboard and online games keep the standard window).
+            request.ForgivingMeter = Career.settings.forgivingMeter && ForgivingMeterRules.Allowed(request.Mode, request.ContextId);
             if (request.Mode == GameMode.Rise || request.Mode == GameMode.Rival)
             {
                 request.StartingStamina = RiseEngine.StartingStamina(Career.rise);

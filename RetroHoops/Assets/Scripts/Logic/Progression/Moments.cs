@@ -3,7 +3,7 @@ using System.Collections.Generic;
 
 namespace CallerRetroBall.Logic
 {
-    public enum MomentKind { GameWinner = 0, BuzzerBeater = 1, BigGame = 2, PerfectNight = 3, Lockdown = 4, Blowout = 5 }
+    public enum MomentKind { GameWinner = 0, BuzzerBeater = 1, BigGame = 2, PerfectNight = 3, Lockdown = 4, Blowout = 5, /** I15 */ Comeback = 6 }
 
     /// <summary>One moment worth keeping (newest first in <see cref="CareerSaveData.moments"/>).</summary>
     [Serializable]
@@ -33,7 +33,11 @@ namespace CallerRetroBall.Logic
         public const int BlowoutMargin = 12;
 
         /// <summary>The moments in a finished game. <paramref name="yourWinner"/>: you hit the shot that won it.</summary>
-        public static List<MomentEntry> FromGame(MatchSummary s, bool yourWinner, bool buzzer)
+        /// <summary>I15: a win from this far down is a comeback.</summary>
+        public const int ComebackFrom = 6;
+
+        /// <param name="maxDeficit">I15: the most your team trailed by in this game.</param>
+        public static List<MomentEntry> FromGame(MatchSummary s, bool yourWinner, bool buzzer, int maxDeficit = 0)
         {
             var list = new List<MomentEntry>();
             if (s == null || s.mode == GameMode.Practice || s.mode == GameMode.Tutorial || s.mode == GameMode.Versus || s.mode == GameMode.Demo)
@@ -55,6 +59,7 @@ namespace CallerRetroBall.Logic
                 if (line.steals >= LockdownSteals) list.Add(M(MomentKind.Lockdown, line.steals));
             }
             if (s.HumanWon && s.Margin >= BlowoutMargin && s.mode != GameMode.Clutch) list.Add(M(MomentKind.Blowout, s.Margin));
+            if (Comebacks.IsComeback(s.HumanWon, maxDeficit, s.fullCourt || s.mode == GameMode.FullCourt)) list.Add(M(MomentKind.Comeback, maxDeficit));
             return list;
         }
 
@@ -111,6 +116,7 @@ namespace CallerRetroBall.Logic
                 case MomentKind.BigGame: return "BIG GAME";
                 case MomentKind.PerfectNight: return "PERFECT NIGHT";
                 case MomentKind.Lockdown: return "LOCKDOWN";
+                case MomentKind.Comeback: return "COMEBACK";
                 default: return "BLOWOUT";
             }
         }
@@ -126,6 +132,7 @@ namespace CallerRetroBall.Logic
                 case MomentKind.PerfectNight: what += ": " + m.value + "/" + m.value + " " + Loc.T("FG"); break;
                 case MomentKind.Lockdown: what += ": " + m.value + " " + Loc.T("STL"); break;
                 case MomentKind.Blowout: what += ": +" + m.value; break;
+                case MomentKind.Comeback: what += ": " + Loc.T("DOWN") + " " + m.value; break;
             }
             return what + "  ·  vs " + (string.IsNullOrEmpty(opponentAbbr) ? "?" : opponentAbbr) + " " + m.scoreFor + "-" + m.scoreAgainst;
         }

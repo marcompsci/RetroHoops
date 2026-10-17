@@ -973,6 +973,23 @@ offline and couch play (already here). Built:
   starts fresh); finishing or leaving the game clears it; it keeps 7 days.
 - Tests: `MorePhasesTests` (5). 1049 logic tests pass. Not yet seen on a device.
 
+### Improvements I12–I17 (16 Oct 2026)
+- **I12 RECORD WATCH** (`RecordWatch.cs`): passing one of your one-game records (points, assists, boards, steals,
+  blocks, greens) is called live, once per record per game ("NEW CAREER HIGH: 13 PTS"); records under 3 stay quiet;
+  Full Court points aren't compared; not in practice, 2 Player, the demo or CLUTCH.
+- **I13 NEMESIS** (`Nemesis.cs`): the team that has beaten you most in your recent games (2+ losses, more losses than
+  wins) is flagged on the tip-off card; beating them pays +50 SP (play points) on the result screen.
+- **I14 FORGIVING METER** (Settings, off by default; `ShotModel.Forgiving`, `MatchSimulation.TuningFor`): your shot
+  meter's green window is 50% wider with wider "slightly" bands; make chances, the CPU's meter and everyone else are
+  unchanged. Not in the Daily (leaderboard), two-phone/LIVE games, the tutorial or the demo. GREENS (stat, record and
+  board) still count by the standard window, so it never pads them.
+- **I15 COMEBACKS** (`Comebacks.cs`): climbing back level from 6+ down (12 in Full Court) gets "ALL TIED UP!" and the
+  crowd; a win from there is a COMEBACK moment in the book and "COMEBACK COMPLETE" on the result screen.
+- **I16 CLOCK CALLS** (`ClockCalls.cs`): LAST MINUTE (games of 100 s or more), 10 SECONDS! in a game within 3, and
+  SUDDEN DEATH: NEXT BUCKET WINS when the horn goes tied.
+- **I17 YOUR WEEK** (`WeekInReview.cs`): the top of PLAY shows the last 7 days: record, best scoring game, big moments.
+- Tests: `SixPhasesTests` (7). 1056 logic tests pass. Not yet seen on a device.
+
 ## Deviations from the brief (deliberate)
 
 - "Oakland Voltage" → **Eastbay Voltage** (real city + electric branding sat too close to real pro-sports naming).

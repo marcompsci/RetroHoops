@@ -97,6 +97,8 @@ namespace CallerRetroBall.Logic
         public float AiEdge;
         /// <summary>17 Oct 2026 CASHED OUT: 0..1, the CPU defence keys on the human (tighter on the ball, doubles near the rim).</summary>
         public float KeyOnHuman;
+        /// <summary>I14: human shooters use <see cref="ShotModel.Forgiving"/>.</summary>
+        public bool ForgivingMeter;
         public List<PlayerDef> BenchA = new List<PlayerDef>();
         public List<PlayerDef> BenchB = new List<PlayerDef>();
         /// <summary>Finds an archetype by id (bench players coming on).</summary>
@@ -146,6 +148,7 @@ namespace CallerRetroBall.Logic
                 StartClock = Math.Max(0f, request.StartClock),
                 AiEdge = Math.Max(-Adaptive.MaxEdge, Math.Min(Adaptive.MaxEdge, request.AiEdge)),
                 KeyOnHuman = Math.Max(0f, Math.Min(1f, request.KeyOnHuman)),
+                ForgivingMeter = request.ForgivingMeter,
             };
             if (request.StartWithBall == 0 || request.StartWithBall == 1) setup.StartingOffense = request.StartWithBall;
             // Practice has no opponent: mirror the player crew so the court still has bodies.
@@ -493,6 +496,15 @@ namespace CallerRetroBall.Logic
         public PlayerRuntimeState Holder => Ball.IsHeld ? Players[Ball.HolderIndex] : null;
         public int DefenseTeam => 1 - OffenseTeam;
         public bool IsOver => Phase == MatchPhase.Final;
+
+        private ShotTuning _forgiving;
+
+        /// <summary>The shot tuning a player's release is graded with (I14: the forgiving meter for people who chose it).</summary>
+        public ShotTuning TuningFor(int player)
+        {
+            if (!Setup.ForgivingMeter || player < 0 || player >= Players.Length || !IsHumanControlled(player)) return Setup.Shot;
+            return _forgiving ?? (_forgiving = ShotModel.Forgiving(Setup.Shot));
+        }
         public bool HumanHasBall => !NoHuman && Ball.IsHeld && Ball.HolderIndex == ControlledIndex;
         public bool HumanTeamHasBall => !Setup.Coach && Ball.IsHeld && Players[Ball.HolderIndex].Team == Setup.HumanTeam;
 
@@ -1043,19 +1055,20 @@ namespace CallerRetroBall.Logic
             {
                 LastReleaseMeter = meter;
                 Events.Add(new MatchEvent(MatchEventType.ShotReleased, shooter, p.Team,
-                    (int)ShotModel.Evaluate(ShotContextFor(shooter, type, meter), Setup.Shot).Feedback, 0f));
+                    (int)ShotModel.Evaluate(ShotContextFor(shooter, type, meter), TuningFor(shooter)).Feedback, 0f));
                 ResolveBlock(shooter, blocker);
                 return;
             }
             var ctx = ShotContextFor(shooter, type, meter);
             LastReleaseMeter = meter;
-            var eval = ShotModel.Evaluate(ctx, Setup.Shot);
+            var eval = ShotModel.Evaluate(ctx, TuningFor(shooter));
             bool makes = eval.GuaranteedMake || _rng.NextFloat() < eval.MakeChance;
             var zone = court.ZoneOf(p.Position);
             int points = Scoring.PointsFor(zone, Setup.Rules);
 
             var line = Stats[shooter];
-            if (eval.Grade == TimingGrade.Green) line.greenReleases++;
+            // Greens count by the standard window only, so a forgiving meter never pads the GREENS record or board.
+            if (ShotModel.Grade(meter, p.Def.attributes.shooting, Setup.Shot) == TimingGrade.Green) line.greenReleases++;
             line.fieldGoalsAttempted++;
             if (zone == ShotZone.BeyondArc) line.arcAttempted++;
             line.chart.spots[(int)ShotZones.SpotOf(p.Position, court)].attempted++;

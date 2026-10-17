@@ -71,6 +71,15 @@ namespace CallerRetroBall.Gameplay
         private readonly FairPlayTally _fair = new FairPlayTally();
         /// <summary>I6: gear the MOMENTS book just earned you (shown with the result).</summary>
         private string _momentReward;
+        /// <summary>I13: tonight's opponent is your nemesis.</summary>
+        private string _nemesisId;
+        /// <summary>I15: the most your team trailed by, and whether ALL TIED UP has been called.</summary>
+        private int _maxDeficit;
+        private bool _tiedCalled;
+        /// <summary>I16: the game clock last frame.</summary>
+        private float _prevClock = -1f; // the first frame never calls (a game that starts late in the clock)
+        /// <summary>I12: records already called this game.</summary>
+        private readonly System.Collections.Generic.HashSet<string> _recordsCalled = new System.Collections.Generic.HashSet<string>();
         private int _lastLabelState = -1;
         private PracticeSession _practice;
         // Phase 17: H-O-R-S-E.
@@ -434,7 +443,15 @@ namespace CallerRetroBall.Gameplay
                     int opp = 1 - setup.HumanTeam;
                     var roster = new System.Collections.Generic.List<PlayerDef>();
                     foreach (var pl in _match.Players) if (pl.Team == opp && !IsBenchedSlot(pl)) roster.Add(pl.Def);
-                    tape = TaleOfTheTape.Card(App.Career.history, (opp == 0 ? setup.TeamA : setup.TeamB).id, roster);
+                    string oppId = (opp == 0 ? setup.TeamA : setup.TeamB).id;
+                    tape = TaleOfTheTape.Card(App.Career.history, oppId, roster);
+                    // I13 NEMESIS: the team that keeps beating you.
+                    var nem = Nemesis.Find(App.Career.history);
+                    if (nem.Exists && nem.TeamId == oppId)
+                    {
+                        _nemesisId = oppId;
+                        tape = Nemesis.Line(nem) + "\n" + tape;
+                    }
                 }
                 _hud.ShowIntro(court != null ? court.displayName : "THE COURT", setup.TeamA, setup.TeamB, startersA, startersB, tape);
             }
@@ -2147,7 +2164,7 @@ namespace CallerRetroBall.Gameplay
             {
                 var shooter = _match.Players[_match.ChargingIndex];
                 _meter.ShowCharging(CourtSpace.ToWorld(shooter.Position), _match.ChargeMeter,
-                                    shooter.Def.attributes.shooting, _match.Setup.Shot, _match.ContestLevel(_match.ChargingIndex));
+                                    shooter.Def.attributes.shooting, _match.TuningFor(_match.ChargingIndex), _match.ContestLevel(_match.ChargingIndex));
             }
             else
             {
@@ -2177,6 +2194,42 @@ namespace CallerRetroBall.Gameplay
             bool showLine = !Versus && !Demo && _streetsHud == null && _practice == null && _tutorial == null && _horse == null
                             && (App.Career?.settings == null || App.Career.settings.liveStatLine) && _match.ControlledIndex >= 0;
             _hud.SetMyLine(showLine ? MyLine.Text(_match.Stats[_match.ControlledIndex]) : null);
+            // I15 COMEBACKS: track how far down you've been; call it when you climb all the way back.
+            if (!Versus && !Demo && _watch == null && !Theater && _match.Phase == MatchPhase.Live)
+            {
+                int me = _match.Setup.HumanTeam;
+                int down = _match.Score[1 - me] - _match.Score[me];
+                if (down > _maxDeficit) _maxDeficit = down;
+                if (!_tiedCalled && down == 0 && _maxDeficit >= Comebacks.TieCallFrom(_match.Setup.FullCourt))
+                {
+                    _tiedCalled = true;
+                    _hud.Toast(Loc.T("ALL TIED UP!") + "  (" + Loc.T("WERE DOWN") + " " + _maxDeficit + ")", 1.6f);
+                    SetCrowd(CrowdMood.Cheer, 1.6f);
+                }
+            }
+            // I16 CLOCK CALLS: last minute, 10 seconds in a close one, sudden death at a tied horn.
+            {
+                var rules = _match.Setup.Rules;
+                float len = _match.Setup.StartClock > 0f ? Mathf.Max(_match.Setup.StartClock, rules.gameClockSeconds) : rules.gameClockSeconds;
+                string call = Theater || _watch != null ? null
+                    : ClockCalls.For(_prevClock, _match.GameClock, len, _match.Score[0], _match.Score[1], rules.useGameClock, rules.suddenDeathOnTie, !_match.IsOver);
+                _prevClock = _match.GameClock;
+                if (call != null)
+                {
+                    if (_streetsHud != null) _streetsHud.Banner(Loc.T(call), Theme.Gold, 1.6f);
+                    else _hud.Toast(call, 1.6f);
+                    Sfx(call.StartsWith("SUDDEN") ? SfxId.Whistle : SfxId.ArenaHorn, 0.6f);
+                    if (call.StartsWith("SUDDEN")) SetCrowd(CrowdMood.Cheer, 2f);
+                }
+            }
+            // I12 RECORD WATCH: your one-game records, called the moment you pass them.
+            if (App.Career != null && RecordWatch.Applies(_request.Mode) && !Demo && _watch == null && !Theater && _match.ControlledIndex >= 0)
+                foreach (var line in RecordWatch.Check(App.Career.records, _match.Stats[_match.ControlledIndex], _recordsCalled, _match.Setup.FullCourt))
+                {
+                    if (_streetsHud != null) _streetsHud.Banner(line, Theme.Gold, 1.6f);
+                    else _hud.Toast(line, 1.8f);
+                    Sfx(SfxId.Stinger, 0.6f);
+                }
             if (_streetsHud != null) _streetsHud.Sync(_match, _touchShown && !_paused && _match.Phase != MatchPhase.Final);
             // The info line builds a string, so refresh it ~10x a second rather than every frame.
             if (Time.unscaledTime >= _nextInfoAt)
@@ -2599,10 +2652,18 @@ namespace CallerRetroBall.Gameplay
             {
                 _resultApplied = true;
                 rewarded = !customClutch && Career.ApplyMatch(App.Career, summary, grant);
+                if (rewarded && Comebacks.IsComeback(summary.HumanWon, _maxDeficit, summary.fullCourt || summary.mode == GameMode.FullCourt))
+                    _momentReward = (_momentReward == null ? "" : _momentReward + "\n") + Loc.T("COMEBACK COMPLETE") + ": " + Loc.T("WERE DOWN") + " " + _maxDeficit;
+                if (rewarded && _nemesisId != null && summary.HumanWon)
+                {
+                    // I13: the grudge is settled (for now).
+                    App.Career.signalPoints += Nemesis.BonusSP;
+                    _momentReward = (_momentReward == null ? "" : _momentReward + "\n") + Loc.T("NEMESIS DOWN!") + "  +" + Nemesis.BonusSP + " SP";
+                }
                 // I3 LEGACY: your game-winners, buzzer-beaters and big nights go in the MOMENTS book.
                 if (rewarded)
                 {
-                    MomentsBook.Add(App.Career, MomentsBook.FromGame(summary, _endedOnWinner && _lastMadePlayer >= 0 && _match.IsHumanControlled(_lastMadePlayer), _endedOnBuzzer));
+                    MomentsBook.Add(App.Career, MomentsBook.FromGame(summary, _endedOnWinner && _lastMadePlayer >= 0 && _match.IsHumanControlled(_lastMadePlayer), _endedOnBuzzer, _maxDeficit));
                     // I6: gear earned by your moments.
                     foreach (var item in MomentsBook.GrantRewards(App.Career, App.Catalog))
                         _momentReward = (_momentReward == null ? "" : _momentReward + "\n") + Loc.T("EARNED GEAR") + ": " + item.displayName.ToUpperInvariant();

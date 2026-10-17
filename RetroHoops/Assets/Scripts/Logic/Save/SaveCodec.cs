@@ -72,6 +72,7 @@ namespace CallerRetroBall.Logic
                     ["reduceMotion"] = d.settings.reduceMotion,
                     ["houseRules"] = d.settings.houseRules ?? "",
                     ["liveStatLine"] = d.settings.liveStatLine,
+                    ["forgivingMeter"] = d.settings.forgivingMeter,
                 },
                 ["rise"] = EncodeRise(d.rise),
                 ["classic"] = EncodeClassic(d.classic),
@@ -548,6 +549,7 @@ namespace CallerRetroBall.Logic
                     reduceMotion = Bool(st, "reduceMotion", false),
                     houseRules = Str(st, "houseRules", "") ?? "",
                     liveStatLine = Bool(st, "liveStatLine", true),
+                    forgivingMeter = Bool(st, "forgivingMeter", false),
                 };
                 d.rise = DecodeRise(Obj(o, "rise"));
                 d.classic = DecodeClassic(Obj(o, "classic"));
@@ -681,7 +683,7 @@ namespace CallerRetroBall.Logic
                 {
                     if (!(item is Dictionary<string, object> m)) continue;
                     int kind = Int(m, "kind", -1), mode = Int(m, "mode", 0);
-                    if (kind < 0 || kind > (int)MomentKind.Blowout) continue;
+                    if (kind < 0 || kind > (int)MomentKind.Comeback) continue;
                     d.moments.Add(new MomentEntry
                     {
                         day = Int(m, "day", 0), kind = (MomentKind)kind,

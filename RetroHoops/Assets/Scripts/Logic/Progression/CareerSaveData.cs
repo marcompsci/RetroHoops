@@ -43,6 +43,8 @@ namespace CallerRetroBall.Logic
         public string houseRules = "";
         /// <summary>I8: your live stat line under the score bar.</summary>
         public bool liveStatLine = true;
+        /// <summary>I14: a wider green window on your shot meter (offline games; Daily and online games keep the standard one).</summary>
+        public bool forgivingMeter;
         /// <summary>"en" or "es".</summary>
         public string language = Loc.English;
         /// <summary>CRT look: 0 = off, 1 = soft scanlines, 2 = strong (scanlines + vignette).</summary>

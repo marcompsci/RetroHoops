@@ -521,6 +521,10 @@ namespace CallerRetroBall.UI
             var column = OpenOverlay("PLAY", out var footer);
             var career = App.Career;
 
+            // I17 YOUR WEEK: the last seven days at a glance.
+            string week = WeekInReview.Line(career.history, career.moments, App.Today);
+            if (week != null) UiKit.Size(UiKit.Label(column, week, 30f, Theme.Cyan, TextAlignmentOptions.Center, true), 50f);
+
             Section(column, "STORY");
             var story = career.story ?? new StorySaveData();
             Mode(column, "SUMMER STORY", story.finished ? "Sunburst champions. Replay any chapter."

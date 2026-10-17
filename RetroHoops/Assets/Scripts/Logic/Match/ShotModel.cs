@@ -16,6 +16,9 @@ namespace CallerRetroBall.Logic
     [Serializable]
     public class ShotTuning
     {
+        /// <summary>A field-by-field copy (I14).</summary>
+        public ShotTuning CloneTuning() => (ShotTuning)MemberwiseClone();
+
         // Meter
         public float meterFillSeconds = 0.9f;
         public float closeRangeFillSeconds = 0.6f;
@@ -134,6 +137,21 @@ namespace CallerRetroBall.Logic
 
         public static float FillSeconds(ShotType type, ShotTuning t) =>
             IsCloseRange(type) ? t.closeRangeFillSeconds : t.meterFillSeconds;
+
+        /// <summary>
+        /// I14 FORGIVING METER (Settings): a copy of the tuning with a 50% wider green window and wider "slightly"
+        /// bands, for people still learning the release. Only your own shots use it; make chances are unchanged.
+        /// </summary>
+        public static ShotTuning Forgiving(ShotTuning t)
+        {
+            var f = (ShotTuning)t.CloneTuning();
+            f.greenHalfWidth = t.greenHalfWidth * ForgivingGreen;
+            f.greenWidthFromShooting = t.greenWidthFromShooting * ForgivingGreen;
+            f.slightBand = t.slightBand * 1.3f;
+            return f;
+        }
+
+        public const float ForgivingGreen = 1.5f;
 
         public static float GreenHalfWidth(int shootingRating, ShotTuning t) =>
             t.greenHalfWidth + t.greenWidthFromShooting * RatingScale.Normalized(shootingRating);
