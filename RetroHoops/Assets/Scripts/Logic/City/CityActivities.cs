@@ -5,7 +5,8 @@ namespace CallerRetroBall.Logic
 {
     /// <summary>What a city choice does when picked.</summary>
     public enum CityAction { PlayMatch = 0, OpenRiseHub = 1, OpenLockerRoom = 2, Info = 3, /** 17 Oct 2026 (phase 3): the shops. */ Buy = 4, Equip = 5, Haircut = 6, /** 17 Oct 2026: THE STREETS walls. */ OpenStreets = 7, StreetsBoard = 8, BuyWithCash = 9,
-        /** 28 Oct 2026 (BALLER WORLD): drive to a region (ItemId = region id), open the world map, take a side job, read the comic. */ Drive = 10, WorldMap = 11, AcceptJob = 12, Comic = 13 }
+        /** 28 Oct 2026 (BALLER WORLD): drive to a region (ItemId = region id), open the world map, take a side job, read the comic. */ Drive = 10, WorldMap = 11, AcceptJob = 12, Comic = 13,
+        /** I30: buy from a region store (ItemId = cosmetic id). */ RegionBuy = 14 }
 
     /// <summary>
     /// One thing you can do at a court, a door, a station or with a person: a label, a line of detail, and either a
@@ -148,6 +149,12 @@ namespace CallerRetroBall.Logic
                 r.DifficultyId = diff;
                 string best = PracticeBest(career, drill);
                 list.Add(new CityActivity { Label = "START " + portal.Label, Detail = "Practice Lab." + (best != null ? "  " + Loc.T("BEST") + ": " + best : ""), Request = Tag(r, back), Primary = true });
+                return list;
+            }
+            // I30: a region's store.
+            if (portal.Target != null && portal.Target.StartsWith(RegionStore.Prefix, StringComparison.Ordinal))
+            {
+                list.AddRange(RegionStore.Choices(career, c, portal.Target.Substring(RegionStore.Prefix.Length)));
                 return list;
             }
             switch (portal.Target)

@@ -30,6 +30,11 @@ namespace CallerRetroBall.City
             public Action<string, string> Drive, Spawn;
             public Action Closed;
             public string Footer;
+            // I26 pins, I29 label size, Reduce Motion.
+            public List<MapPin> Pins = new List<MapPin>();
+            public Func<MapPinKind, bool> PinShown;
+            public int LabelSize = 1;
+            public bool ReduceMotion;
         }
 
         // Textures are built once and kept for the session (the map opens instantly the second time).
@@ -37,6 +42,9 @@ namespace CallerRetroBall.City
         private static readonly Dictionary<string, Texture2D> Plates = new Dictionary<string, Texture2D>();
         private static readonly Dictionary<string, Texture2D> Districts = new Dictionary<string, Texture2D>();
         private static Sprite _youSprite;
+        private static readonly Dictionary<MapPinKind, Sprite> PinSprites = new Dictionary<MapPinKind, Sprite>();
+        private readonly List<(Image image, Vector2 at, MapPinKind kind)> _pins = new List<(Image, Vector2, MapPinKind)>();
+        private bool _showPins = true;
 
         private Model _model;
         private RectTransform _viewport, _content, _overlay, _sheet;
@@ -56,6 +64,57 @@ namespace CallerRetroBall.City
         private Vector2 _youAt;
         private string _selected;
         private TextMeshProUGUI _hintLabel;
+
+        // ------------------------------------------------------------------ I22 INSTANT MAP
+
+        private static List<string> _warmQueue;
+
+        /// <summary>
+        /// Builds one more map texture in the background (your region first), so MAP opens fully drawn. Call every so
+        /// often while walking; false once everything's built.
+        /// </summary>
+        public static bool WarmStep(string here)
+        {
+            if (_warmQueue == null)
+            {
+                _warmQueue = new List<string> { "backdrop" };
+                var home = WorldRegions.RegionOf(here);
+                _warmQueue.Add("p:" + home.Id);
+                foreach (var d in home.Districts) _warmQueue.Add("d:" + d);
+                foreach (var r in WorldRegions.All) if (r.Id != home.Id) _warmQueue.Add("p:" + r.Id);
+                foreach (var r in WorldRegions.All) if (r.Id != home.Id) foreach (var d in r.Districts) _warmQueue.Add("d:" + d);
+            }
+            while (_warmQueue.Count > 0)
+            {
+                string job = _warmQueue[0];
+                _warmQueue.RemoveAt(0);
+                if (job == "backdrop")
+                {
+                    if (_backdrop != null) continue;
+                    _backdrop = TextureFactory.ToTexture(WorldMapArt.Backdrop(), "map.backdrop");
+                    return true;
+                }
+                string id = job.Substring(2);
+                if (job[0] == 'p')
+                {
+                    if (Plates.TryGetValue(id, out var t) && t != null) continue;
+                    var p = WorldAtlas.Plate(id);
+                    Plates[id] = TextureFactory.ToTexture(WorldMapArt.Plate(id, (int)(p.W / WorldAtlas.PxPerTile), (int)(p.H / WorldAtlas.PxPerTile)), "map.plate." + id);
+                    return true;
+                }
+                if (Districts.TryGetValue(id, out var dt) && dt != null) continue;
+                Districts[id] = DistrictTexture(id);
+                return true;
+            }
+            return false;
+        }
+
+        /// <summary>A district's map texture (shared with the I21 minimap).</summary>
+        public static Texture2D DistrictTexture(string id)
+        {
+            if (Districts.TryGetValue(id, out var t) && t != null) return t;
+            return Districts[id] = TextureFactory.ToTexture(WorldMapArt.District(CityDistricts.Map(id)), "map.district." + id);
+        }
 
         /// <summary>Builds the map under <paramref name="parent"/> (a full-screen card on the HUD canvas).</summary>
         public static WorldMapView Create(RectTransform parent, Model model)
@@ -143,6 +202,22 @@ namespace CallerRetroBall.City
                 var tex = TextureFactory.ToTexture(WorldMapArt.You(), "map.you");
                 _youSprite = Sprite.Create(tex, new Rect(0, 0, tex.width, tex.height), new Vector2(0.5f, 0.5f), 100f);
             }
+            // I26 pins (under YOU).
+            foreach (var pin in _model.Pins ?? new List<MapPin>())
+            {
+                if (_model.PinShown != null && !_model.PinShown(pin.Kind)) continue;
+                if (!PinSprites.TryGetValue(pin.Kind, out var ps) || ps == null)
+                {
+                    var tex = TextureFactory.ToTexture(WorldMapArt.Pin(pin.Kind), "map.pin." + pin.Kind);
+                    PinSprites[pin.Kind] = ps = Sprite.Create(tex, new Rect(0, 0, tex.width, tex.height), new Vector2(0.5f, 0f), 100f);
+                }
+                var img = UiKit.Panel(_overlay, Color.white, ps, false, "Pin " + pin.Kind);
+                img.rectTransform.anchorMin = img.rectTransform.anchorMax = Vector2.zero;
+                img.rectTransform.pivot = new Vector2(0.5f, 0f);
+                img.rectTransform.sizeDelta = new Vector2(45f, 57f);
+                var (px, py) = WorldAtlas.ToMap(pin.District, pin.At);
+                _pins.Add((img, new Vector2(px, py), pin.Kind));
+            }
             _you = UiKit.Panel(_overlay, Color.white, _youSprite, false, "You");
             _you.rectTransform.anchorMin = _you.rectTransform.anchorMax = Vector2.zero;
             _you.rectTransform.sizeDelta = new Vector2(52f, 52f);
@@ -170,12 +245,13 @@ namespace CallerRetroBall.City
             var side = UiKit.NewRect("ZoomButtons", safe);
             side.anchorMin = side.anchorMax = new Vector2(1f, 0.62f);
             side.pivot = new Vector2(1f, 0.5f);
-            side.sizeDelta = new Vector2(150f, 520f);
+            side.sizeDelta = new Vector2(150f, 650f);
             side.anchoredPosition = new Vector2(-20f, 0f);
             AddSideButton(side, "+", 0, () => ZoomAround(1.6f, ViewCenter()));
             AddSideButton(side, "-", 1, () => ZoomAround(1f / 1.6f, ViewCenter()));
             AddSideButton(side, "ME", 2, () => FrameRect(WorldAtlas.Frame(WorldRegions.RegionOf(_model.Here).Id), centerOn: _youAt));
             AddSideButton(side, "ALL", 3, () => FrameRect(new MapRect(0f, 0f, WorldAtlas.Width, WorldAtlas.Height)));
+            AddSideButton(side, "PINS", 4, () => _showPins = !_showPins);
 
             var foot = UiKit.Panel(safe, new Color(0.04f, 0.04f, 0.09f, 0.82f), name: "Footer");
             foot.rectTransform.anchorMin = new Vector2(0f, 0f);
@@ -207,6 +283,7 @@ namespace CallerRetroBall.City
 
         private void AddLabel(string text, Vector2 at, float size, Color color, bool district)
         {
+            size *= _model.LabelSize <= 0 ? 0.8f : _model.LabelSize >= 2 ? 1.3f : 1f;
             var l = UiKit.Label(_overlay, text, size, color, TextAlignmentOptions.Center, true, "Label");
             l.rectTransform.anchorMin = l.rectTransform.anchorMax = Vector2.zero;
             l.rectTransform.pivot = new Vector2(0.5f, 0f);
@@ -275,8 +352,7 @@ namespace CallerRetroBall.City
                 }
                 var (id, img) = _pendingDistricts[best];
                 _pendingDistricts.RemoveAt(best);
-                if (!Districts.TryGetValue(id, out var tex) || tex == null)
-                    Districts[id] = tex = TextureFactory.ToTexture(WorldMapArt.District(CityDistricts.Map(id)), "map.district." + id);
+                var tex = DistrictTexture(id);
                 if (img != null)
                 {
                     img.texture = tex;
@@ -314,7 +390,14 @@ namespace CallerRetroBall.City
                 label.enabled = show;
                 if (show) label.rectTransform.anchoredPosition = _pan + at * _zoom;
             }
-            float pulse = 1f + Mathf.Sin(Time.unscaledTime * 5f) * 0.12f;
+            // Pins: the comic's always; the rest once you're close enough to tell them apart.
+            foreach (var (img, at, kind) in _pins)
+            {
+                bool show = _showPins && (kind == MapPinKind.Comic || _zoom > 0.6f);
+                img.enabled = show;
+                if (show) img.rectTransform.anchoredPosition = _pan + at * _zoom;
+            }
+            float pulse = _model.ReduceMotion ? 1f : 1f + Mathf.Sin(Time.unscaledTime * 5f) * 0.12f;
             _you.rectTransform.anchoredPosition = _pan + _youAt * _zoom;
             _you.rectTransform.localScale = new Vector3(pulse, pulse, 1f);
             string hereOutside = CityAtlas.Outside(_model.Here);
@@ -323,7 +406,7 @@ namespace CallerRetroBall.City
                 var r = WorldRegions.RegionOf(kv.Key);
                 Color baseColor = Hex(r.Primary);
                 if (kv.Key == _selected) kv.Value.color = Color.white;
-                else if (kv.Key == hereOutside) kv.Value.color = Color.Lerp(baseColor, Color.white, 0.5f + Mathf.Sin(Time.unscaledTime * 4f) * 0.5f);
+                else if (kv.Key == hereOutside) kv.Value.color = _model.ReduceMotion ? Theme.Gold : Color.Lerp(baseColor, Color.white, 0.5f + Mathf.Sin(Time.unscaledTime * 4f) * 0.5f);
                 else kv.Value.color = baseColor;
             }
         }

@@ -594,6 +594,61 @@ namespace CallerRetroBall.Logic.PixelArt
 
         // ------------------------------------------------------------------ markers
 
+        /// <summary>I26: a map pin (15 × 19: a round badge on a point).</summary>
+        public static PixelCanvas Pin(MapPinKind kind)
+        {
+            var c = new PixelCanvas(15, 19);
+            string face;
+            switch (kind)
+            {
+                case MapPinKind.Crew: face = "#E63946"; break;
+                case MapPinKind.BigRun: face = "#FFD166"; break;
+                case MapPinKind.SideJob: face = "#F77F00"; break;
+                case MapPinKind.Ride: face = "#2E6FD8"; break;
+                case MapPinKind.Comic: face = "#9B5DE5"; break;
+                default: face = "#2A9D8F"; break;
+            }
+            var ink = H("#14141F");
+            var white = H("#FFFFFF");
+            // The point.
+            for (int y = 0; y < 6; y++) c.FillRect(7 - y / 2, y, 1 + y, 1, ink);
+            c.FillCircle(7, 11.5f, 7f, ink);
+            c.FillCircle(7, 11.5f, 5.8f, H(face));
+            switch (kind)
+            {
+                case MapPinKind.Crew: // a ball
+                    c.FillCircle(7, 11.5f, 3.4f, H("#F77F00"));
+                    c.FillRect(4, 11, 7, 1, ink);
+                    c.FillRect(7, 8, 1, 7, ink);
+                    break;
+                case MapPinKind.BigRun: // a cup
+                    c.FillRect(4, 13, 7, 3, H("#B07D00"));
+                    c.FillRect(5, 11, 5, 2, H("#B07D00"));
+                    c.FillRect(7, 9, 1, 2, H("#B07D00"));
+                    c.FillRect(5, 8, 5, 1, H("#B07D00"));
+                    break;
+                case MapPinKind.SideJob: // "!"
+                    c.FillRect(6, 11, 3, 5, white);
+                    c.FillRect(6, 8, 3, 2, white);
+                    break;
+                case MapPinKind.Ride: // a car from the side
+                    c.FillRect(3, 10, 9, 3, white);
+                    c.FillRect(5, 13, 5, 2, white);
+                    c.Set(5, 9, ink); c.Set(9, 9, ink);
+                    break;
+                case MapPinKind.Comic: // a star
+                    c.FillRect(6, 9, 3, 6, white);
+                    c.FillRect(4, 11, 7, 2, white);
+                    c.Set(5, 9, white); c.Set(9, 9, white); c.Set(5, 14, white); c.Set(9, 14, white);
+                    break;
+                default: // a bag
+                    c.FillRect(4, 8, 7, 6, white);
+                    c.FillRect(6, 14, 1, 2, white); c.FillRect(8, 14, 1, 2, white); c.FillRect(6, 15, 3, 1, white);
+                    break;
+            }
+            return c;
+        }
+
         /// <summary>YOU on the map: a gold ring with a dot.</summary>
         public static PixelCanvas You()
         {

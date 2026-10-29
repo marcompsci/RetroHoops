@@ -14,6 +14,10 @@ namespace CallerRetroBall.City
     {
         private CityDrive _driveView;
         private string _driveTarget;
+        // I21 minimap / I22 map warm-up.
+        private Texture2D _miniTexture;
+        private readonly List<(Vector2 at, Color color)> _miniDots = new List<(Vector2, Color)>();
+        private float _warmAt = 2f;
         private float _guideAt, _walkMetres, _walkAt, _achAt, _errandStart;
         private bool _errandRunning;
         private GuideHint _hint;
@@ -55,6 +59,8 @@ namespace CallerRetroBall.City
             if (_arrivalNote != null) { _hud.Toast(_arrivalNote, 3f); _arrivalNote = null; }
 
             SpawnGivers();
+            if (w.minimap) _miniTexture = WorldMapView.DistrictTexture(_map.DistrictId);
+            RefreshMiniDots();
             // An errand you'd started stops when you leave its district: talk to the giver to go again.
             var job = CitySideJobs.Active(w);
             if (job != null && job.Kind == SideJobKind.Errand) w.sideStage = 0;
@@ -107,6 +113,7 @@ namespace CallerRetroBall.City
         /// <summary>Markers for the job you've taken: things to find, the errand's next spot.</summary>
         private void RefreshJobMarks()
         {
+            RefreshMiniDots();
             foreach (var m in _jobMarks) if (m != null) Destroy(m.gameObject);
             _jobMarks.Clear();
             var w = World;
@@ -197,6 +204,16 @@ namespace CallerRetroBall.City
 
             // Comic pages wait until no card is open.
             if (_comicQueue.Count > 0 && !_hud.CardOpen) _comicQueue.Dequeue()();
+
+            // I21 the minimap; I22 the world map builds itself a piece at a time while you walk.
+            Vector2? miniTarget = null;
+            if (_hint.HasPoint && (_hint.Kind == GuideKind.Spot || _hint.Kind == GuideKind.Exit || _hint.Kind == GuideKind.Drive)) miniTarget = new Vector2(_hint.Point.x, _hint.Point.y);
+            _hud.SetMinimap(w.minimap && _miniTexture != null, _miniTexture, _map.Width, _map.Height, new Vector2(_me.Position.x, _me.Position.y), miniTarget, _miniDots);
+            if (Time.timeSinceLevelLoad > _warmAt && !_hud.CardOpen)
+            {
+                _warmAt = Time.timeSinceLevelLoad + 0.35f;
+                if (!WorldMapView.WarmStep(_map.DistrictId)) _warmAt = float.MaxValue;
+            }
 
             // The guide.
             if (Time.unscaledTime > _guideAt)
@@ -295,6 +312,13 @@ namespace CallerRetroBall.City
             {
                 CityStory.MarkIntroShown(World);
                 App.SaveCareer();
+                if (!World.comicPopups)
+                {
+                    // I29: pop-ups off: a line instead of the pages (they're in MENU ► THE COMIC).
+                    _hud.Toast(CityStory.Header(issue) + "\n" + Loc.T("NEW OBJECTIVE") + ": " + CityStory.Ticker(App.Career), 2.8f);
+                    _guideAt = 0f;
+                    return;
+                }
                 ShowPanels(CityStory.Header(issue), Loc.T(issue.Tagline), issue.Intro, issue.Region, () =>
                 {
                     _hud.Toast(Loc.T("NEW OBJECTIVE") + "\n" + CityStory.Ticker(App.Career), 2.6f);
@@ -309,6 +333,11 @@ namespace CallerRetroBall.City
             _comicQueue.Enqueue(() =>
             {
                 Audio.AudioManager.Play(SfxId.Fanfare, 0.7f);
+                if (!World.comicPopups)
+                {
+                    _hud.Toast(CityStory.Header(issue) + "  " + Loc.T("COMPLETE") + "\n+" + StreetCash.Money(issue.Cash) + "  +" + issue.Sp + " SP", 2.8f);
+                    return;
+                }
                 ShowPanels(CityStory.Header(issue) + "  " + Loc.T("COMPLETE"), "+" + StreetCash.Money(issue.Cash) + "  +" + issue.Sp + " SP", issue.Outro, issue.Region, null);
             });
         }
@@ -479,6 +508,10 @@ namespace CallerRetroBall.City
                 Spawn = SpawnAt,
                 Closed = () => CloseCard(),
                 Footer = footer,
+                Pins = WorldAtlas.Pins(career, _map.DistrictId),
+                PinShown = k => WorldAtlas.PinShown(World, k),
+                LabelSize = w.mapLabels,
+                ReduceMotion = _reduceMotion,
             });
         }
 
@@ -517,7 +550,7 @@ namespace CallerRetroBall.City
             Audio.AudioManager.SetAmbience(false);
             Audio.AudioManager.Play(SfxId.TipOff, 0.6f);
             string from = WorldRegions.RegionOf(_map.DistrictId).Id;
-            _driveView = CityDrive.Begin(_camera, from, r.Id, App.Career.settings, ArriveFromDrive);
+            _driveView = CityDrive.Begin(_camera, from, r.Id, App.Career.settings, ArriveFromDrive, World.easyDrive, World.RouteBest(from, r.Id));
         }
 
         private void ArriveFromDrive(HighwayDrive drive)
@@ -527,7 +560,7 @@ namespace CallerRetroBall.City
             var (district, spawn) = WorldAtlas.DriveArrival(drive.To, _driveTarget);
             career.city.Arrive(district, spawn);
             _arrivalNote = Loc.T("ARRIVED IN") + " " + drive.Time.ToString("0.0") + " s"
-                           + (drive.Bumps == 0 ? "  ·  " + Loc.T("CLEAN DRIVE") : "")
+                           + (drive.RouteRecord ? "  ·  " + Loc.T("NEW ROUTE RECORD!") : drive.Bumps == 0 ? "  ·  " + Loc.T("CLEAN DRIVE") : "")
                            + (paid > 0 ? "  +" + StreetCash.Money(paid) : "");
             CityAchievements.Update(career, _day);
             App.SaveCareer();
@@ -633,6 +666,66 @@ namespace CallerRetroBall.City
                 list.Add(new CityActivity { Label = (got ? Loc.T("DONE") + ": " : "") + Loc.T(b.Name), Detail = Loc.T(b.Detail) + "  ·  +" + b.Sp + " SP" + (b.Cash > 0 ? "  +" + StreetCash.Money(b.Cash) : ""), Action = CityAction.Info });
             }
             _hud.ShowCard(Loc.T("BADGES"), w.badges.Count + "/" + CityAchievements.Badges.Length, list, a => OpenAchievements(), null);
+        }
+
+        /// <summary>I21: the pins in this district, as minimap dots.</summary>
+        private void RefreshMiniDots()
+        {
+            _miniDots.Clear();
+            string here = CityAtlas.Outside(_map.DistrictId);
+            if (here != _map.DistrictId) return; // indoors: no pins
+            foreach (var pin in WorldAtlas.Pins(App.Career, _map.DistrictId))
+            {
+                if (pin.District != here || pin.Kind == MapPinKind.Comic || !WorldAtlas.PinShown(World, pin.Kind)) continue;
+                Color c;
+                switch (pin.Kind)
+                {
+                    case MapPinKind.Crew: c = new Color32(0xE6, 0x39, 0x46, 255); break;
+                    case MapPinKind.BigRun: c = new Color32(0xFF, 0xD1, 0x66, 255); break;
+                    case MapPinKind.SideJob: c = new Color32(0xF7, 0x7F, 0x00, 255); break;
+                    case MapPinKind.Ride: c = new Color32(0x2E, 0x6F, 0xD8, 255); break;
+                    default: c = new Color32(0x2A, 0x9D, 0x8F, 255); break;
+                }
+                _miniDots.Add((new Vector2(pin.At.x, pin.At.y), c));
+            }
+        }
+
+        // ------------------------------------------------------------------ I29 WORLD SETTINGS
+
+        private static readonly string[] LabelSizes = { "SMALL", "NORMAL", "LARGE" };
+        private static readonly string[] PinNames = { "CREWS", "BIG RUNS", "SIDE JOBS", "YOUR RIDE", "THE COMIC", "STORES" };
+
+        private void OpenWorldSettings()
+        {
+            var w = World;
+            string OnOff(bool b) => Loc.T(b ? "ON" : "OFF");
+            var list = new List<CityActivity>
+            {
+                new CityActivity { Label = Loc.T("MINIMAP") + ": " + OnOff(w.minimap), Detail = Loc.T("The district map in the corner."), Action = CityAction.Info, ItemId = "minimap" },
+                new CityActivity { Label = Loc.T("GUIDE") + ": " + OnOff(w.tracking != "off"), Detail = Loc.T("The arrow and the objective at the top."), Action = CityAction.Info, ItemId = "guide" },
+                new CityActivity { Label = Loc.T("COMIC POP-UPS") + ": " + OnOff(w.comicPopups), Detail = Loc.T("New issues open by themselves. Off: a line instead."), Action = CityAction.Info, ItemId = "comic" },
+                new CityActivity { Label = Loc.T("EASY DRIVE") + ": " + OnOff(w.easyDrive), Detail = Loc.T("Your ride steers round the traffic when you don't."), Action = CityAction.Info, ItemId = "easy" },
+                new CityActivity { Label = Loc.T("MAP LABELS") + ": " + Loc.T(LabelSizes[Math.Max(0, Math.Min(2, w.mapLabels))]), Action = CityAction.Info, ItemId = "labels" },
+            };
+            for (int k = 0; k < PinNames.Length; k++)
+                list.Add(new CityActivity { Label = Loc.T("MAP PINS") + ": " + Loc.T(PinNames[k]) + "  " + OnOff(WorldAtlas.PinShown(w, (MapPinKind)k)), Action = CityAction.Info, ItemId = "pin" + k });
+            _hud.ShowCard(Loc.T("WORLD SETTINGS"), null, list, a =>
+            {
+                switch (a.ItemId)
+                {
+                    case "minimap": w.minimap = !w.minimap; if (w.minimap && _miniTexture == null) _miniTexture = WorldMapView.DistrictTexture(_map.DistrictId); break;
+                    case "guide": w.tracking = w.tracking == "off" ? "" : "off"; _guideAt = 0f; break;
+                    case "comic": w.comicPopups = !w.comicPopups; break;
+                    case "easy": w.easyDrive = !w.easyDrive; break;
+                    case "labels": w.mapLabels = (w.mapLabels + 1) % 3; break;
+                    default:
+                        if (a.ItemId != null && a.ItemId.StartsWith("pin", StringComparison.Ordinal) && int.TryParse(a.ItemId.Substring(3), out int k)) { w.mapPins ^= 1 << k; RefreshMiniDots(); }
+                        else { OpenMenu(); return; }
+                        break;
+                }
+                App.SaveCareer();
+                OpenWorldSettings();
+            }, null);
         }
 
         private void DestroyWorldOwned()

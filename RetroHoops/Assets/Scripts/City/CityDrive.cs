@@ -52,8 +52,11 @@ namespace CallerRetroBall.City
         private List<DriveFeature> _scenery;
         private readonly Dictionary<string, Sprite> _sceneSprites = new Dictionary<string, Sprite>();
         private int _nextLine;
+        // I25 / I27.
+        private bool _easy;
+        private float _routeBest;
 
-        public static CityDrive Begin(Camera camera, string from, string to, SettingsData settings, Action<HighwayDrive> done)
+        public static CityDrive Begin(Camera camera, string from, string to, SettingsData settings, Action<HighwayDrive> done, bool easyDrive = false, float routeBest = 0f)
         {
             var go = new GameObject("CityDrive");
             var d = go.AddComponent<CityDrive>();
@@ -61,6 +64,8 @@ namespace CallerRetroBall.City
             d._done = done;
             d._reduceMotion = settings != null && settings.reduceMotion;
             d._drive = new HighwayDrive(from, to, (uint)Environment.TickCount | 1u);
+            d._easy = easyDrive;
+            d._routeBest = routeBest;
             d.Build(settings);
             return d;
         }
@@ -258,6 +263,8 @@ namespace CallerRetroBall.City
                 return;
             }
             float steer = (_left.IsHeld ? -1f : 0f) + (_right.IsHeld ? 1f : 0f) + KeySteer();
+            // I27 EASY DRIVE: when you're not steering, the ride steers round the traffic.
+            if (_easy && Mathf.Abs(steer) < 0.1f) steer = _drive.AutoSteer();
             _drive.Step(dt, Mathf.Clamp(steer, -1f, 1f), _boost.IsHeld || KeyBoost());
             if (_drive.Bumps > _lastBumps)
             {
@@ -287,10 +294,11 @@ namespace CallerRetroBall.City
                 _finishedAt = Time.unscaledTime + 1.6f;
                 Audio.AudioManager.Play(SfxId.Fanfare, 0.7f);
                 Haptics.Success();
-                Banner(Loc.T("ARRIVED") + "  " + _drive.Time.ToString("0.0") + " s" + (_drive.Bumps == 0 ? "\n" + Loc.T("CLEAN DRIVE!") : ""), 3f);
+                bool record = _routeBest <= 0f || _drive.Time < _routeBest;
+                Banner(Loc.T("ARRIVED") + "  " + _drive.Time.ToString("0.0") + " s" + (record ? "\n" + Loc.T("NEW ROUTE RECORD!") : _drive.Bumps == 0 ? "\n" + Loc.T("CLEAN DRIVE!") : ""), 3f);
             }
             if (_banner.text.Length > 0 && Time.unscaledTime > _bannerUntil) _banner.text = "";
-            _time.text = _drive.Time.ToString("0.0") + " s";
+            _time.text = _drive.Time.ToString("0.0") + " s" + (_routeBest > 0f ? "  ·  " + Loc.T("BEST") + " " + _routeBest.ToString("0.0") : "") + (_easy ? "  ·  " + Loc.T("EASY") : "");
             _speed.text = _drive.Mph + " MPH" + (_drive.Boosting ? "  " + Loc.T("BOOST") : "");
             _misses.text = Loc.T("NEAR MISSES") + " " + _drive.NearMisses;
             _progress.anchorMax = new Vector2(_drive.Progress, 1f);

@@ -460,11 +460,13 @@ namespace CallerRetroBall.UI
             // Play anywhere: home court, any street court, and hidden courts once unlocked.
             var courts = new List<string> { null };
             foreach (var court in c.Courts) if (court.circuit == CourtCircuit.Custom) courts.Add(court.id);
-            foreach (var court in c.Courts) if (court.circuit == CourtCircuit.Blacktop || court.circuit == CourtCircuit.Holiday) courts.Add(court.id);
+            // I24 COURT PASSPORT: BALLER WORLD courts join the list once you've been to their region.
+            foreach (var court in c.Courts)
+                if ((court.circuit == CourtCircuit.Blacktop || court.circuit == CourtCircuit.Holiday) && WorldAtlas.CourtStamped(App.Career, court.id)) courts.Add(court.id);
             foreach (var id in new[] { DefaultContent.SecretCourtId, DefaultContent.BossCourtId })
                 if (Secrets.IsUnlocked(App.Career.secrets, id)) courts.Add(id);
             {
-                var courtNames = courts.ConvertAll(id => id == null ? "HOME" : c.Court(id).displayName.ToUpperInvariant()).ToArray();
+                var courtNames = courts.ConvertAll(id => id == null ? "HOME" : WorldAtlas.CourtLabel(id, c.Court(id).displayName)).ToArray();
                 UiControls.ChoiceRow(column, "COURT", courtNames, 0, i => courtChoice = i);
             }
 
@@ -524,6 +526,20 @@ namespace CallerRetroBall.UI
             // I17 YOUR WEEK: the last seven days at a glance.
             string week = WeekInReview.Line(career.history, career.moments, App.Today);
             if (week != null) UiKit.Size(UiKit.Label(column, week, 30f, Theme.Cyan, TextAlignmentOptions.Center, true), 50f);
+            // I28 TODAY: what BALLER WORLD has for you today.
+            var worldToday = WorldToday.Lines(career, CityNpcScheduler.DayNumber(System.DateTime.Now));
+            if (worldToday.Count > 0)
+            {
+                UiKit.Size(UiKit.Label(column, "TODAY IN BALLER WORLD", 30f, Theme.Gold, TextAlignmentOptions.Center, true), 46f);
+                foreach (var line in worldToday)
+                {
+                    var l = UiKit.Label(column, line, 26f, Theme.Cream, TextAlignmentOptions.Center, false);
+                    l.enableAutoSizing = true;
+                    l.fontSizeMin = 16f;
+                    l.fontSizeMax = 26f;
+                    UiKit.Size(l, 42f);
+                }
+            }
 
             Section(column, "STORY");
             var story = career.story ?? new StorySaveData();

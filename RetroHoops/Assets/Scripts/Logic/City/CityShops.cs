@@ -29,7 +29,7 @@ namespace CallerRetroBall.Logic
         /// <summary>Everything the store can ever carry (not free starters, never Hoops Pass items), in a fixed order.</summary>
         public static List<CosmeticDef> Catalog(ContentCatalog c)
         {
-            var list = c?.Cosmetics.FindAll(x => !x.passOnly && !x.unlockedByDefault && x.cost > 0) ?? new List<CosmeticDef>();
+            var list = c?.Cosmetics.FindAll(x => !x.passOnly && !x.unlockedByDefault && x.cost > 0 && x.store == null) ?? new List<CosmeticDef>();
             list.Sort((a, b) => string.CompareOrdinal(a.id, b.id));
             return list;
         }

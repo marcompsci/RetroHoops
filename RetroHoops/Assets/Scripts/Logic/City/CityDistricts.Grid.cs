@@ -138,6 +138,12 @@ namespace CallerRetroBall.Logic
                     m.AddProp(look.Curb, x0 + bw / 2, y, 1, 1, true, c);
                 }
 
+            // I30: the region's store, a stall on the middle plaza.
+            string region = WorldRegions.RegionOf(id).Id;
+            m.AddProp(CityPropKind.Stall, 33, 5, 2, 1, true, 4);
+            m.Portals.Add(new CityPortal { Id = "store", Kind = CityPortalKind.Station, Label = RegionStore.Name(region), Target = RegionStore.Prefix + region,
+                                           X = 32, Y = 3.8f, W = 4, H = 1.2f });
+
             // The road west and the spot you arrive at.
             m.Portals.Add(new CityPortal { Id = "road." + from, Kind = CityPortalKind.District, Label = fromLabel, Target = from,
                                            TargetSpawn = "from_" + GridShort(id), X = 0, Y = 19, W = 1.4f, H = 6 });

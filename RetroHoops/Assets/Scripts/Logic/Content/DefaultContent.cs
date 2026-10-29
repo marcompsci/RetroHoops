@@ -118,6 +118,7 @@ namespace CallerRetroBall.Logic
                 "Downtown's big room: polished maple, a scoreboard over centre court and a sold-out crowd.",
                 "#D8A35D", "#14141F", "#F72585", "#0B0B1A", "#4CC9F0", 0.95f));
             AddWorldCourts(c); // 28 Oct 2026 (BALLER WORLD)
+            AddRegionGear(c); // I30 REGION STORES
             c.Courts.Add(Court("court.grove_gym", "Grove Gym", CourtCircuit.League,
                 "Timber rafters and a floor with a hand-painted tree at centre.",
                 "#C49A6C", "#111111", "#1E5631", "#0B2E1A", "#D4A017", 0.70f));
@@ -1007,6 +1008,32 @@ namespace CallerRetroBall.Logic
             // Season 6 store kit.
             c.Cosmetics.Add(Cosmetic("cosmetic.jersey.harbor_fog", "Harbor Fog", CosmeticSlot.JerseyPalette, 350, 1500, false, "#52796F", "#CAD2C5"));
             c.Cosmetics.Add(Cosmetic("cosmetic.move.spin_cycle", "Spin Cycle", CosmeticSlot.DribbleMove, 450, 350, false, "#FFFFFF", "#FFFFFF"));
+        }
+
+        /// <summary>
+        /// 28 Oct 2026, I30 REGION STORES: three pieces in each region's store, sold only there and only for street cash
+        /// (the price is cost × 100 in play money).
+        /// </summary>
+        private static void AddRegionGear(ContentCatalog c)
+        {
+            void R(string region, string id, string name, CosmeticSlot slot, int cost, string a, string b)
+            {
+                var d = Cosmetic("cosmetic.region." + id, name, slot, cost, 0, false, a, b);
+                d.store = region;
+                c.Cosmetics.Add(d);
+            }
+            R(WorldRegions.NewYork, "shoes.brownstone", "Brownstone Lows", CosmeticSlot.Shoes, 400, "#7A3E2E", "#F4F1DE");
+            R(WorldRegions.NewYork, "shoes.token", "Subway Tokens", CosmeticSlot.Shoes, 600, "#FFD60A", "#1B1B1E");
+            R(WorldRegions.NewYork, "jersey.avenue", "Midnight Avenue", CosmeticSlot.JerseyPalette, 900, "#1B1B1E", "#F2C14E");
+            R(WorldRegions.LosAngeles, "shoes.goldenhour", "Golden Hour Highs", CosmeticSlot.Shoes, 450, "#FFB703", "#8338EC");
+            R(WorldRegions.LosAngeles, "shoes.lowrider", "Lowrider Lows", CosmeticSlot.Shoes, 650, "#5A189A", "#E9C46A");
+            R(WorldRegions.LosAngeles, "jersey.palmfade", "Palm Fade", CosmeticSlot.JerseyPalette, 950, "#FB8500", "#2EC4B6");
+            R(WorldRegions.LasVegas, "shoes.neonnights", "Neon Nights", CosmeticSlot.Shoes, 500, "#FF2E88", "#00F0FF");
+            R(WorldRegions.LasVegas, "shoes.desertheat", "Desert Heat", CosmeticSlot.Shoes, 700, "#D9BC85", "#E76F51");
+            R(WorldRegions.LasVegas, "jersey.marquee", "Marquee Gold", CosmeticSlot.JerseyPalette, 1000, "#14141F", "#FFD166");
+            R(WorldRegions.TheBay, "shoes.fogcity", "Fog City Runners", CosmeticSlot.Shoes, 550, "#A8DADC", "#1D3557");
+            R(WorldRegions.TheBay, "shoes.cablecar", "Cable Car Reds", CosmeticSlot.Shoes, 750, "#C0392B", "#F4F1DE");
+            R(WorldRegions.TheBay, "jersey.bayline", "Bayline", CosmeticSlot.JerseyPalette, 1200, "#1D3557", "#E9C46A");
         }
 
         private static CosmeticDef PassGear(string id, string name, CosmeticSlot slot, string a, string b)

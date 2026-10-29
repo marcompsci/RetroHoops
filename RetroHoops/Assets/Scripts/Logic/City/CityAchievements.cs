@@ -66,6 +66,9 @@ namespace CallerRetroBall.Logic
             new AchDef { Kind = AchKind.NearMisses, Target = 5, Text = "5 near misses on the highway" },
         };
 
+        /// <summary>Every achievement there is (I23: for the Spanish check).</summary>
+        public static IReadOnlyList<AchDef> AllDefs => Pool;
+
         /// <summary>Today's six (the same all day for everyone; a different mix tomorrow).</summary>
         public static List<AchDef> For(int day)
         {

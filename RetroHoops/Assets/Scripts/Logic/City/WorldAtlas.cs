@@ -23,6 +23,17 @@ namespace CallerRetroBall.Logic
         public bool Here, InRegion, CanDrive, CanSpawn, Next;
     }
 
+    /// <summary>I26: what a pin on the map marks.</summary>
+    public enum MapPinKind { Crew = 0, BigRun = 1, SideJob = 2, Ride = 3, Comic = 4, Store = 5 }
+
+    /// <summary>A pin on the world map: what, where (district and tile) and a short label.</summary>
+    public struct MapPin
+    {
+        public MapPinKind Kind;
+        public string District, Label;
+        public Vec2 At;
+    }
+
     /// <summary>What a tap on the world map landed on.</summary>
     public struct MapPick
     {
@@ -163,6 +174,93 @@ namespace CallerRetroBall.Logic
             return list;
         }
 
+        // ------------------------------------------------------------------ I24 COURT PASSPORT
+
+        private static Dictionary<string, string> _courtRegions;
+
+        /// <summary>The BALLER WORLD region a catalog court is in (null for Baller City's and every other court).</summary>
+        public static string CourtRegion(string courtId)
+        {
+            if (courtId == null) return null;
+            if (_courtRegions == null)
+            {
+                var map = new Dictionary<string, string>();
+                foreach (var r in WorldRegions.All)
+                {
+                    if (r.Id == WorldRegions.BallerCity) continue;
+                    foreach (var d in r.Districts)
+                        foreach (var k in CityDistricts.Map(d).Courts) map[k.CourtId] = r.Id;
+                }
+                _courtRegions = map;
+            }
+            return _courtRegions.TryGetValue(courtId, out var region) ? region : null;
+        }
+
+        /// <summary>Quick Play lists a BALLER WORLD court once you've been to its region.</summary>
+        public static bool CourtStamped(CareerSaveData d, string courtId)
+        {
+            string region = CourtRegion(courtId);
+            return region == null || (d?.world != null && d.world.regionsSeen.Contains(region));
+        }
+
+        /// <summary>The court's name for a list, with its region ("THE CAGE  ·  NYC").</summary>
+        public static string CourtLabel(string courtId, string displayName)
+        {
+            var r = WorldRegions.Find(CourtRegion(courtId));
+            return (displayName ?? courtId).ToUpperInvariant() + (r == null ? "" : "  ·  " + r.Short);
+        }
+
+        // ------------------------------------------------------------------ I26 pins
+
+        /// <summary>
+        /// The pins on the map: courts with a crew you haven't beaten, the Big Run posters, side jobs you can take,
+        /// your ride in each region, the region stores and where the comic wants you next. Only regions that are open.
+        /// </summary>
+        public static List<MapPin> Pins(CareerSaveData d, string here)
+        {
+            var list = new List<MapPin>();
+            var w = d?.world ?? new CityWorldSaveData();
+            foreach (var r in WorldRegions.All)
+            {
+                if (!WorldRegions.Open(d, r)) continue;
+                foreach (var id in r.Districts)
+                {
+                    var m = CityDistricts.Map(id);
+                    foreach (var p in m.Portals)
+                    {
+                        if (p.Kind != CityPortalKind.Station && p.Kind != CityPortalKind.Building) continue;
+                        var at = new Vec2(p.X + p.W * 0.5f, p.Y + p.H * 0.5f);
+                        if (p.Target == "ride") list.Add(new MapPin { Kind = MapPinKind.Ride, District = id, At = at, Label = "YOUR RIDE" });
+                        else if (p.Target == "bigrun") list.Add(new MapPin { Kind = MapPinKind.BigRun, District = id, At = at, Label = "BIG RUN" });
+                        else if (p.Target != null && p.Target.StartsWith("store.", StringComparison.Ordinal))
+                            list.Add(new MapPin { Kind = MapPinKind.Store, District = id, At = at, Label = p.Label });
+                    }
+                }
+            }
+            foreach (var crew in CityCrews.All)
+            {
+                if (d?.city != null && d.city.crewsBeaten.Contains(crew.Id)) continue;
+                var spot = CityGuide.CourtSpot(crew.CourtId);
+                if (spot == null || !WorldRegions.Open(d, WorldRegions.RegionOf(spot.Value.district))) continue;
+                list.Add(new MapPin { Kind = MapPinKind.Crew, District = spot.Value.district, At = spot.Value.at, Label = crew.Name });
+            }
+            foreach (var j in CitySideJobs.All)
+            {
+                if (CitySideJobs.Done(w, j) || CitySideJobs.Locked(d, j) != null) continue;
+                list.Add(new MapPin { Kind = MapPinKind.SideJob, District = j.District, At = j.At, Label = j.Title });
+            }
+            var goal = CityStory.CurrentGoal(w);
+            if (goal != null)
+            {
+                var dest = CityGuide.StoryDestination(d, goal, here, out _);
+                if (dest != null) list.Add(new MapPin { Kind = MapPinKind.Comic, District = dest.Value.district, At = dest.Value.at, Label = "THE COMIC" });
+            }
+            return list;
+        }
+
+        /// <summary>Is this kind of pin shown (the WORLD SETTINGS filter)?</summary>
+        public static bool PinShown(CityWorldSaveData w, MapPinKind k) => w == null || (w.mapPins & (1 << (int)k)) != 0;
+
         // ------------------------------------------------------------------ going somewhere
 
         /// <summary>Why you can't go to a district or region from here (null = you can).</summary>
@@ -225,6 +323,9 @@ namespace CallerRetroBall.Logic
             choice.CanDrive = choice.Blocked == null && !choice.InRegion;
             choice.CanSpawn = choice.Blocked == null && target != hereOutside;
             choice.Next = CityStory.Current(d?.world ?? new CityWorldSaveData())?.Region == r.Id && !choice.InRegion;
+            // I25: your best time on this road.
+            float best = d?.world == null || choice.InRegion ? 0f : d.world.RouteBest(hereRegion.Id, r.Id);
+            if (best > 0f) choice.Stats += "  ·  " + Loc.T("BEST DRIVE") + " " + best.ToString("0.0") + " s";
             return choice;
         }
 

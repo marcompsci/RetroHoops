@@ -500,6 +500,7 @@ namespace CallerRetroBall.UI
             string status = owned ? (equipped ? "<color=#4CC9F0>EQUIPPED</color>" : "<color=#8D99AE>OWNED</color>")
                           : check == CosmeticCheck.PassOnly && item.id == LiveSeason.StarBannerId ? "<color=#9B4DFF>LIVE SEASON: FINISH ALL-STAR</color>"
                           : check == CosmeticCheck.PassOnly ? "<color=#9B4DFF>HOOPS PASS TIER " + PassTierOf(item.id) + "</color>"
+                          : check == CosmeticCheck.StoreOnly ? "<color=#2EC4B6>" + Loc.T("SOLD IN") + " " + RegionStore.Name(item.store) + "</color>"
                           : check == CosmeticCheck.NeedsFans ? "<color=#F72585>Needs " + item.fansRequired + " fans</color>"
                           : "<color=#FFD166>" + item.cost + " SP</color>";
             var text = UiKit.Label(card.transform, item.displayName.ToUpperInvariant() + "\n<size=75%>" + status + "</size>",

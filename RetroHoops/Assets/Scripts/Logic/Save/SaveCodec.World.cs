@@ -29,6 +29,7 @@ namespace CallerRetroBall.Logic
                 ["runs"] = Strings(w.runs ?? new List<string>()),
                 ["rs"] = Strings(w.regionsSeen ?? new List<string>()), ["dr"] = w.drives, ["cd"] = w.cleanDrives, ["nm"] = w.nearMisses,
                 ["bdt"] = (double)w.bestDrive, ["rw"] = Strings(w.regionWins ?? new List<string>()), ["wt"] = (double)w.walkedTotal,
+                ["rb"] = Strings(w.routeBest ?? new List<string>()), ["mm"] = w.minimap, ["cp"] = w.comicPopups, ["ed"] = w.easyDrive, ["ml"] = w.mapLabels, ["mp"] = w.mapPins,
             };
         }
 
@@ -95,6 +96,18 @@ namespace CallerRetroBall.Logic
             }
             double wt = Num(o, "wt", 0);
             w.walkedTotal = double.IsNaN(wt) || wt < 0 ? 0 : (long)Math.Min(1e12, wt);
+            foreach (var e in StrList(o, "rb"))
+            {
+                var m = (e ?? "").Split('>', '=');
+                if (m.Length == 3 && WorldRegions.Find(m[0]) != null && WorldRegions.Find(m[1]) != null && m[0] != m[1]
+                    && float.TryParse(m[2], System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out float t) && t > 1f && t < 600f)
+                    w.NoteRoute(m[0], m[1], t);
+            }
+            w.minimap = Bool(o, "mm", true);
+            w.comicPopups = Bool(o, "cp", true);
+            w.easyDrive = Bool(o, "ed", false);
+            w.mapLabels = Math.Max(0, Math.Min(2, Int(o, "ml", 1)));
+            w.mapPins = Int(o, "mp", -1);
             return w;
         }
     }

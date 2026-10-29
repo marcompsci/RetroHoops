@@ -183,6 +183,36 @@ namespace CallerRetroBall.Logic
         /// <summary>Lifetime counts for badges.</summary>
         public long walkedTotal;
 
+        // 28 Oct 2026, I25 ROUTE RECORDS: best time per route ("from>to=seconds").
+        public List<string> routeBest = new List<string>();
+        // I29 WORLD SETTINGS.
+        public bool minimap = true, comicPopups = true, easyDrive;
+        /// <summary>Map label size: 0 small, 1 normal, 2 large.</summary>
+        public int mapLabels = 1;
+        /// <summary>I26 map pins shown (bit per <see cref="MapPinKind"/>; all on by default).</summary>
+        public int mapPins = -1;
+
+        public float RouteBest(string from, string to)
+        {
+            string key = from + ">" + to + "=";
+            foreach (var e in routeBest)
+                if (e.StartsWith(key, StringComparison.Ordinal) &&
+                    float.TryParse(e.Substring(key.Length), System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out float t)) return t;
+            return 0f;
+        }
+
+        /// <summary>Records a finished drive; true if it's a new best for the route.</summary>
+        public bool NoteRoute(string from, string to, float seconds)
+        {
+            if (seconds <= 0f || from == to) return false;
+            float best = RouteBest(from, to);
+            if (best > 0f && seconds >= best) return false;
+            string key = from + ">" + to + "=";
+            routeBest.RemoveAll(e => e.StartsWith(key, StringComparison.Ordinal));
+            routeBest.Add(key + seconds.ToString("0.00", System.Globalization.CultureInfo.InvariantCulture));
+            return true;
+        }
+
         public int RegionWins(string region)
         {
             foreach (var e in regionWins)

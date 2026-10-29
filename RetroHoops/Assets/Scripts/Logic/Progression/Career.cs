@@ -5,7 +5,7 @@ namespace CallerRetroBall.Logic
 {
     public enum UpgradeCheck { Ok = 0, MaxLevel = 1, AtAttributeCap = 2, NotEnoughPoints = 3, NeedsTraining = 4, Unknown = 5 }
 
-    public enum CosmeticCheck { Ok = 0, AlreadyOwned = 1, NeedsFans = 2, NotEnoughPoints = 3, Unknown = 4, PassOnly = 5 }
+    public enum CosmeticCheck { Ok = 0, AlreadyOwned = 1, NeedsFans = 2, NotEnoughPoints = 3, Unknown = 4, PassOnly = 5, /** I30: a region store item. */ StoreOnly = 6 }
 
     /// <summary>
     /// Pure progression rules on top of <see cref="CareerSaveData"/>: rewards, training upgrades
@@ -198,6 +198,7 @@ namespace CallerRetroBall.Logic
             if (c == null) return CosmeticCheck.Unknown;
             if (data.ownedCosmetics.Contains(c.id)) return CosmeticCheck.AlreadyOwned;
             if (c.passOnly) return CosmeticCheck.PassOnly;
+            if (c.store != null) return CosmeticCheck.StoreOnly;
             if (data.fans < c.fansRequired) return CosmeticCheck.NeedsFans;
             if (data.signalPoints < c.cost) return CosmeticCheck.NotEnoughPoints;
             return CosmeticCheck.Ok;

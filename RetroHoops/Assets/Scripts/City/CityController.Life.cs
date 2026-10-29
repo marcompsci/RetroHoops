@@ -164,6 +164,14 @@ namespace CallerRetroBall.City
                     if (result == CosmeticCheck.Ok) { Audio.AudioManager.Play(SfxId.Fanfare, 0.5f); RefreshMe(); }
                     break;
                 }
+                case CityAction.RegionBuy:
+                {
+                    // I30 REGION STORES.
+                    var result = RegionStore.Buy(career, App.Catalog, a.ItemId);
+                    _hud.Toast(result == CosmeticCheck.Ok ? Loc.T("PAID IN CASH") : result == CosmeticCheck.NotEnoughPoints ? Loc.T("NOT ENOUGH CASH") : Loc.T("CAN'T BUY THAT"), 1.8f);
+                    if (result == CosmeticCheck.Ok) { Audio.AudioManager.Play(SfxId.Fanfare, 0.5f); RefreshMe(); }
+                    break;
+                }
                 case CityAction.Equip:
                     if (CityShop.Equip(career, App.Catalog, a.ItemId)) { _hud.Toast("PUT ON", 1.4f); RefreshMe(); }
                     break;

@@ -346,6 +346,7 @@ namespace CallerRetroBall.City
                     break;
                 case CityAction.Buy:
                 case CityAction.BuyWithCash:
+                case CityAction.RegionBuy:
                 case CityAction.Equip:
                 case CityAction.Haircut:
                     HandleShop(a);
@@ -433,15 +434,17 @@ namespace CallerRetroBall.City
             var map = new CityActivity { Label = "MAP", Detail = "Your state up close. Pinch out for the whole world.", Action = CityAction.Info };
             var comic = new CityActivity { Label = "THE COMIC", Detail = CityStory.Ticker(App.Career), Action = CityAction.Info };
             var ach = new CityActivity { Label = Loc.T("ACHIEVEMENTS") + "  " + CityAchievements.DoneCount(World, _day) + "/" + CityAchievements.PerDay, Detail = "Six a day, a streak, and badges.", Action = CityAction.Info };
+            var worldSettings = new CityActivity { Label = "WORLD SETTINGS", Detail = "Minimap, guide, comic pop-ups, easy drive, map labels and pins.", Action = CityAction.Info };
             var world = new CityActivity { Label = "WORLD MAP", Detail = "Every region. Drive there in under 30 seconds.", Action = CityAction.Info };
             var weather = new CityActivity { Label = Loc.T("WEATHER") + ": " + Loc.T(s.weatherOff ? "OFF" : "ON"), Detail = "Rain, snow and wind in the city.", Action = CityAction.Info };
-            var list = new List<CityActivity> { resume, comic, ach, world, map, missions, daily, zoom, weather, battery, menu };
+            var list = new List<CityActivity> { resume, comic, ach, world, map, missions, daily, worldSettings, zoom, weather, battery, menu };
             _hud.ShowCard("BALLER CITY", null, list, a =>
             {
                 if (ReferenceEquals(a, map)) OpenMap();
                 else if (ReferenceEquals(a, comic)) OpenComic();
                 else if (ReferenceEquals(a, ach)) OpenAchievements();
                 else if (ReferenceEquals(a, world)) OpenWorldMap();
+                else if (ReferenceEquals(a, worldSettings)) OpenWorldSettings();
                 else if (ReferenceEquals(a, daily)) OpenDaily();
                 else if (ReferenceEquals(a, weather))
                 {

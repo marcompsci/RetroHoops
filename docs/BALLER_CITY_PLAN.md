@@ -346,3 +346,26 @@ The full logic suite passes (1,086 of 1,086). The Unity reference compile is cle
   - NOW LEAVING signs, WELCOME TO signs at each state line (LA to New York crosses seven), and mile markers.
   - Buildings are lit at night.
 - **Tests:** `BallerWorldMapTests` (5). Full logic suite 1,091 of 1,091. UnityCheck is clean, and the text audit and release gate pass. Not yet run in Unity or on a phone.
+
+### Improvements I21–I30 (28 Oct 2026)
+
+- **I21 MINIMAP:** the district from above in the top-right corner, with you, the guide's target and the pins nearby. Tap it for the MAP.
+- **I22 INSTANT MAP:** the map's textures build a piece at a time while you walk (your region first), so MAP opens fully drawn.
+- **I23 SPANISH STORIES:** 302 lines in Spanish: the comic, side jobs, achievements, badges, region and district text. `WorldText.All()` plus a test keep it complete.
+- **I24 COURT PASSPORT:** BALLER WORLD courts appear in Quick Play once you've visited their region, labelled with it ("THE CAGE · NYC").
+- **I25 ROUTE RECORDS:**
+  - A best time for each route, shown during the drive and on the map sheet.
+  - NEW ROUTE RECORD! when you beat it.
+- **I26 MAP PINS:**
+  - Pins for unbeaten crews, Big Run posters, side jobs, your ride, region stores and the comic's next stop.
+  - A PINS button on the map, and a filter for each kind.
+- **I27 EASY DRIVE:**
+  - An optional assist steers round traffic when you're not steering.
+  - Reduce Motion stops the map's pulsing.
+- **I28 TODAY:** TODAY IN BALLER WORLD on PLAY shows the comic step, today's achievements and streak, open Big Runs and your side job.
+- **I29 WORLD SETTINGS** (city MENU): minimap, guide, comic pop-ups, easy drive, map label size and pin filters. All are saved.
+- **I30 REGION STORES:**
+  - A stall in each grid district sells that region's 2 shoes and 1 jersey colourway.
+  - They're sold only there, for street cash ($40K–$120K play money).
+  - The Locker Room shows "SOLD IN … STORE".
+- **Tests:** `ImprovementsI21Tests` (7). Full logic suite 1,098 of 1,098. UnityCheck is clean, and the text audit and release gate pass. Not run on a phone.

@@ -293,6 +293,8 @@ namespace CallerRetroBall.Logic
         public bool passOnly;
         public RgbColor colorA;
         public RgbColor colorB;
+        /// <summary>I30: sold only in this region's store, for street cash (null = the usual shops).</summary>
+        public string store;
 
         public string Id => id;
     }

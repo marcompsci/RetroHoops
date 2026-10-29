@@ -46,6 +46,8 @@ namespace CallerRetroBall.Logic
         public bool Boosting { get; private set; }
         public int Bumps { get; private set; }
         public int NearMisses { get; private set; }
+        /// <summary>I25: set by <see cref="Finish"/> when this drive beat the route's best.</summary>
+        public bool RouteRecord { get; set; }
         public float Stun { get; private set; }
 
         public bool Done => Distance >= Length;
@@ -117,6 +119,32 @@ namespace CallerRetroBall.Logic
             }
         }
 
+        /// <summary>
+        /// I27 EASY DRIVE: the steering a helping hand would give: toward the lane with the most open road ahead
+        /// (staying put when it's clear), −1..1. Added to the player's own steering when the setting is on.
+        /// </summary>
+        public float AutoSteer()
+        {
+            const float look = 26f;
+            float best = -1f;
+            int bestLane = (int)Math.Round(X);
+            for (int lane = 0; lane < Lanes; lane++)
+            {
+                float clear = look;
+                foreach (var c in Traffic)
+                {
+                    float gap = c.Y - Distance;
+                    if (c.Lane != lane || gap < -CarLength || gap > look) continue;
+                    clear = Math.Min(clear, Math.Max(0f, gap - CarLength));
+                }
+                // Prefer staying near where you are when lanes are equally clear.
+                float score = clear - Math.Abs(lane - X) * 0.8f;
+                if (score > best) { best = score; bestLane = lane; }
+            }
+            float delta = bestLane - X;
+            return Math.Abs(delta) < 0.05f ? 0f : Math.Max(-1f, Math.Min(1f, delta * 3f));
+        }
+
         /// <summary>The drive with nobody steering (for tests and the worst case): it still arrives in time.</summary>
         public static float SimulateWorstCase(string from, string to, uint seed, float dt = 1f / 60f)
         {
@@ -163,6 +191,7 @@ namespace CallerRetroBall.Logic
             if (drive.Bumps == 0) w.cleanDrives++;
             w.nearMisses += drive.NearMisses;
             if (drive.Done && (w.bestDrive <= 0f || drive.Time < w.bestDrive)) w.bestDrive = drive.Time;
+            drive.RouteRecord = drive.Done && w.NoteRoute(drive.From, drive.To, drive.Time); // I25
             CityAchievements.NoteDrive(w, day, drive.NearMisses);
             long pay = (drive.Bumps == 0 ? CleanBonus : 0) + drive.NearMisses * NearMissPay;
             if (pay > 0)
