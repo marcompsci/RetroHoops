@@ -26,6 +26,21 @@ namespace CallerRetroBall.Core
             }
         }
 
+        /// <summary>
+        /// I36: reads a line aloud whatever the commentary settings (the comic's READ ALOUD option); still silent when
+        /// the sound effects volume is at zero. A new line cuts off the last one.
+        /// </summary>
+        public static void Read(string line)
+        {
+            var s = App.Career?.settings;
+            if (s == null || s.sfxVolume <= 0f || string.IsNullOrEmpty(line)) return;
+            string lang = Loc.Language == Loc.Spanish ? "es-MX" : "en-US";
+            float volume = UnityEngine.Mathf.Clamp01(s.sfxVolume * 1.1f);
+#if UNITY_IOS && !UNITY_EDITOR
+            RetroSpeech_Say(Announcer.ForSpeech(line), lang, Announcer.CallRate, Announcer.CallPitch, volume);
+#endif
+        }
+
         /// <summary>Says a commentary line (a new line cuts off the last one).</summary>
         public static void Say(string line, bool hype)
         {

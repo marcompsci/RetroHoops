@@ -235,6 +235,14 @@ namespace CallerRetroBall.Logic
         {
             var list = new List<CityActivity> { new CityActivity { Label = Loc.T("WORLD MAP"), Detail = Loc.T("Every region, and where the comic goes next."), Action = CityAction.WorldMap } };
             var here = WorldRegions.RegionOf(map.DistrictId);
+            // I34: today's time trial from here.
+            int day = CityNpcScheduler.DayNumber(DateTime.Now);
+            string trial = TimeTrial.Line(career, here.Id, day);
+            string trialTo = TimeTrial.Target(career, here.Id, day);
+            if (trial != null)
+                list.Add(TimeTrial.Won(career?.world, day)
+                    ? new CityActivity { Label = trial, Action = CityAction.Info }
+                    : new CityActivity { Label = trial, Detail = Loc.T("No EASY DRIVE. Once a day."), Action = CityAction.Drive, ItemId = trialTo, Primary = true });
             foreach (var r in WorldRegions.All)
             {
                 if (r.Id == here.Id) continue;

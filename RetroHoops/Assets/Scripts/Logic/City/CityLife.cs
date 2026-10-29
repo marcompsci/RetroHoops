@@ -3,7 +3,7 @@ using System.Collections.Generic;
 
 namespace CallerRetroBall.Logic
 {
-    public enum CityWeatherKind { Clear = 0, Cloudy = 1, Rain = 2, Wind = 3, Snow = 4 }
+    public enum CityWeatherKind { Clear = 0, Cloudy = 1, Rain = 2, Wind = 3, Snow = 4, /** I33: the Bay's fog. */ Fog = 5 }
 
     /// <summary>
     /// 17 Oct 2026 (Omari, phase 3): the city's weather. One kind per district per day (the same on every launch that
@@ -16,18 +16,34 @@ namespace CallerRetroBall.Logic
         {
             if (interior || off) return CityWeatherKind.Clear;
             uint h = StableHash.Of("weather:" + day + ":" + district) % 100;
-            var kind = h < 58 ? CityWeatherKind.Clear : h < 78 ? CityWeatherKind.Cloudy : h < 91 ? CityWeatherKind.Rain : CityWeatherKind.Wind;
             bool winter = month == 12 || month == 1 || month == 2;
+            // 28 Oct 2026, I33 REGION WEATHER: each region has its own sky.
+            switch (WorldRegions.RegionOf(district).Id)
+            {
+                case WorldRegions.TheBay:
+                    return h < 34 ? CityWeatherKind.Fog : h < 62 ? CityWeatherKind.Clear : h < 80 ? CityWeatherKind.Cloudy : h < 91 ? CityWeatherKind.Wind : CityWeatherKind.Rain;
+                case WorldRegions.LasVegas: // desert: sun, and dust on the wind; never snow
+                    return h < 76 ? CityWeatherKind.Clear : h < 93 ? CityWeatherKind.Wind : CityWeatherKind.Cloudy;
+                case WorldRegions.LosAngeles:
+                    return h < 80 ? CityWeatherKind.Clear : h < 90 ? CityWeatherKind.Cloudy : h < 96 ? CityWeatherKind.Wind : CityWeatherKind.Rain;
+                case WorldRegions.NewYork: // four real seasons: more snow in winter
+                {
+                    var ny = h < 50 ? CityWeatherKind.Clear : h < 72 ? CityWeatherKind.Cloudy : h < 90 ? CityWeatherKind.Rain : CityWeatherKind.Wind;
+                    if (winter && (ny == CityWeatherKind.Rain || h % 3 == 0)) ny = CityWeatherKind.Snow;
+                    return ny;
+                }
+            }
+            var kind = h < 58 ? CityWeatherKind.Clear : h < 78 ? CityWeatherKind.Cloudy : h < 91 ? CityWeatherKind.Rain : CityWeatherKind.Wind;
             if (kind == CityWeatherKind.Rain && winter) kind = CityWeatherKind.Snow;
             return kind;
         }
 
         /// <summary>How much the sky dims the daylight (added to the night darkness, capped).</summary>
         public static float Gloom(CityWeatherKind k) =>
-            k == CityWeatherKind.Rain ? 0.28f : k == CityWeatherKind.Snow ? 0.18f : k == CityWeatherKind.Cloudy ? 0.14f : k == CityWeatherKind.Wind ? 0.06f : 0f;
+            k == CityWeatherKind.Rain ? 0.28f : k == CityWeatherKind.Snow ? 0.18f : k == CityWeatherKind.Fog ? 0.24f : k == CityWeatherKind.Cloudy ? 0.14f : k == CityWeatherKind.Wind ? 0.06f : 0f;
 
         public static string Name(CityWeatherKind k) =>
-            k == CityWeatherKind.Rain ? "RAIN" : k == CityWeatherKind.Snow ? "SNOW" : k == CityWeatherKind.Cloudy ? "CLOUDY" : k == CityWeatherKind.Wind ? "WINDY" : "CLEAR";
+            k == CityWeatherKind.Rain ? "RAIN" : k == CityWeatherKind.Snow ? "SNOW" : k == CityWeatherKind.Fog ? "FOG" : k == CityWeatherKind.Cloudy ? "CLOUDY" : k == CityWeatherKind.Wind ? "WINDY" : "CLEAR";
 
         /// <summary>Falling particles on screen at once (rain or snow; 0 otherwise). Kept small for the frame budget.</summary>
         public static int Particles(CityWeatherKind k, bool reduceMotion) =>

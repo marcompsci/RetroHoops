@@ -369,3 +369,23 @@ The full logic suite passes (1,086 of 1,086). The Unity reference compile is cle
   - They're sold only there, for street cash ($40K–$120K play money).
   - The Locker Room shows "SOLD IN … STORE".
 - **Tests:** `ImprovementsI21Tests` (7). Full logic suite 1,098 of 1,098. UnityCheck is clean, and the text audit and release gate pass. Not run on a phone.
+
+### Improvements I31–I40 (28 Oct 2026)
+
+- **I31 BACK ISSUES:** under MENU ► THE COMIC, reread any finished issue (opening and closing pages).
+- **I32 BADGE PROGRESS:** every badge shows how far along you are (12/25 drives…).
+- **I33 REGION WEATHER:** each region has its own sky:
+  - The Bay: fog about a third of days, with a grey veil over the view.
+  - Vegas: sun and dust, never rain or snow.
+  - LA: mostly sunny.
+  - New York: snows more in winter.
+- **I34 DAILY TIME TRIAL:** one road a day from YOUR RIDE with a 21 s par.
+  - Beat par without EASY DRIVE for $15,000 play money, once a day.
+- **I35 WORLD STATS:** under ACHIEVEMENTS: distance, drives, records, wins and crews in each region, route bests, cash earned.
+- **I36 READ COMIC ALOUD:** a WORLD SETTINGS option. The phone's voice reads each page (Spanish voice in Spanish).
+- **I37 WORLD TIPS:** one-time tips for the map and comic, the minimap, each region and the time trial.
+- **I38 TROPHY ROOM:** YOUR CRIB's trophy case shows the Big Run crowns and your badges.
+- **I39 NIGHT AND FOG DRIVES:** at night the drive dims and your ride's headlights come on. Driving into a foggy Bay fades in fog.
+- **I40 TEXT POLISH:** side-job items and tips in Spanish and in the Spanish check.
+- **New badges:** AGAINST THE CLOCK and WORLD COLLECTOR (25 in all).
+- **Tests:** `ImprovementsI31Tests` (7). Full logic suite 1,105 of 1,105. UnityCheck is clean, and the text audit and release gate pass.

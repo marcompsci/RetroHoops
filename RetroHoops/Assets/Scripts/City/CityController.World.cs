@@ -60,6 +60,15 @@ namespace CallerRetroBall.City
 
             SpawnGivers();
             if (w.minimap) _miniTexture = WorldMapView.DistrictTexture(_map.DistrictId);
+            // I36 READ COMIC ALOUD.
+            _hud.OnComicPage = p =>
+            {
+                if (!World.comicVoice) return;
+                if (p == null) { Speech.Stop(); return; }
+                string words = (string.IsNullOrEmpty(p.Caption) ? "" : p.Caption + ". ") + (p.Line ?? "");
+                Speech.Read(words);
+            };
+            QueueTips(); // I37
             RefreshMiniDots();
             // An errand you'd started stops when you leave its district: talk to the giver to go again.
             var job = CitySideJobs.Active(w);
@@ -557,9 +566,12 @@ namespace CallerRetroBall.City
         {
             var career = App.Career;
             long paid = HighwayDrive.Finish(career, drive, _day);
+            long trial = TimeTrial.Apply(career, drive, World.easyDrive, _day); // I34
+            paid += trial;
             var (district, spawn) = WorldAtlas.DriveArrival(drive.To, _driveTarget);
             career.city.Arrive(district, spawn);
             _arrivalNote = Loc.T("ARRIVED IN") + " " + drive.Time.ToString("0.0") + " s"
+                           + (trial > 0 ? "  ·  " + Loc.T("TIME TRIAL WON!") : "")
                            + (drive.RouteRecord ? "  ·  " + Loc.T("NEW ROUTE RECORD!") : drive.Bumps == 0 ? "  ·  " + Loc.T("CLEAN DRIVE") : "")
                            + (paid > 0 ? "  +" + StreetCash.Money(paid) : "");
             CityAchievements.Update(career, _day);
@@ -589,6 +601,11 @@ namespace CallerRetroBall.City
                 }
                 list.Add(new CityActivity { Label = Loc.T("READ THIS ISSUE"), Action = CityAction.Comic, ItemId = "read" });
             }
+            {
+                // I31 BACK ISSUES: every issue you've finished, to read again.
+                int finished = CityStory.IssueReached(w) - 1;
+                if (finished > 0) list.Add(new CityActivity { Label = Loc.T("BACK ISSUES") + "  " + finished, Detail = Loc.T("Read any finished issue again."), Action = CityAction.Comic, ItemId = "back" });
+            }
             bool tracking = w.tracking != "off";
             list.Add(new CityActivity { Label = Loc.T("GUIDE") + ": " + Loc.T(tracking ? "ON" : "OFF"), Detail = Loc.T("The arrow and the objective at the top."), Action = CityAction.Comic, ItemId = "guide" });
             if (CitySideJobs.Active(w) != null && w.tracking != null && w.tracking.StartsWith("side:", StringComparison.Ordinal))
@@ -605,6 +622,9 @@ namespace CallerRetroBall.City
                     case "read":
                         CloseCard();
                         if (issue != null) ShowPanels(CityStory.Header(issue), Loc.T(issue.Tagline), issue.Intro, issue.Region, null);
+                        break;
+                    case "back":
+                        OpenBackIssues();
                         break;
                     case "guide":
                         w.tracking = tracking ? "off" : "";
@@ -643,6 +663,8 @@ namespace CallerRetroBall.City
             }
             var badges = new CityActivity { Label = Loc.T("BADGES") + " " + w.badges.Count + "/" + CityAchievements.Badges.Length, Action = CityAction.Comic, ItemId = "badges" };
             list.Add(badges);
+            var stats = new CityActivity { Label = Loc.T("WORLD STATS"), Detail = Loc.T("Your BALLER WORLD in numbers."), Action = CityAction.Comic, ItemId = "stats" };
+            list.Add(stats);
             int done6 = CityAchievements.DoneCount(w, _day);
             string tiers = "";
             for (int t = 0; t < CityAchievements.TierAt.Length; t++)
@@ -652,6 +674,7 @@ namespace CallerRetroBall.City
             _hud.ShowCard(Loc.T("DAILY ACHIEVEMENTS"), line, list, a =>
             {
                 if (ReferenceEquals(a, badges)) OpenBadges();
+                else if (ReferenceEquals(a, stats)) OpenWorldStats();
                 else OpenMenu();
             }, null);
         }
@@ -663,7 +686,9 @@ namespace CallerRetroBall.City
             foreach (var b in CityAchievements.Badges)
             {
                 bool got = w.badges.Contains(b.Id);
-                list.Add(new CityActivity { Label = (got ? Loc.T("DONE") + ": " : "") + Loc.T(b.Name), Detail = Loc.T(b.Detail) + "  ·  +" + b.Sp + " SP" + (b.Cash > 0 ? "  +" + StreetCash.Money(b.Cash) : ""), Action = CityAction.Info });
+                var (now, target) = CityAchievements.Progress(App.Career, b); // I32
+                string progress = got || target <= 1 ? "" : "  " + now + "/" + target;
+                list.Add(new CityActivity { Label = (got ? Loc.T("DONE") + ": " : "") + Loc.T(b.Name) + progress, Detail = Loc.T(b.Detail) + "  ·  +" + b.Sp + " SP" + (b.Cash > 0 ? "  +" + StreetCash.Money(b.Cash) : ""), Action = CityAction.Info });
             }
             _hud.ShowCard(Loc.T("BADGES"), w.badges.Count + "/" + CityAchievements.Badges.Length, list, a => OpenAchievements(), null);
         }
@@ -704,6 +729,7 @@ namespace CallerRetroBall.City
                 new CityActivity { Label = Loc.T("MINIMAP") + ": " + OnOff(w.minimap), Detail = Loc.T("The district map in the corner."), Action = CityAction.Info, ItemId = "minimap" },
                 new CityActivity { Label = Loc.T("GUIDE") + ": " + OnOff(w.tracking != "off"), Detail = Loc.T("The arrow and the objective at the top."), Action = CityAction.Info, ItemId = "guide" },
                 new CityActivity { Label = Loc.T("COMIC POP-UPS") + ": " + OnOff(w.comicPopups), Detail = Loc.T("New issues open by themselves. Off: a line instead."), Action = CityAction.Info, ItemId = "comic" },
+                new CityActivity { Label = Loc.T("READ COMIC ALOUD") + ": " + OnOff(w.comicVoice), Detail = Loc.T("The phone's voice reads each comic page."), Action = CityAction.Info, ItemId = "voice" },
                 new CityActivity { Label = Loc.T("EASY DRIVE") + ": " + OnOff(w.easyDrive), Detail = Loc.T("Your ride steers round the traffic when you don't."), Action = CityAction.Info, ItemId = "easy" },
                 new CityActivity { Label = Loc.T("MAP LABELS") + ": " + Loc.T(LabelSizes[Math.Max(0, Math.Min(2, w.mapLabels))]), Action = CityAction.Info, ItemId = "labels" },
             };
@@ -717,6 +743,7 @@ namespace CallerRetroBall.City
                     case "guide": w.tracking = w.tracking == "off" ? "" : "off"; _guideAt = 0f; break;
                     case "comic": w.comicPopups = !w.comicPopups; break;
                     case "easy": w.easyDrive = !w.easyDrive; break;
+                    case "voice": w.comicVoice = !w.comicVoice; break;
                     case "labels": w.mapLabels = (w.mapLabels + 1) % 3; break;
                     default:
                         if (a.ItemId != null && a.ItemId.StartsWith("pin", StringComparison.Ordinal) && int.TryParse(a.ItemId.Substring(3), out int k)) { w.mapPins ^= 1 << k; RefreshMiniDots(); }
@@ -726,6 +753,59 @@ namespace CallerRetroBall.City
                 App.SaveCareer();
                 OpenWorldSettings();
             }, null);
+        }
+
+        // ------------------------------------------------------------------ I31 back issues, I35 stats, I37 tips
+
+        private void OpenBackIssues()
+        {
+            var w = World;
+            var list = new List<CityActivity>();
+            int finished = CityStory.IssueReached(w) - 1;
+            for (int n = 1; n <= finished; n++)
+            {
+                var issue = CityStory.Issue(n);
+                if (issue != null) list.Add(new CityActivity { Label = "#" + n + "  " + Loc.T(issue.Title), Detail = Loc.T(issue.Tagline), Action = CityAction.Info, ItemId = "issue" + n });
+            }
+            _hud.ShowCard(Loc.T("BACK ISSUES"), null, list, a =>
+            {
+                if (a.ItemId != null && a.ItemId.StartsWith("issue", StringComparison.Ordinal) && int.TryParse(a.ItemId.Substring(5), out int n))
+                {
+                    var issue = CityStory.Issue(n);
+                    if (issue == null) return;
+                    var pages = new List<ComicPanel>(issue.Intro);
+                    pages.AddRange(issue.Outro);
+                    CloseCard();
+                    ShowPanels(CityStory.Header(issue), Loc.T(issue.Tagline), pages.ToArray(), issue.Region, null);
+                }
+                else OpenComic();
+            }, null);
+        }
+
+        private void OpenWorldStats()
+        {
+            var list = new List<CityActivity>();
+            foreach (var (label, value) in WorldStats.Rows(App.Career))
+                list.Add(new CityActivity { Label = label + ":  " + value, Action = CityAction.Info });
+            _hud.ShowCard(Loc.T("WORLD STATS"), null, list, a => OpenAchievements(), null);
+        }
+
+        /// <summary>I37 WORLD TIPS: a one-time tip for each new thing (the first visit, each region, the stores, the drive).</summary>
+        private void QueueTips()
+        {
+            var w = World;
+            var region = WorldRegions.RegionOf(_map.DistrictId);
+            var tips = WorldTips.For(w, _map.DistrictId, region.Id);
+            foreach (var t in tips)
+            {
+                var tip = t;
+                _comicQueue.Enqueue(() =>
+                {
+                    WorldTips.Mark(w, tip.Id);
+                    App.SaveCareer();
+                    _hud.Toast(Loc.T(tip.Text), 4f);
+                });
+            }
         }
 
         private void DestroyWorldOwned()

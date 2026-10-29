@@ -21,7 +21,8 @@ namespace CallerRetroBall.Logic
                 foreach (var p in issue.Intro) { Add(p.Line); Add(p.Caption); }
                 foreach (var p in issue.Outro) { Add(p.Line); Add(p.Caption); }
             }
-            foreach (var j in CitySideJobs.All) { Add(j.Title); Add(j.Pitch); Add(j.Thanks); }
+            foreach (var j in CitySideJobs.All) { Add(j.Title); Add(j.Pitch); Add(j.Thanks); Add(j.Item); }
+            foreach (var t in WorldTips.AllText()) Add(t); // I37
             foreach (var a in CityAchievements.AllDefs) Add(a.Text);
             foreach (var b in CityAchievements.Badges) { Add(b.Name); Add(b.Detail); }
             foreach (var r in WorldRegions.All) Add(r.Tagline);

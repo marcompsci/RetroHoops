@@ -191,6 +191,11 @@ namespace CallerRetroBall.Logic
         public int mapLabels = 1;
         /// <summary>I26 map pins shown (bit per <see cref="MapPinKind"/>; all on by default).</summary>
         public int mapPins = -1;
+        // I31–I40: tips already shown (I37), the comic read aloud (I36), the day today's time trial was won (I34).
+        public List<string> tipsShown = new List<string>();
+        public bool comicVoice;
+        public int trialDay = -1;
+        public int trialsWon;
 
         public float RouteBest(string from, string to)
         {

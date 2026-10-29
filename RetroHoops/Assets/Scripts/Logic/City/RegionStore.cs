@@ -44,6 +44,19 @@ namespace CallerRetroBall.Logic
             return list;
         }
 
+        /// <summary>How many region store pieces there are (12: three in each of the four regions).</summary>
+        public const int TotalItems = 12;
+
+        public static int OwnedCount(CareerSaveData d)
+        {
+            if (d == null) return 0;
+            int n = 0;
+            foreach (var id in d.ownedCosmetics) if (id != null && id.StartsWith("cosmetic.region.", StringComparison.Ordinal)) n++;
+            return n;
+        }
+
+        public static bool OwnedAll(CareerSaveData d) => OwnedCount(d) >= TotalItems;
+
         /// <summary>Buys (and puts on) a region store item with street cash.</summary>
         public static CosmeticCheck Buy(CareerSaveData d, ContentCatalog c, string itemId)
         {

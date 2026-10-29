@@ -30,6 +30,7 @@ namespace CallerRetroBall.Logic
                 ["rs"] = Strings(w.regionsSeen ?? new List<string>()), ["dr"] = w.drives, ["cd"] = w.cleanDrives, ["nm"] = w.nearMisses,
                 ["bdt"] = (double)w.bestDrive, ["rw"] = Strings(w.regionWins ?? new List<string>()), ["wt"] = (double)w.walkedTotal,
                 ["rb"] = Strings(w.routeBest ?? new List<string>()), ["mm"] = w.minimap, ["cp"] = w.comicPopups, ["ed"] = w.easyDrive, ["ml"] = w.mapLabels, ["mp"] = w.mapPins,
+                ["tip"] = Strings(w.tipsShown ?? new List<string>()), ["cv"] = w.comicVoice, ["ttd"] = w.trialDay, ["ttw"] = w.trialsWon,
             };
         }
 
@@ -108,6 +109,10 @@ namespace CallerRetroBall.Logic
             w.easyDrive = Bool(o, "ed", false);
             w.mapLabels = Math.Max(0, Math.Min(2, Int(o, "ml", 1)));
             w.mapPins = Int(o, "mp", -1);
+            foreach (var t in StrList(o, "tip")) if (!string.IsNullOrEmpty(t) && t.Length < 40 && !w.tipsShown.Contains(t) && w.tipsShown.Count < 64) w.tipsShown.Add(t);
+            w.comicVoice = Bool(o, "cv", false);
+            w.trialDay = Int(o, "ttd", -1);
+            w.trialsWon = Math.Max(0, Int(o, "ttw", 0));
             return w;
         }
     }

@@ -10,6 +10,7 @@ namespace CallerRetroBall.City
     public sealed partial class CityController
     {
         private CityWeatherKind _weather;
+        private SpriteRenderer _fog; // I33: the Bay's fog, a soft grey veil over the view
         private readonly List<CityNpcBrain> _walkerBrains = new List<CityNpcBrain>();
         private readonly List<CityActorView> _walkerViews = new List<CityActorView>();
         private List<CityLane> _lanes = new List<CityLane>();
@@ -55,6 +56,17 @@ namespace CallerRetroBall.City
             _world.SetHour(_hour);
             foreach (var p in _particles) if (p != null) Destroy(p.gameObject);
             _particles.Clear();
+            if (_fog != null) { Destroy(_fog.gameObject); _fog = null; }
+            if (_weather == CityWeatherKind.Fog)
+            {
+                var fogGo = new GameObject("Fog");
+                fogGo.transform.SetParent(_world.transform, false);
+                _fog = fogGo.AddComponent<SpriteRenderer>();
+                _fog.sprite = _world.Dot(1, 1, new RgbColor(214, 222, 232, 255));
+                _fog.color = new Color(1f, 1f, 1f, 0.32f);
+                _fog.sortingOrder = 30000;
+                fogGo.transform.localScale = new Vector3(16f * 60f, 16f * 90f, 1f);
+            }
             int n = CityWeather.Particles(_weather, _reduceMotion);
             _particleVel = new Vector2[n];
             if (n == 0) { RefreshClock(force: true); return; }
@@ -117,6 +129,7 @@ namespace CallerRetroBall.City
                 _carViews[i].transform.localPosition = new Vector3(Mathf.Round(x * 16f) / 16f, lane.Y - 0.45f, 0f);
                 _carViews[i].sortingOrder = CityWorld.Order(lane.Y - 0.45f);
             }
+            if (_fog != null) _fog.transform.localPosition = new Vector3(_cam.x, _cam.y, 0f);
             // Weather particles fall across the view and wrap round it (no spawning, no garbage).
             if (_particles.Count == 0) return;
             float w = halfW * 2f + 2f, h = halfH * 2f + 4f;

@@ -311,7 +311,7 @@ namespace CallerRetroBall.Logic
     {
         /// <summary>The trophy case's art code: titles (0..9) + milestones × 10 (0..99).</summary>
         public static int TrophyVariant(CareerSaveData d) =>
-            Math.Min(9, d?.bigTime?.arenaTitles ?? 0) + 10 * Math.Min(99, d?.streetCash?.achievements.Count ?? 0);
+            Math.Min(9, (d?.bigTime?.arenaTitles ?? 0) + (d?.world == null ? 0 : CityBigRun.TotalTitles(d.world))) + 10 * Math.Min(99, d?.streetCash?.achievements.Count ?? 0); // I38: Big Run crowns too
 
         /// <summary>The banner wall's art code: one bit per crew beaten (in <see cref="CityCrews.All"/> order).</summary>
         public static int BannerMask(CareerSaveData d)
@@ -338,6 +338,15 @@ namespace CallerRetroBall.Logic
                 {
                     int titles = d?.bigTime?.arenaTitles ?? 0;
                     list.Add(new CityActivity { Label = Loc.T("CITY CHAMPIONSHIPS") + ": " + titles, Action = CityAction.Info, Detail = titles == 0 ? Loc.T("Win one at the Baller Arena, Downtown.") : null });
+                    // 28 Oct 2026, I38 TROPHY ROOM: the Big Run crowns and the badges.
+                    foreach (var r in WorldRegions.All)
+                    {
+                        int crowns = d?.world == null ? 0 : CityBigRun.Titles(d.world, r.Id);
+                        if (crowns > 0) list.Add(new CityActivity { Label = Loc.T(CityBigRun.KingTitle(r.Id)) + "  x" + crowns, Action = CityAction.Info, Detail = Loc.T("BIG RUN TITLES") });
+                    }
+                    if (d?.world != null && d.world.badges.Count > 0)
+                        list.Add(new CityActivity { Label = Loc.T("BADGES") + " " + d.world.badges.Count + "/" + CityAchievements.Badges.Length, Action = CityAction.Info,
+                                                    Detail = string.Join("  ·  ", d.world.badges.ConvertAll(id => Loc.T(CityAchievements.FindBadge(id)?.Name ?? id))) });
                     foreach (var m in StreetCash.Milestones)
                         if (d?.streetCash != null && d.streetCash.achievements.Contains(m.Id))
                             list.Add(new CityActivity { Label = Loc.T(m.Name), Detail = Loc.T(m.Detail), Action = CityAction.Info });

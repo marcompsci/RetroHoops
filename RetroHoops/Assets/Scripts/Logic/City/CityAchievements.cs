@@ -275,7 +275,42 @@ namespace CallerRetroBall.Logic
             B("every_job", "ODD JOBS", "Finish every side job in the world.", 750, 100000, d => d.world.sideDone.Count >= CitySideJobs.All.Length),
             B("marathon", "MARATHON", "Walk 10 km in all.", 200, 10000, d => d.world.walkedTotal >= 10000),
             B("all_world", "ALL-WORLD", "Finish the comic: beat VELVET SQUAD.", 1000, 0, d => d.world.velvetBeaten),
+            // 28 Oct 2026, I34 / I30.
+            B("trials", "AGAINST THE CLOCK", "Win 5 daily time trials.", 300, 30000, d => d.world.trialsWon >= 5),
+            B("collector", "WORLD COLLECTOR", "Own every piece from the region stores.", 500, 0, d => RegionStore.OwnedAll(d)),
         };
+
+        /// <summary>I32 BADGE PROGRESS: how far along a badge is (now, target); target 1 for yes/no badges.</summary>
+        public static (int now, int target) Progress(CareerSaveData d, WorldBadgeDef b)
+        {
+            var w = d?.world ?? new CityWorldSaveData();
+            if (b == null) return (0, 1);
+            if (w.badges.Contains(b.Id)) return (1, 1);
+            (int, int) Of(long now, int target) => ((int)Math.Min(target, Math.Max(0, now)), target);
+            switch (b.Id)
+            {
+                case "first_gold": return Of(w.achGoldDays, 1);
+                case "golden_week": return Of(w.achGoldDays, 7);
+                case "streak7": return Of(w.achBestStreak, 7);
+                case "achiever": return Of(w.achTotal, 100);
+                case "road_trip": return Of(w.drives, 1);
+                case "frequent": return Of(w.drives, 25);
+                case "clean": return Of(w.cleanDrives, 10);
+                case "needle": return Of(w.nearMisses, 100);
+                case "world_tour": return Of(w.regionsSeen.Count, WorldRegions.All.Length);
+                case "neighbor": return Of(w.sideDone.Count, 10);
+                case "every_job": return Of(w.sideDone.Count, CitySideJobs.All.Length);
+                case "marathon": return Of(w.walkedTotal / 1000, 10);
+                case "trials": return Of(w.trialsWon, 5);
+                case "collector": return Of(RegionStore.OwnedCount(d), RegionStore.TotalItems);
+                case "crews_ny": case "crews_la": case "crews_lv": case "crews_bay":
+                {
+                    var r = WorldRegions.Find(b.Id == "crews_ny" ? WorldRegions.NewYork : b.Id == "crews_la" ? WorldRegions.LosAngeles : b.Id == "crews_lv" ? WorldRegions.LasVegas : WorldRegions.TheBay);
+                    return Of(WorldRegions.CrewsBeaten(d?.city, r), WorldRegions.Crews(r).Count);
+                }
+                default: return (b.Earned != null && d != null && d.world != null && b.Earned(d) ? 1 : 0, 1);
+            }
+        }
 
         public static WorldBadgeDef FindBadge(string id) => Array.Find(Badges, b => b.Id == id);
 

@@ -55,6 +55,9 @@ namespace CallerRetroBall.City
         // I25 / I27.
         private bool _easy;
         private float _routeBest;
+        // I39: the drive at night (dimmer country, headlights) and into the fog (a veil over the last stretch).
+        private bool _night, _fogAhead;
+        private SpriteRenderer _headlights, _fogVeil;
 
         public static CityDrive Begin(Camera camera, string from, string to, SettingsData settings, Action<HighwayDrive> done, bool easyDrive = false, float routeBest = 0f)
         {
@@ -107,6 +110,25 @@ namespace CallerRetroBall.City
             _welcome = Renderer("Welcome", MakeSprite(DriveArt.Welcome(WorldRegions.Find(_drive.To)), "drive.welcome", RoadPpu, new Vector2(0.5f, 0f)), 30);
             _welcome.transform.localPosition = new Vector3(0f, HighwayDrive.Length - 6f, 0f);
             BuildScenery(px);
+            int hourNow = DateTime.Now.Hour;
+            _night = hourNow >= 19 || hourNow < 6;
+            var dest = WorldRegions.Find(_drive.To);
+            _fogAhead = dest != null && CityWeather.For(CityNpcScheduler.DayNumber(DateTime.Now), DateTime.Now.Month, dest.Main, false,
+                                                         App.Career?.city?.weatherOff ?? false) == CityWeatherKind.Fog;
+            if (_night)
+            {
+                _headlights = Renderer("Headlights", px, 15);
+                _headlights.color = new Color(1f, 0.95f, 0.7f, 0.22f);
+                _headlights.transform.localScale = new Vector3(1.2f, 4.5f, 1f);
+                foreach (var r in _road) r.color = new Color(0.62f, 0.62f, 0.75f, 1f);
+                foreach (var r in _side) r.color = new Color(0.5f, 0.5f, 0.65f, 1f);
+            }
+            if (_fogAhead)
+            {
+                _fogVeil = Renderer("Fog", px, 28);
+                _fogVeil.color = new Color(0.85f, 0.88f, 0.92f, 0f);
+                _fogVeil.transform.localScale = new Vector3(30f, 60f, 1f);
+            }
             BuildHud(settings);
         }
 
@@ -329,6 +351,14 @@ namespace CallerRetroBall.City
             var ground = new Color32(g.r, g.g, g.b, 255);
             // In the cities the road runs between sidewalks.
             if (DriveScenery.CityAt(_drive.From, _drive.To, Mathf.Clamp01(camY / HighwayDrive.Length)) != null) ground = new Color32(0x8D, 0x8D, 0x99, 255);
+            if (_night) ground = Color.Lerp(ground, new Color32(0x0B, 0x0B, 0x1A, 255), 0.55f); // I39
+            if (_headlights != null) _headlights.transform.localPosition = new Vector3((_drive.X - 1f) * LaneUnits, _drive.Distance + 3.2f, 0f);
+            if (_fogVeil != null)
+            {
+                float t = Mathf.Clamp01((_drive.Progress - DriveScenery.CityIn + 0.08f) / 0.12f);
+                _fogVeil.color = new Color(0.85f, 0.88f, 0.92f, 0.38f * t);
+                _fogVeil.transform.localPosition = new Vector3(0f, camY, 0f);
+            }
             float roadHalf = DriveArt.RoadWidth / RoadPpu * 0.5f;
             foreach (var (r, side) in new[] { (_groundL, -1f), (_groundR, 1f) })
             {

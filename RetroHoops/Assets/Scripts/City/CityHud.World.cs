@@ -98,6 +98,9 @@ namespace CallerRetroBall.City
 
         private GameObject _tickerBand;
 
+        /// <summary>I36: called as each comic page shows (null when the comic closes), for reading it aloud.</summary>
+        public Action<ComicPanelView> OnComicPage;
+
         /// <summary>The objective ticker (null hides it).</summary>
         public void SetTicker(string objective, string route)
         {
@@ -256,9 +259,11 @@ namespace CallerRetroBall.City
                 dots.rectTransform.anchorMin = new Vector2(0f, -0.06f);
                 dots.rectTransform.anchorMax = new Vector2(1f, 0.02f);
                 dots.rectTransform.offsetMin = dots.rectTransform.offsetMax = Vector2.zero;
+                OnComicPage?.Invoke(p);
             }
             void Finish()
             {
+                OnComicPage?.Invoke(null);
                 CloseCard(true);
                 done?.Invoke();
             }
