@@ -332,6 +332,15 @@ namespace CallerRetroBall.Logic
               "#4A4E69", "#F2E9E4", "#FFB703", "#22223B", "#E36414", 0.7f, FloorStyle.Asphalt, StandsStyle.Fence);
             W("court.bay_lake", "Lakeside", "Green rubber by the lake, ducks for referees.",
               "#2D6A4F", "#FFFFFF", "#FFD60A", "#74C69D", "#D8F3DC", 0.45f, FloorStyle.Rubber, StandsStyle.Crowd);
+            // 28 Oct 2026: the grid districts' park courts.
+            W("court.ny_blockparty", "Block Party Court", "The park in the middle of the Avenues. Speakers in the windows, the whole block on the stoops.",
+              "#3D3D45", "#FFFFFF", "#F2C14E", "#1B1B1E", "#E76F51", 0.7f, FloorStyle.Asphalt, StandsStyle.Brick);
+            W("court.la_boulevard", "Boulevard Park", "Hardwood in the palm park off the boulevard. Lowriders idling at the curb.",
+              "#C68B59", "#FFFFFF", "#8338EC", "#FFB703", "#FB5607", 0.6f, FloorStyle.Hardwood, StandsStyle.Crowd);
+            W("court.lv_neonmile", "Neon Mile Court", "A neon-grid floor in a desert garden, ringed by the brightest towers on the Mile.",
+              "#14141F", "#00F0FF", "#FF2E88", "#10002B", "#7B2CBF", 0.65f, FloorStyle.NeonGrid, StandsStyle.Crowd);
+            W("court.bay_crosstown", "Crosstown Court", "Blue rubber in the park, the cable car clanging past every few minutes.",
+              "#3A6EA5", "#FFFFFF", "#FFD166", "#1D3557", "#A8DADC", 0.55f, FloorStyle.Rubber, StandsStyle.Fence);
         }
 
         private static CourtDef Court(string id, string name, CourtCircuit circuit, string description,

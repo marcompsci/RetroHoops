@@ -48,7 +48,7 @@ namespace CallerRetroBall.Logic
             new CityDistrictDefinition { Id = FreshCuts, Name = "FRESH CUTS", Blurb = "The barbershop.", Interior = true, Build = BuildFreshCuts },
             new CityDistrictDefinition { Id = Arena, Name = "BALLER ARENA", Blurb = "The City Championship.", Interior = true, Build = BuildArena },
             new CityDistrictDefinition { Id = Crib, Name = "YOUR CRIB", Blurb = "Trophies, banners and the safe.", Interior = true, Build = BuildCrib },
-        }, WorldDistricts());
+        }, Join(WorldDistricts(), GridDistricts()));
 
         private static CityDistrictDefinition[] Join(CityDistrictDefinition[] a, CityDistrictDefinition[] b)
         {

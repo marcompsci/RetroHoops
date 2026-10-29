@@ -68,7 +68,7 @@ namespace CallerRetroBall.Tests
             s.seen.AddRange(new[] { CityDistricts.FirstCallers, CityDistricts.NyUptown, CityDistricts.NyMidtown });
             Assert.IsTrue(CityAtlas.CanTravel(s, CityDistricts.NyUptown, CityDistricts.NyMidtown));
             Assert.IsFalse(CityAtlas.CanTravel(s, CityDistricts.NyUptown, CityDistricts.FirstCallers), "other regions are a drive");
-            Assert.AreEqual(2, CityAtlas.SpotsFor(WorldRegions.TheBay).Count);
+            Assert.AreEqual(3, CityAtlas.SpotsFor(WorldRegions.TheBay).Count);
             Assert.AreEqual(CityAtlas.Spots.Length, CityAtlas.SpotsFor(WorldRegions.BallerCity).Count);
         }
 
@@ -86,7 +86,7 @@ namespace CallerRetroBall.Tests
                         Assert.IsNotNull(C.Court(k.CourtId), k.CourtId);
                         Assert.AreEqual(CourtCircuit.Blacktop, C.Court(k.CourtId).circuit);
                     }
-                Assert.AreEqual(6, courts, r.Id);
+                Assert.AreEqual(7, courts, r.Id); // six in the first two districts, the park court in the grid district
                 var crews = WorldRegions.Crews(r);
                 Assert.AreEqual(4, crews.Count, r.Id);
                 Assert.AreEqual(2, crews.FindAll(c => c.Tier == CityCrewTier.Legendary).Count, r.Id);

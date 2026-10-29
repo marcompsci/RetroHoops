@@ -328,3 +328,21 @@ The full logic suite passes (1,086 of 1,086). The Unity reference compile is cle
 - It hasn't run in the Unity editor or on a phone.
 - Comic dialogue, side-job pitches and achievement texts are English-only in Spanish mode for now.
 - The 24 new courts also appear in Quick Play's court list.
+
+### Bigger regions, the zoomable WORLD MAP and cities on THE DRIVE (28 Oct 2026)
+
+- **A third, bigger district in each region**, each a full 72 × 64 street grid. Two avenues and two cross streets make nine blocks of that region's buildings, with shops on a plaza, lots with parked cars, gardens, and a park court in the middle:
+  - THE AVENUES (New York)
+  - THE BOULEVARD (LA)
+  - NEON MILE (Las Vegas)
+  - CROSSTOWN (the Bay, with the cable-car line and a bridge over the estuary)
+- 4 new courts (28 in BALLER WORLD now) and 12 new side jobs (3 per grid district).
+- **The WORLD MAP** (`WorldAtlas`, `WorldMapArt`, `WorldMapView`) opens from MAP in the top bar, MENU ► MAP or YOUR RIDE.
+  - It opens on your state: every district drawn from above, true to scale, inside a whole city of that region's rooftops, parks, lots and water.
+  - Pinch or scroll out to the whole country: the Pacific and the Atlantic, desert, mountains, plains, lakes, a river, and the interstates between the cities.
+  - Drag to move. Tap a state or a district to get **DRIVE THERE** (another region) or **SPAWN THERE** (straight in, any outdoor district of an open region). Locked regions say which comic issue opens them.
+- **THE DRIVE through the cities** (`DriveScenery`):
+  - You leave through your city and arrive through the next. Both sides of the highway are lined with that region's buildings, with cross streets and green exit signs over the road naming its districts.
+  - NOW LEAVING signs, WELCOME TO signs at each state line (LA to New York crosses seven), and mile markers.
+  - Buildings are lit at night.
+- **Tests:** `BallerWorldMapTests` (5). Full logic suite 1,091 of 1,091. UnityCheck is clean, and the text audit and release gate pass. Not yet run in Unity or on a phone.

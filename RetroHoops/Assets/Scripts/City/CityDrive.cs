@@ -47,6 +47,11 @@ namespace CallerRetroBall.City
         private Canvas _canvas;
         private int _lastMisses, _lastBumps;
         private float _bannerUntil;
+        // 28 Oct 2026: the cities along the road (buildings, cross streets, exit signs, state lines, mile markers).
+        private const float BuildingPpu = 16f / DriveScenery.TileUnits;
+        private List<DriveFeature> _scenery;
+        private readonly Dictionary<string, Sprite> _sceneSprites = new Dictionary<string, Sprite>();
+        private int _nextLine;
 
         public static CityDrive Begin(Camera camera, string from, string to, SettingsData settings, Action<HighwayDrive> done)
         {
@@ -86,9 +91,9 @@ namespace CallerRetroBall.City
             var white = new PixelCanvas(1, 1);
             white.Pixels[0] = new RgbColor(255, 255, 255);
             var px = MakeSprite(white, "drive.white", 1f, new Vector2(0.5f, 0.5f));
-            _groundL = Renderer("GroundL", px, -100);
-            _groundR = Renderer("GroundR", px, -100);
-            for (int i = 0; i < 14; i++) _road.Add(Renderer("Road", _roadSprite, -50));
+            _groundL = Renderer("GroundL", px, -5000);
+            _groundR = Renderer("GroundR", px, -5000);
+            for (int i = 0; i < 14; i++) _road.Add(Renderer("Road", _roadSprite, -4500));
             for (int i = 0; i < 24; i++) _side.Add(Renderer("Roadside", null, -40));
             var carSprites = new Sprite[8];
             for (int v = 0; v < carSprites.Length; v++) carSprites[v] = MakeSprite(DriveArt.Car(v), "drive.car" + v, CarPpu, new Vector2(0.5f, 0.5f));
@@ -96,7 +101,60 @@ namespace CallerRetroBall.City
             _me = Renderer("You", MakeSprite(DriveArt.Car(-1), "drive.me", CarPpu, new Vector2(0.5f, 0.5f)), 20);
             _welcome = Renderer("Welcome", MakeSprite(DriveArt.Welcome(WorldRegions.Find(_drive.To)), "drive.welcome", RoadPpu, new Vector2(0.5f, 0f)), 30);
             _welcome.transform.localPosition = new Vector3(0f, HighwayDrive.Length - 6f, 0f);
+            BuildScenery(px);
             BuildHud(settings);
+        }
+
+        /// <summary>The cities and signs along the road (all placed once; Unity skips what's off screen).</summary>
+        private void BuildScenery(Sprite px)
+        {
+            _scenery = DriveScenery.Layout(_drive.From, _drive.To, (uint)Environment.TickCount | 1u);
+            int hour = DateTime.Now.Hour;
+            bool night = hour >= 19 || hour < 6;
+            float roadHalf = DriveArt.RoadWidth / RoadPpu * 0.5f;
+            foreach (var f in _scenery)
+            {
+                switch (f.Kind)
+                {
+                    case DriveFeatureKind.Building:
+                    {
+                        string key = "b." + f.Style + "." + f.W + "." + f.H + "." + f.Seed + (night ? ".n" : "");
+                        if (!_sceneSprites.TryGetValue(key, out var sprite))
+                        {
+                            var b = new CityBuilding { Id = "drive", W = f.W, H = f.H, Style = f.Style, DoorX = f.W / 2, Seed = 11 + f.Seed * 37 };
+                            _sceneSprites[key] = sprite = MakeSprite(CityArtGenerator.Building(b, night), "drive." + key, BuildingPpu, Vector2.zero);
+                        }
+                        var r = Renderer("Building", sprite, -1000 - Mathf.RoundToInt(f.Y * 4f));
+                        float w = f.W * DriveScenery.TileUnits;
+                        r.transform.localPosition = new Vector3(f.Side < 0 ? -(roadHalf + 0.25f) - w : roadHalf + 0.25f, f.Y, 0f);
+                        break;
+                    }
+                    case DriveFeatureKind.CrossStreet:
+                    {
+                        var street = Renderer("CrossStreet", px, -4400);
+                        street.color = new Color32(0x3B, 0x3B, 0x46, 255);
+                        street.transform.localPosition = new Vector3(f.Side * (roadHalf + 4.25f), f.Y + 0.9f, 0f);
+                        street.transform.localScale = new Vector3(8f, 1.8f, 1f);
+                        var line = Renderer("Crosswalk", px, -4390);
+                        line.color = new Color32(0xF4, 0xF1, 0xDE, 255);
+                        line.transform.localPosition = new Vector3(f.Side * (roadHalf + 0.6f), f.Y + 0.9f, 0f);
+                        line.transform.localScale = new Vector3(0.5f, 1.6f, 1f);
+                        break;
+                    }
+                    case DriveFeatureKind.Gantry:
+                    {
+                        var g = Renderer("Gantry", MakeSprite(DriveArt.Gantry(f.Text, f.Sub), "drive.gantry", RoadPpu, new Vector2(0.5f, 0f)), 25);
+                        g.transform.localPosition = new Vector3(0f, f.Y, 0f);
+                        break;
+                    }
+                    default:
+                    {
+                        var sign = Renderer("Sign", MakeSprite(DriveArt.Sign(f.Kind, f.Text, f.Sub), "drive.sign", RoadPpu, new Vector2(0.5f, 0f)), -900);
+                        sign.transform.localPosition = new Vector3(f.Side * (roadHalf + 1.1f), f.Y, 0f);
+                        break;
+                    }
+                }
+            }
         }
 
         private Sprite SideSprite(WorldBiome b, int variant)
@@ -216,6 +274,13 @@ namespace CallerRetroBall.City
                 Haptics.Light();
                 Banner(Loc.T("NEAR MISS!"), 0.6f);
             }
+            // Crossing a state line.
+            while (_scenery != null && _nextLine < _scenery.Count && _scenery[_nextLine].Y <= _drive.Distance)
+            {
+                var f = _scenery[_nextLine++];
+                if (f.Kind == DriveFeatureKind.StateLine) Banner(Loc.T("WELCOME TO") + "\n" + f.Sub, 1.6f);
+                else if (f.Kind == DriveFeatureKind.Leaving) Banner(Loc.T("NOW LEAVING") + "\n" + Loc.T(f.Sub), 1.4f);
+            }
             if (_drive.Done)
             {
                 _finished = true;
@@ -254,6 +319,8 @@ namespace CallerRetroBall.City
             var biome = HighwayDrive.BiomeAt(_drive.From, _drive.To, _drive.Progress);
             var g = DriveArt.Ground(biome);
             var ground = new Color32(g.r, g.g, g.b, 255);
+            // In the cities the road runs between sidewalks.
+            if (DriveScenery.CityAt(_drive.From, _drive.To, Mathf.Clamp01(camY / HighwayDrive.Length)) != null) ground = new Color32(0x8D, 0x8D, 0x99, 255);
             float roadHalf = DriveArt.RoadWidth / RoadPpu * 0.5f;
             foreach (var (r, side) in new[] { (_groundL, -1f), (_groundR, 1f) })
             {
@@ -282,6 +349,7 @@ namespace CallerRetroBall.City
                 uint h = StableHash.Of(slot + ":" + sideSign);
                 var b = HighwayDrive.BiomeAt(_drive.From, _drive.To, Mathf.Clamp01(y / HighwayDrive.Length));
                 var r = _side[i];
+                r.enabled = DriveScenery.CityAt(_drive.From, _drive.To, Mathf.Clamp01(y / HighwayDrive.Length)) == null;
                 r.sprite = SideSprite(b, (int)(h % 4));
                 r.transform.localPosition = new Vector3(sideSign * (roadHalf + 1.4f + (h / 4 % 3) * 0.8f), y, 0f);
             }

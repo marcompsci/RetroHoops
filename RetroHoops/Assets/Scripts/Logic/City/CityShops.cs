@@ -218,6 +218,9 @@ namespace CallerRetroBall.Logic
             (WorldRegions.LosAngeles, CityDistricts.LaBeach, 0, 0), (WorldRegions.LosAngeles, CityDistricts.LaEastside, 0, 1),
             (WorldRegions.LasVegas, CityDistricts.LvStrip, 0, 0), (WorldRegions.LasVegas, CityDistricts.LvOldTown, 0, 1),
             (WorldRegions.TheBay, CityDistricts.BayHills, 0, 0), (WorldRegions.TheBay, CityDistricts.BayTown, 1, 0),
+            // 28 Oct 2026: the bigger grid districts, east of each region's second district.
+            (WorldRegions.NewYork, CityDistricts.NyAvenues, 1, 1), (WorldRegions.LosAngeles, CityDistricts.LaBoulevard, 1, 1),
+            (WorldRegions.LasVegas, CityDistricts.LvNeonMile, 1, 0), (WorldRegions.TheBay, CityDistricts.BayCrosstown, 2, 0),
         };
 
         /// <summary>The district map of a region: (id, col, row) for each of its districts.</summary>

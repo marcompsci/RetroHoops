@@ -43,7 +43,7 @@ namespace CallerRetroBall.Tests
         {
             int courts = 0;
             foreach (var c in _catalog.Courts) if (c.circuit == CourtCircuit.Blacktop) courts++;
-            Assert.AreEqual(54, courts, "five circuit courts, three street courts each for Seasons 2, 3 and 4, two each for Seasons 5 to 12, and the 24 BALLER WORLD courts (6 per region)");
+            Assert.AreEqual(58, courts, "five circuit courts, three street courts each for Seasons 2, 3 and 4, two each for Seasons 5 to 12, and the 28 BALLER WORLD courts");
             var crews = _catalog.TeamsInTier(TeamTier.Circuit);
             Assert.AreEqual(5, crews.Count);
             foreach (var crew in crews) Assert.AreEqual(CourtCircuit.Blacktop, _catalog.Court(crew.homeCourtId).circuit, crew.id);

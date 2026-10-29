@@ -73,6 +73,7 @@ namespace CallerRetroBall.City
 
             _hud = CityHud.Create(career.settings);
             _hud.MenuRequested += OpenMenu;
+            _hud.MapRequested += OpenMap;
             _hud.Interact.Pressed += () => _interactQueued = true;
 
             _camera = Camera.main;
@@ -429,7 +430,7 @@ namespace CallerRetroBall.City
             var battery = new CityActivity { Label = Loc.T("BATTERY SAVER") + ": " + Loc.T(s.fps30 ? "ON" : "OFF"), Detail = "30 frames a second in the city.", Action = CityAction.Info };
             var menu = new CityActivity { Label = "MAIN MENU", Detail = "Your spot in the city is saved.", Action = CityAction.Info };
             var daily = new CityActivity { Label = "CITY CHALLENGES", Detail = "Three a day. $7,500 each, $15,000 more for all three.", Action = CityAction.Info };
-            var map = new CityActivity { Label = "MAP", Detail = "Every district, and fast travel to the ones you've visited.", Action = CityAction.Info };
+            var map = new CityActivity { Label = "MAP", Detail = "Your state up close. Pinch out for the whole world.", Action = CityAction.Info };
             var comic = new CityActivity { Label = "THE COMIC", Detail = CityStory.Ticker(App.Career), Action = CityAction.Info };
             var ach = new CityActivity { Label = Loc.T("ACHIEVEMENTS") + "  " + CityAchievements.DoneCount(World, _day) + "/" + CityAchievements.PerDay, Detail = "Six a day, a streak, and badges.", Action = CityAction.Info };
             var world = new CityActivity { Label = "WORLD MAP", Detail = "Every region. Drive there in under 30 seconds.", Action = CityAction.Info };

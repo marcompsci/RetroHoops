@@ -339,6 +339,17 @@ namespace CallerRetroBall.City
             UiKit.Place((RectTransform)close.transform, new Vector2(0.72f, 0.08f), new Vector2(400f, 110f));
         }
 
+        /// <summary>28 Oct 2026: the zoomable WORLD MAP as a full-screen card.</summary>
+        public void ShowWorldAtlas(WorldMapView.Model model)
+        {
+            CloseCard(false);
+            SetControlsVisible(false);
+            var root = UiKit.NewRect("WorldAtlas", _canvas.transform);
+            UiKit.Stretch(root);
+            _card = root.gameObject;
+            WorldMapView.Create(root, model);
+        }
+
         private void OnDestroy()
         {
             foreach (var o in _hudOwned) if (o != null) Destroy(o);

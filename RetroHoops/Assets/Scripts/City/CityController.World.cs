@@ -13,6 +13,7 @@ namespace CallerRetroBall.City
     public sealed partial class CityController
     {
         private CityDrive _driveView;
+        private string _driveTarget;
         private float _guideAt, _walkMetres, _walkAt, _achAt, _errandStart;
         private bool _errandRunning;
         private GuideHint _hint;
@@ -451,41 +452,65 @@ namespace CallerRetroBall.City
 
         // ------------------------------------------------------------------ the world map and the drive
 
-        private void OpenWorldMap()
+        /// <summary>The WORLD MAP zoomed right out (the whole country).</summary>
+        private void OpenWorldMap() => OpenAtlas(null);
+
+        /// <summary>
+        /// 28 Oct 2026: the zoomable map. Opens on <paramref name="focus"/> (a region; null = the whole world); tap a place
+        /// for DRIVE THERE (another region) or SPAWN THERE (straight in).
+        /// </summary>
+        private void OpenAtlas(string focus)
         {
+            if (_leaving || Driving) return;
+            _talking = -1;
             var career = App.Career;
             var w = World;
-            var here = WorldRegions.RegionOf(_map.DistrictId);
-            var next = CityStory.Current(w)?.Region;
-            var entries = new List<WorldMapEntry>();
-            foreach (var r in WorldRegions.All)
-            {
-                bool open = WorldRegions.Open(career, r);
-                int crews = WorldRegions.Crews(r).Count, beaten = WorldRegions.CrewsBeaten(career.city, r);
-                int titles = CityBigRun.Titles(w, r.Id);
-                entries.Add(new WorldMapEntry
-                {
-                    Id = r.Id, Name = Loc.T(r.Name), State = r.State, X = r.MapX, Y = r.MapY, Here = r.Id == here.Id, Open = open, Next = r.Id == next && r.Id != here.Id,
-                    Status = r.Id == here.Id ? Loc.T("YOU ARE HERE") : open ? Loc.T("TAP TO DRIVE") : WorldRegions.LockedReason(career, r),
-                    Detail = Loc.T("CREWS") + " " + beaten + "/" + crews + (titles > 0 ? "  ·  " + Loc.T(CityBigRun.KingTitle(r.Id)) : ""),
-                });
-            }
-            string footer = Loc.T("REGIONS") + " " + w.regionsSeen.Count + "/" + WorldRegions.All.Length + "  ·  " + Loc.T("BIG RUN TITLES") + " " + CityBigRun.TotalTitles(w)
+            string footer = Loc.T("REGIONS") + " " + w.regionsSeen.Count + "/" + WorldRegions.All.Length + "  ·  " + Loc.T("CREWS BEATEN") + " " + career.city.crewsBeaten.Count
+                            + "  ·  " + Loc.T("BIG RUN TITLES") + " " + CityBigRun.TotalTitles(w)
                             + "  ·  " + Loc.T("DRIVES") + " " + w.drives + (w.bestDrive > 0f ? "  ·  " + Loc.T("BEST") + " " + w.bestDrive.ToString("0.0") + " s" : "");
-            _hud.ShowWorldMap(entries, footer, to => StartDrive(to), () => OpenMap(), null);
+            _hud.ShowWorldAtlas(new WorldMapView.Model
+            {
+                Here = _map.DistrictId,
+                HereAt = _me.Position,
+                Focus = focus,
+                Describe = (region, district) => WorldAtlas.Describe(App.Career, _map.DistrictId, region, district),
+                IsOpen = region => WorldRegions.Open(App.Career, WorldRegions.Find(region)),
+                Drive = (region, district) => StartDrive(region, district),
+                Spawn = SpawnAt,
+                Closed = () => CloseCard(),
+                Footer = footer,
+            });
         }
 
-        /// <summary>Gets in your ride and drives to a region (from anywhere outdoors).</summary>
-        private void StartDrive(string region)
+        /// <summary>SPAWN THERE: straight into a district (or a region's main district), no drive.</summary>
+        private void SpawnAt(string region, string district)
+        {
+            if (_leaving) return;
+            var career = App.Career;
+            if (!WorldAtlas.Spawn(career, region, district))
+            {
+                _hud.CloseCard();
+                _hud.Toast(WorldAtlas.Blocked(career, region, district) ?? "", 2.4f);
+                return;
+            }
+            var r = WorldRegions.Find(region);
+            _arrivalNote = Loc.T("SPAWNED IN") + " " + (CityDistricts.Find(career.city.district)?.Name ?? r.Name);
+            Audio.AudioManager.Play(SfxId.Lob, 0.6f);
+            App.SaveCareer();
+            Leave(SceneNames.City);
+        }
+
+        /// <summary>Gets in your ride and drives to a region (or one of its districts), from anywhere.</summary>
+        private void StartDrive(string region, string district = null)
         {
             if (_leaving || Driving) return;
             var r = WorldRegions.Find(region);
             if (r == null) return;
             string locked = WorldRegions.LockedReason(App.Career, r);
-            if (locked != null) { _hud.Toast(locked, 2.4f); return; }
-            if (_map.Interior) { _hud.Toast(Loc.T("Head outside to your ride first."), 2f); return; }
-            if (WorldRegions.RegionOf(_map.DistrictId).Id == r.Id) { _hud.Toast(Loc.T("YOU ARE HERE"), 1.4f); return; }
+            if (locked != null) { _hud.CloseCard(); _hud.Toast(locked, 2.4f); return; }
+            if (WorldRegions.RegionOf(_map.DistrictId).Id == r.Id) { _hud.CloseCard(); _hud.Toast(Loc.T("YOU ARE HERE"), 1.4f); return; }
             SavePosition();
+            _driveTarget = district;
             _hud.CloseCard(false);
             _hud.gameObject.SetActive(false);
             _world.gameObject.SetActive(false);
@@ -499,7 +524,7 @@ namespace CallerRetroBall.City
         {
             var career = App.Career;
             long paid = HighwayDrive.Finish(career, drive, _day);
-            var (district, spawn) = HighwayDrive.Arrival(drive.To);
+            var (district, spawn) = WorldAtlas.DriveArrival(drive.To, _driveTarget);
             career.city.Arrive(district, spawn);
             _arrivalNote = Loc.T("ARRIVED IN") + " " + drive.Time.ToString("0.0") + " s"
                            + (drive.Bumps == 0 ? "  ·  " + Loc.T("CLEAN DRIVE") : "")

@@ -146,6 +146,50 @@ namespace CallerRetroBall.Logic.PixelArt
             return c;
         }
 
+        /// <summary>A green sign over the road (an exit, the city ahead): two lines on a gantry across all three lanes.</summary>
+        public static PixelCanvas Gantry(string text, string sub)
+        {
+            text = (text ?? "").ToUpperInvariant();
+            sub = (sub ?? "").ToUpperInvariant();
+            int w = Math.Max(RoadWidth + 10, Math.Max(PixelFont.Measure(text, 1), PixelFont.Measure(sub, 1)) + 14);
+            var c = new PixelCanvas(w, 30);
+            var steel = H("#5C6370");
+            c.FillRect(1, 0, 3, 30, steel);
+            c.FillRect(w - 4, 0, 3, 30, steel);
+            c.FillRect(0, 26, w, 2, steel);
+            c.FillRect(4, 9, w - 8, 18, H("#F4F1DE"));
+            c.FillRect(5, 10, w - 10, 16, H("#11663A"));
+            PixelFont.DrawCentered(c, text, w / 2, 24, H("#FFFFFF"));
+            PixelFont.DrawCentered(c, sub, w / 2, 16, H("#FFE08A"));
+            return c;
+        }
+
+        /// <summary>A roadside sign: NOW LEAVING (green), STATE LINE (blue) or a mile marker (small green).</summary>
+        public static PixelCanvas Sign(DriveFeatureKind kind, string text, string sub)
+        {
+            text = (text ?? "").ToUpperInvariant();
+            sub = (sub ?? "").ToUpperInvariant();
+            if (kind == DriveFeatureKind.MileMarker)
+            {
+                int mw = PixelFont.Measure(text, 1) + 6;
+                var m = new PixelCanvas(mw, 16);
+                m.FillRect(mw / 2 - 1, 0, 2, 8, H("#5C6370"));
+                m.FillRect(0, 7, mw, 9, H("#F4F1DE"));
+                m.FillRect(1, 8, mw - 2, 7, H("#11663A"));
+                PixelFont.DrawCentered(m, text, mw / 2, 14, H("#FFFFFF"));
+                return m;
+            }
+            int w = Math.Max(PixelFont.Measure(text, 1), PixelFont.Measure(sub, 1)) + 12;
+            var c = new PixelCanvas(w, 26);
+            var face = kind == DriveFeatureKind.StateLine ? H("#1D4E89") : H("#11663A");
+            c.FillRect(w / 2 - 1, 0, 3, 10, H("#5C6370"));
+            c.FillRect(0, 9, w, 17, H("#F4F1DE"));
+            c.FillRect(1, 10, w - 2, 15, face);
+            PixelFont.DrawCentered(c, text, w / 2, 23, H("#FFFFFF"));
+            PixelFont.DrawCentered(c, sub, w / 2, 16, H("#FFE08A"));
+            return c;
+        }
+
         private static void Palm(PixelCanvas c)
         {
             var leaf = H("#2E8B4A");

@@ -47,25 +47,25 @@ namespace CallerRetroBall.Logic
             new WorldRegion
             {
                 Id = NewYork, Name = "NEW YORK", Short = "NYC", State = "NEW YORK", Tagline = "Brownstones, the Cage and rooftops. Concrete that remembers every bucket.",
-                Districts = new[] { CityDistricts.NyUptown, CityDistricts.NyMidtown },
+                Districts = new[] { CityDistricts.NyUptown, CityDistricts.NyMidtown, CityDistricts.NyAvenues },
                 MapX = 0.88f, MapY = 0.68f, Biome = WorldBiome.Metro, OpensAtIssue = 3, Primary = "#F2C14E", Secondary = "#1B1B1E",
             },
             new WorldRegion
             {
                 Id = LosAngeles, Name = "LOS ANGELES", Short = "LA", State = "CALIFORNIA", Tagline = "Palms, the beach courts and the freeway. Golden hour every hour.",
-                Districts = new[] { CityDistricts.LaBeach, CityDistricts.LaEastside },
+                Districts = new[] { CityDistricts.LaBeach, CityDistricts.LaEastside, CityDistricts.LaBoulevard },
                 MapX = 0.1f, MapY = 0.32f, Biome = WorldBiome.Coast, OpensAtIssue = 5, Primary = "#FFB703", Secondary = "#8338EC",
             },
             new WorldRegion
             {
                 Id = LasVegas, Name = "LAS VEGAS", Short = "LV", State = "NEVADA", Tagline = "Neon towers, the desert lot and the biggest stage in the West.",
-                Districts = new[] { CityDistricts.LvStrip, CityDistricts.LvOldTown },
+                Districts = new[] { CityDistricts.LvStrip, CityDistricts.LvOldTown, CityDistricts.LvNeonMile },
                 MapX = 0.24f, MapY = 0.42f, Biome = WorldBiome.Desert, OpensAtIssue = 7, Primary = "#FF2E88", Secondary = "#00F0FF",
             },
             new WorldRegion
             {
                 Id = TheBay, Name = "THE BAY", Short = "BAY", State = "CALIFORNIA", Tagline = "Hills, fog, cable cars and the Town. The bridge brings you in.",
-                Districts = new[] { CityDistricts.BayHills, CityDistricts.BayTown },
+                Districts = new[] { CityDistricts.BayHills, CityDistricts.BayTown, CityDistricts.BayCrosstown },
                 MapX = 0.07f, MapY = 0.6f, Biome = WorldBiome.Bay, OpensAtIssue = 9, Primary = "#E63946", Secondary = "#1D3557",
             },
         };

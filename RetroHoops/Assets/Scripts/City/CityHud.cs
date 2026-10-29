@@ -25,6 +25,8 @@ namespace CallerRetroBall.City
         public TouchActionButton Interact { get; private set; }
         public TouchActionButton Sprint { get; private set; }
         public event Action MenuRequested;
+        /// <summary>28 Oct 2026: the MAP button (the zoomable world map).</summary>
+        public event Action MapRequested;
 
         private Canvas _canvas;
         private TextMeshProUGUI _district, _time, _hint, _toast, _prompt;
@@ -61,12 +63,18 @@ namespace CallerRetroBall.City
             bar.rectTransform.anchoredPosition = Vector2.zero;
             _district = UiKit.Label(bar.rectTransform, "", 44f, Theme.Gold, TextAlignmentOptions.Left, true, "District");
             _district.rectTransform.anchorMin = new Vector2(0f, 0.42f);
-            _district.rectTransform.anchorMax = new Vector2(0.7f, 1f);
+            _district.rectTransform.anchorMax = new Vector2(0.58f, 1f); // 28 Oct 2026: room for MAP
+            _district.enableAutoSizing = true;
+            _district.fontSizeMin = 24f;
+            _district.fontSizeMax = 44f;
             _district.rectTransform.offsetMin = new Vector2(32f, 0f);
             _district.rectTransform.offsetMax = Vector2.zero;
             _time = UiKit.Label(bar.rectTransform, "", 28f, Theme.Cream, TextAlignmentOptions.Left, false, "Time");
             _time.rectTransform.anchorMin = new Vector2(0f, 0.05f);
-            _time.rectTransform.anchorMax = new Vector2(0.7f, 0.45f);
+            _time.rectTransform.anchorMax = new Vector2(0.58f, 0.45f);
+            _time.enableAutoSizing = true;
+            _time.fontSizeMin = 16f;
+            _time.fontSizeMax = 28f;
             _time.rectTransform.offsetMin = new Vector2(32f, 0f);
             _time.rectTransform.offsetMax = Vector2.zero;
             var menu = UiKit.Button(bar.rectTransform, "MENU", () => MenuRequested?.Invoke(), ButtonStyle.Ghost, 96f, 40f);
@@ -75,6 +83,12 @@ namespace CallerRetroBall.City
             mrt.pivot = new Vector2(1f, 0.5f);
             mrt.sizeDelta = new Vector2(220f, 96f);
             mrt.anchoredPosition = new Vector2(-24f, 0f);
+            var mapButton = UiKit.Button(bar.rectTransform, "MAP", () => MapRequested?.Invoke(), ButtonStyle.Secondary, 96f, 40f);
+            var mbrt = (RectTransform)mapButton.transform;
+            mbrt.anchorMin = mbrt.anchorMax = new Vector2(1f, 0.5f);
+            mbrt.pivot = new Vector2(1f, 0.5f);
+            mbrt.sizeDelta = new Vector2(180f, 96f);
+            mbrt.anchoredPosition = new Vector2(-260f, 0f);
 
             _hint = UiKit.Label(safe, "", 34f, Theme.Cream, TextAlignmentOptions.Center, true, "Hint");
             _hint.rectTransform.anchorMin = new Vector2(0.05f, 1f);

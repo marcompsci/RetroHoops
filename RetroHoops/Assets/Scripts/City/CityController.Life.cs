@@ -244,35 +244,7 @@ namespace CallerRetroBall.City
 
         // ------------------------------------------------------------------ the map
 
-        private void OpenMap()
-        {
-            var s = App.Career.city;
-            var entries = new List<CityHud.MapEntry>();
-            int cols = 0, rows = 0;
-            string here = CityAtlas.Outside(_map.DistrictId);
-            // 28 Oct 2026: the districts of the region you're in (the WORLD MAP has the regions).
-            string region = WorldRegions.RegionOf(_map.DistrictId).Id;
-            foreach (var spot in region == WorldRegions.BallerCity ? new List<(string id, int col, int row)>(CityAtlas.Spots) : CityAtlas.SpotsFor(region))
-            {
-                var def = CityDistricts.Find(spot.id);
-                entries.Add(new CityHud.MapEntry
-                {
-                    Id = spot.id, Name = def?.Name ?? spot.id, Col = spot.col, Row = spot.row,
-                    Here = spot.id == here, Visited = s.seen.Contains(spot.id), Summary = CityAtlas.Summary(s, spot.id),
-                });
-                cols = Math.Max(cols, spot.col + 1);
-                rows = Math.Max(rows, spot.row + 1);
-            }
-            int seen = entries.FindAll(e => e.Visited).Count;
-            string footer = Loc.T("DISTRICTS") + " " + seen + "/" + entries.Count + "  ·  " + Loc.T("CREWS BEATEN") + " " + s.crewsBeaten.Count + "/" + CityCrews.All.Length
-                            + (_map.Interior ? "\n" + Loc.T("You're inside:") + " " + CityDistricts.Find(_map.DistrictId)?.Name : "");
-            _hud.ShowMap(entries, cols, rows, footer, to =>
-            {
-                if (!CityAtlas.Travel(App.Career.city, _map.DistrictId, to)) return;
-                AnnounceMissions(CityMissions.Check(App.Career));
-                App.SaveCareer();
-                Leave(SceneNames.City);
-            }, null);
-        }
+        /// <summary>28 Oct 2026: MAP opens the zoomable world map on the region you're in.</summary>
+        private void OpenMap() => OpenAtlas(WorldRegions.RegionOf(_map.DistrictId).Id);
     }
 }

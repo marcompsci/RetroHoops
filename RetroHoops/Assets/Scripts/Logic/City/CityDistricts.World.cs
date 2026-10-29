@@ -203,6 +203,9 @@ namespace CallerRetroBall.Logic
 
             m.Portals.Add(new CityPortal { Id = "road.uptown", Kind = CityPortalKind.District, Label = "TO UPTOWN", Target = NyUptown,
                                            TargetSpawn = "from_midtown", X = 22, Y = 0, W = 4, H = 1.4f });
+            m.Portals.Add(new CityPortal { Id = "road.avenues", Kind = CityPortalKind.District, Label = "TO THE AVENUES", Target = NyAvenues,
+                                           TargetSpawn = "from_midtown", X = 46.6f, Y = 21, W = 1.4f, H = 6 });
+            m.AddSpawn("from_avenues", 45.4f, 23.5f, 2);
             m.AddSpawn("from_uptown", 23.5f, 2.8f, 1);
             m.AddSpawn("court.ny_plaza", 10.5f, 3.4f, 1);
             m.AddSpawn("court.ny_rooftop", 10.5f, 26.5f, 1);
@@ -312,6 +315,9 @@ namespace CallerRetroBall.Logic
 
             m.Portals.Add(new CityPortal { Id = "road.beach", Kind = CityPortalKind.District, Label = "TO OCEAN WALK", Target = LaBeach,
                                            TargetSpawn = "from_eastside", X = 22, Y = 0, W = 4, H = 1.4f });
+            m.Portals.Add(new CityPortal { Id = "road.boulevard", Kind = CityPortalKind.District, Label = "TO THE BOULEVARD", Target = LaBoulevard,
+                                           TargetSpawn = "from_eastside", X = 46.6f, Y = 19, W = 1.4f, H = 6 });
+            m.AddSpawn("from_boulevard", 45.4f, 21.5f, 2);
             m.AddSpawn("from_beach", 23.5f, 2.8f, 1);
             m.AddSpawn("court.la_taco", 36.5f, 2.5f, 1);
             m.AddSpawn("court.la_overpass", 10.5f, 25.6f, 1);
@@ -368,6 +374,9 @@ namespace CallerRetroBall.Logic
                                            TargetSpawn = "from_strip", X = 22, Y = 62.6f, W = 4, H = 1.4f });
             m.AddSpawn("ride", 37f, 20.3f, 0);
             m.AddSpawn("from_oldtown", 23.5f, 60.6f, 0);
+            m.Portals.Add(new CityPortal { Id = "road.neonmile", Kind = CityPortalKind.District, Label = "TO NEON MILE", Target = LvNeonMile,
+                                           TargetSpawn = "from_strip", X = 46.6f, Y = 25, W = 1.4f, H = 6 });
+            m.AddSpawn("from_neonmile", 45.4f, 27.5f, 2);
             m.AddSpawn("court.lv_fountain", 10.5f, 2.8f, 1);
             m.AddSpawn("court.lv_stage", 36.5f, 4.6f, 1);
             m.AddSpawn("court.lv_marquee", 10.5f, 43.6f, 1);
@@ -494,6 +503,7 @@ namespace CallerRetroBall.Logic
             // The estuary on the east, with the port's pier and cranes.
             m.Fill(44, 0, 4, 60, CityGround.Water);
             m.Fill(38, 30, 6, 29, CityGround.Pier);
+            HRoad(m, 24, 40, 48); // 28 Oct 2026: the bridge over the estuary to Crosstown
             m.AddProp(CityPropKind.Crane, 39, 50, 3, 2, true);
             m.AddProp(CityPropKind.Crane, 39, 38, 3, 2, true, 1);
 
@@ -527,6 +537,9 @@ namespace CallerRetroBall.Logic
             m.Portals.Add(new CityPortal { Id = "road.hills", Kind = CityPortalKind.District, Label = "TO THE HILLS", Target = BayHills,
                                            TargetSpawn = "from_town", X = 0, Y = 23, W = 1.4f, H = 6 });
             m.AddSpawn("from_hills", 2.8f, 25.5f, 3);
+            m.Portals.Add(new CityPortal { Id = "road.crosstown", Kind = CityPortalKind.District, Label = "TO CROSSTOWN", Target = BayCrosstown,
+                                           TargetSpawn = "from_town", X = 46.6f, Y = 23, W = 1.4f, H = 6 });
+            m.AddSpawn("from_crosstown", 45.4f, 25.5f, 2);
             m.AddSpawn("court.bay_freeway", 10.5f, 4.5f, 1);
             m.AddSpawn("court.bay_lake", 31.5f, 7.5f, 1);
             m.AddSpawn("court.bay_port", 32.5f, 38.5f, 1);
