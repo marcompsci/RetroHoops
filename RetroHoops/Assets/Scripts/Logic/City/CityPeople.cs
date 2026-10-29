@@ -3,7 +3,7 @@ using System.Collections.Generic;
 
 namespace CallerRetroBall.Logic
 {
-    public enum CityNpcRole { Teammate = 0, Rival = 1, Legend = 2, TourLeader = 3, /** 17 Oct 2026: a CPU crew member. */ Crew = 4 }
+    public enum CityNpcRole { Teammate = 0, Rival = 1, Legend = 2, TourLeader = 3, /** 17 Oct 2026: a CPU crew member. */ Crew = 4, /** 28 Oct 2026: a local with a side job. */ Local = 5 }
 
     /// <summary>Someone who lives in Baller City: a real player from the game (your crew, the rival crew, legends).</summary>
     public sealed class CityNpc

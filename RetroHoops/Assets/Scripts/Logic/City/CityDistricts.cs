@@ -19,7 +19,7 @@ namespace CallerRetroBall.Logic
     /// - BALLER GYM: the gym inside (Practice Lab drills, the Halloween court, the locker room).
     /// Districts load one at a time (each is its own small map), joined by the roads at their edges.
     /// </summary>
-    public static class CityDistricts
+    public static partial class CityDistricts
     {
         public const string FirstCallers = "first_callers";
         public const string Blacktop = "blacktop";
@@ -34,7 +34,7 @@ namespace CallerRetroBall.Logic
         public const string Arena = "baller_arena";
         public const string Crib = "crib";
 
-        public static readonly CityDistrictDefinition[] All =
+        public static readonly CityDistrictDefinition[] All = Join(new[]
         {
             new CityDistrictDefinition { Id = FirstCallers, Name = "FIRST CALLERS NEIGHBORHOOD", Blurb = "Home, the crew's HQ and the Baller Gym.", Build = BuildFirstCallers },
             new CityDistrictDefinition { Id = Blacktop, Name = "BLACKTOP DISTRICT", Blurb = "Street courts, crews and spectators.", Build = BuildBlacktop },
@@ -48,7 +48,15 @@ namespace CallerRetroBall.Logic
             new CityDistrictDefinition { Id = FreshCuts, Name = "FRESH CUTS", Blurb = "The barbershop.", Interior = true, Build = BuildFreshCuts },
             new CityDistrictDefinition { Id = Arena, Name = "BALLER ARENA", Blurb = "The City Championship.", Interior = true, Build = BuildArena },
             new CityDistrictDefinition { Id = Crib, Name = "YOUR CRIB", Blurb = "Trophies, banners and the safe.", Interior = true, Build = BuildCrib },
-        };
+        }, WorldDistricts());
+
+        private static CityDistrictDefinition[] Join(CityDistrictDefinition[] a, CityDistrictDefinition[] b)
+        {
+            var all = new CityDistrictDefinition[a.Length + b.Length];
+            a.CopyTo(all, 0);
+            b.CopyTo(all, a.Length);
+            return all;
+        }
 
         public static CityDistrictDefinition Find(string id) => Array.Find(All, d => d.Id == id);
 
@@ -194,6 +202,7 @@ namespace CallerRetroBall.Logic
             m.AddProp(CityPropKind.Car, 21, 28, 2, 1, true, 0);
             m.AddProp(CityPropKind.Car, 21, 25, 2, 1, true, 1);
             m.AddProp(CityPropKind.Car, 23, 25, 2, 1, true, 2);
+            RideSpot(m, 23, 29); // 28 Oct 2026 (BALLER WORLD): YOUR RIDE, for THE DRIVE
             Trees(m, 34, 24, 34, 30, 30, 42, 20, 42);
 
             // SW: the First Callers' home court.
@@ -242,6 +251,7 @@ namespace CallerRetroBall.Logic
             m.AddSpawn("from_blacktop", 33.4f, 20.5f, 2);
             m.AddSpawn("store", 24.5f, 7.8f, 0);
             m.AddSpawn("barber", 31.5f, 7.8f, 0);
+            m.AddSpawn("ride", 24f, 27.3f, 0);
             m.Hangouts["home.porch"] = new Vec2(7.5f, 33f);
             m.Hangouts["hq.front"] = new Vec2(9.5f, 24.6f);
             m.Hangouts["gym.lot"] = new Vec2(24f, 27f);
@@ -321,6 +331,7 @@ namespace CallerRetroBall.Logic
             m.AddSpawn("court.overpass_park", 36.5f, 1.4f, 1);
             m.AddSpawn("court.static_lot", 9f, 24.6f, 1);
             m.AddSpawn("court.pier_nine", 37.5f, 40.4f, 0);
+            BigRunPoster(m, 8, 44); // 28 Oct 2026 (BALLER WORLD): Baller City's BIG RUN
             return m;
         }
 

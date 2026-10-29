@@ -23,6 +23,11 @@ namespace CallerRetroBall.Logic
         Wall = 13,
         /// <summary>17 Oct 2026: snow (the Christmas court's lawn).</summary>
         Snow = 14,
+        // 28 Oct 2026 (BALLER WORLD): brick pavers (New York plazas, the Bay), cracked desert (Las Vegas), rails in the
+        // road (the Bay's cable cars, the elevated train).
+        Brick = 15,
+        Desert = 16,
+        Rail = 17,
     }
 
     public enum CityPropKind : byte
@@ -37,6 +42,9 @@ namespace CallerRetroBall.Logic
         Graffiti = 32,
         // 17 Oct 2026 (phases 5–7): the arena and your crib.
         TrophyCase = 33, BannerWall = 34, Scoreboard = 35, Crowd = 36, Safe = 37,
+        // 28 Oct 2026 (BALLER WORLD): the regions' street furniture, YOUR RIDE and the Big Run posters.
+        SubwayStairs = 38, FoodCart = 39, Cactus = 40, NeonSign = 41, Lifeguard = 42, TacoTruck = 43, Fountain = 44, CableCar = 45,
+        BridgeTower = 46, Crane = 47, Mural = 48, Poster = 49, Rock = 50, Billboard = 51, Ride = 52, Pillar = 53,
     }
 
     /// <summary>

@@ -146,15 +146,18 @@ namespace CallerRetroBall.Logic
 
         public static CityMissionDef Find(string id) => Array.Find(All, m => m.Id == id);
 
+        /// <summary>Baller City's LEGENDARY crews (28 Oct 2026: the other regions' crews don't move ALL-CITY's goal).</summary>
         public static int LegendaryCount
         {
             get
             {
                 int n = 0;
-                foreach (var c in CityCrews.All) if (c.Tier == CityCrewTier.Legendary) n++;
+                foreach (var c in CityCrews.All) if (c.Tier == CityCrewTier.Legendary && InBallerCity(c)) n++;
                 return n;
             }
         }
+
+        public static bool InBallerCity(CityCrewDef c) => WorldRegions.RegionOf(CityDistricts.CourtHome(c.CourtId)?.district ?? CityDistricts.FirstCallers).Id == WorldRegions.BallerCity;
 
         public static int TargetOf(CityMissionDef m) => m.Kind == CityMissionKind.LegendaryCrews && m.Target < 0 ? LegendaryCount : m.Target;
 
@@ -215,7 +218,7 @@ namespace CallerRetroBall.Logic
             foreach (var id in s.crewsBeaten)
             {
                 var c = CityCrews.Find(id);
-                if (c != null && c.Tier == CityCrewTier.Legendary) n++;
+                if (c != null && c.Tier == CityCrewTier.Legendary && InBallerCity(c)) n++;
             }
             return n;
         }

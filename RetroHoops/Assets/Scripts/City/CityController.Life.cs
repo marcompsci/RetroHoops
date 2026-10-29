@@ -250,7 +250,9 @@ namespace CallerRetroBall.City
             var entries = new List<CityHud.MapEntry>();
             int cols = 0, rows = 0;
             string here = CityAtlas.Outside(_map.DistrictId);
-            foreach (var spot in CityAtlas.Spots)
+            // 28 Oct 2026: the districts of the region you're in (the WORLD MAP has the regions).
+            string region = WorldRegions.RegionOf(_map.DistrictId).Id;
+            foreach (var spot in region == WorldRegions.BallerCity ? new List<(string id, int col, int row)>(CityAtlas.Spots) : CityAtlas.SpotsFor(region))
             {
                 var def = CityDistricts.Find(spot.id);
                 entries.Add(new CityHud.MapEntry

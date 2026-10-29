@@ -211,13 +211,33 @@ namespace CallerRetroBall.Logic
             (CityDistricts.HoopHeights, 1, 2), (CityDistricts.Downtown, 2, 2),
         };
 
-        public static bool OnMap(string district) => Array.Exists(Spots, s => s.id == district);
+        /// <summary>28 Oct 2026 (BALLER WORLD): the other regions' district maps (each region has its own little map).</summary>
+        public static readonly (string region, string id, int col, int row)[] RegionSpots =
+        {
+            (WorldRegions.NewYork, CityDistricts.NyUptown, 0, 0), (WorldRegions.NewYork, CityDistricts.NyMidtown, 0, 1),
+            (WorldRegions.LosAngeles, CityDistricts.LaBeach, 0, 0), (WorldRegions.LosAngeles, CityDistricts.LaEastside, 0, 1),
+            (WorldRegions.LasVegas, CityDistricts.LvStrip, 0, 0), (WorldRegions.LasVegas, CityDistricts.LvOldTown, 0, 1),
+            (WorldRegions.TheBay, CityDistricts.BayHills, 0, 0), (WorldRegions.TheBay, CityDistricts.BayTown, 1, 0),
+        };
+
+        /// <summary>The district map of a region: (id, col, row) for each of its districts.</summary>
+        public static List<(string id, int col, int row)> SpotsFor(string region)
+        {
+            var list = new List<(string, int, int)>();
+            if (region == WorldRegions.BallerCity) { foreach (var s in Spots) list.Add(s); return list; }
+            foreach (var s in RegionSpots) if (s.region == region) list.Add((s.id, s.col, s.row));
+            return list;
+        }
+
+        public static bool OnMap(string district) => Array.Exists(Spots, s => s.id == district) || Array.Exists(RegionSpots, s => s.id == district);
 
         /// <summary>Indoors (the gym, the shops) the map shows the district the building is in.</summary>
-        public static string Outside(string district) => OnMap(district) ? district : CityDistricts.FirstCallers;
+        public static string Outside(string district) => OnMap(district) ? district : CityDistricts.OutsideOf(district);
 
+        /// <summary>Fast travel is within a region (between regions you drive).</summary>
         public static bool CanTravel(CitySaveData s, string from, string to) =>
-            s != null && OnMap(to) && s.seen.Contains(to) && Outside(from) != to;
+            s != null && OnMap(to) && s.seen.Contains(to) && Outside(from) != to
+            && WorldRegions.RegionOf(Outside(from)).Id == WorldRegions.RegionOf(to).Id;
 
         /// <summary>Where fast travel drops you: the district's first spawn (its main road in).</summary>
         public static string ArrivalSpawn(string district) => CityDistricts.Map(district).DefaultSpawn.Id;

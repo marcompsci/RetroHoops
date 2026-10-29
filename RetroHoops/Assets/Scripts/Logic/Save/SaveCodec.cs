@@ -124,6 +124,7 @@ namespace CallerRetroBall.Logic
                 ["city"] = EncodeCity(d.city),
                 ["cash"] = EncodeStreetCash(d.streetCash),
                 ["big"] = EncodeBigTime(d.bigTime),
+                ["world"] = EncodeWorld(d.world),
                 ["clutch"] = EncodeClutch(d.clutch),
                 ["login"] = EncodeLogin(d),
                 ["feel"] = EncodeFeel(d.settings),
@@ -603,6 +604,7 @@ namespace CallerRetroBall.Logic
                 d.city = DecodeCity(Obj(o, "city"));
                 d.streetCash = DecodeStreetCash(Obj(o, "cash"));
                 d.bigTime = DecodeBigTime(Obj(o, "big"));
+                d.world = DecodeWorld(Obj(o, "world"));
                 d.clutch = DecodeClutch(Obj(o, "clutch"));
                 DecodeLogin(d, Obj(o, "login"));
                 DecodeFeel(d.settings, Obj(o, "feel"));

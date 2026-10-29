@@ -41,8 +41,9 @@ namespace CallerRetroBall.Logic
         /// <summary>Today's draw: the semifinal BALLER crew and the final LEGENDARY crew.</summary>
         public static (CityCrewDef semi, CityCrewDef final) Draw(int day)
         {
-            var ballers = Array.FindAll(CityCrews.All, c => c.Tier == CityCrewTier.Baller);
-            var legends = Array.FindAll(CityCrews.All, c => c.Tier == CityCrewTier.Legendary);
+            // Baller City's own crews (28 Oct 2026: the other regions have their own Big Runs).
+            var ballers = Array.FindAll(CityCrews.All, c => c.Tier == CityCrewTier.Baller && CityMissions.InBallerCity(c));
+            var legends = Array.FindAll(CityCrews.All, c => c.Tier == CityCrewTier.Legendary && CityMissions.InBallerCity(c));
             uint h = StableHash.Of("arena:" + day);
             return (ballers[h % (uint)ballers.Length], legends[(h / 7) % (uint)legends.Length]);
         }

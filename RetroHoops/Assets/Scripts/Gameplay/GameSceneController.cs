@@ -2885,6 +2885,31 @@ namespace CallerRetroBall.Gameplay
                     string cityNote = cityResult.Note();
                     if (!string.IsNullOrEmpty(cityNote)) note = string.IsNullOrEmpty(note) ? cityNote : note + "\n" + cityNote;
                     if (cityResult.Completed.Count > 0 || cityResult.CrewFirstWin) Sfx(SfxId.Fanfare);
+
+                    // 28 Oct 2026 (BALLER WORLD): Big Runs, side jobs, the finale, today's achievements and the comic.
+                    var world = App.Career.world ?? (App.Career.world = new CityWorldSaveData());
+                    CityDistricts.TryParseReturn(_request.ReturnTo, out string fromDistrict, out _);
+                    string region = WorldRegions.RegionOf(fromDistrict).Id;
+                    var worldNotes = new System.Collections.Generic.List<string>();
+                    string runLine = CityBigRun.ApplyGame(App.Career, _request, summary.HumanWon, today, System.DateTime.Now.DayOfWeek, out long runPaid);
+                    if (runLine != null)
+                    {
+                        worldNotes.Add(runLine);
+                        var bigRun = CityBigRun.Of(_request);
+                        if (summary.HumanWon && bigRun != null && bigRun.Value.round == CityBigRun.RoundsCount) { title = CityBigRun.KingTitle(bigRun.Value.region); Sfx(SfxId.Fanfare); }
+                    }
+                    if (CityStory.ApplyGame(App.Career, _request, summary.HumanWon) && summary.HumanWon) title = "ALL-WORLD";
+                    CityAchievements.NoteGame(world, today, summary.HumanWon, summary.HumanLine?.stats, CityCrews.FromContext(_request.ContextId) != null, region);
+                    var job = CitySideJobs.ApplyGame(App.Career, _request, summary.HumanWon, summary.Margin, summary.HumanLine?.stats, today);
+                    if (job != null) worldNotes.Add(Loc.T("SIDE JOB DONE:") + " " + Loc.T(job.Title) + "  +" + StreetCash.Money(job.Cash) + "  +" + job.Sp + " SP");
+                    var ach = CityAchievements.Update(App.Career, today);
+                    foreach (var a in ach.Done) worldNotes.Add(Loc.T("ACHIEVEMENT:") + " " + Loc.T(a.Text));
+                    if (ach.Tier > 0) worldNotes.Add(Loc.T(CityAchievements.TierNames[ach.Tier - 1]) + " " + Loc.T("DAY!") + "  +" + StreetCash.Money(ach.Cash));
+                    foreach (var b in ach.Badges) worldNotes.Add(Loc.T("BADGE:") + " " + Loc.T(b.Name));
+                    var story = CityStory.Check(App.Career);
+                    foreach (var g in story.GoalsDone) worldNotes.Add(Loc.T("COMIC:") + " " + Loc.T(g.Text) + "  " + Loc.T("DONE"));
+                    if (story.Finished != null) worldNotes.Add(CityStory.Header(story.Finished) + "  " + Loc.T("COMPLETE") + "  +" + StreetCash.Money(story.Finished.Cash));
+                    if (worldNotes.Count > 0) note = string.IsNullOrEmpty(note) ? string.Join("\n", worldNotes) : note + "\n" + string.Join("\n", worldNotes);
                 }
                 // 17 Oct 2026: CASHED OUT (every street game pays; 20+ points pays a secret bonus).
                 if (rewarded && StreetCash.Counts(_request))

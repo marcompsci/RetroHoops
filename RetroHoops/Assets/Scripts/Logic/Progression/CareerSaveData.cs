@@ -313,6 +313,8 @@ namespace CallerRetroBall.Logic
         public StreetCashSaveData streetCash = new StreetCashSaveData();
         /// <summary>17 Oct 2026 (phases 5–7): the City Championship, daily challenges and call-outs.</summary>
         public CityBigTimeSaveData bigTime = new CityBigTimeSaveData();
+        /// <summary>28 Oct 2026 (BALLER WORLD): the comic, the guide, daily achievements, side jobs, Big Runs and the drive.</summary>
+        public CityWorldSaveData world = new CityWorldSaveData();
         /// <summary>Phase 37 CLUTCH scenarios: best stars.</summary>
         public ClutchSaveData clutch = new ClutchSaveData();
         /// <summary>Phase 39 welcome-back bonus: last day claimed, days in a row, best run.</summary>

@@ -4,7 +4,8 @@ using System.Collections.Generic;
 namespace CallerRetroBall.Logic
 {
     /// <summary>What a city choice does when picked.</summary>
-    public enum CityAction { PlayMatch = 0, OpenRiseHub = 1, OpenLockerRoom = 2, Info = 3, /** 17 Oct 2026 (phase 3): the shops. */ Buy = 4, Equip = 5, Haircut = 6, /** 17 Oct 2026: THE STREETS walls. */ OpenStreets = 7, StreetsBoard = 8, BuyWithCash = 9 }
+    public enum CityAction { PlayMatch = 0, OpenRiseHub = 1, OpenLockerRoom = 2, Info = 3, /** 17 Oct 2026 (phase 3): the shops. */ Buy = 4, Equip = 5, Haircut = 6, /** 17 Oct 2026: THE STREETS walls. */ OpenStreets = 7, StreetsBoard = 8, BuyWithCash = 9,
+        /** 28 Oct 2026 (BALLER WORLD): drive to a region (ItemId = region id), open the world map, take a side job, read the comic. */ Drive = 10, WorldMap = 11, AcceptJob = 12, Comic = 13 }
 
     /// <summary>
     /// One thing you can do at a court, a door, a station or with a person: a label, a line of detail, and either a
@@ -54,7 +55,18 @@ namespace CallerRetroBall.Logic
             }
 
             // 17 Oct 2026 (phase 5): the arena floor is the City Championship.
-            if (court.Use == CityCourtUse.Arena) return CityArena.Choices(career, c, day, back);
+            if (court.Use == CityCourtUse.Arena)
+            {
+                var arena = CityArena.Choices(career, c, day, back);
+                if (CityStory.VelvetOpen(career))
+                {
+                    var velvet = CityStory.VelvetRequest(c, career);
+                    velvet.ReturnTo = back;
+                    arena.Insert(0, new CityActivity { Label = Loc.T("THE VELVET INVITATIONAL"), Primary = true, Request = velvet,
+                                                       Detail = Loc.T("VELVET SQUAD") + "  ·  " + Loc.T("LEGENDARY") + "  ·  " + Loc.T("The comic's last page.") });
+                }
+                return arena;
+            }
 
             // 17 Oct 2026: a holiday court plays its Holiday Game (and its crew) instead of pickup.
             if (court.Use == CityCourtUse.Holiday)
@@ -170,8 +182,25 @@ namespace CallerRetroBall.Logic
                     list.AddRange(CityBarber.Choices(career));
                     break;
                 case "arena.desk":
+                    // 28 Oct 2026 (BALLER WORLD): the comic's finale, the Velvet Invitational, is booked at the desk.
+                    if (career != null && CityStory.VelvetOpen(career))
+                    {
+                        var velvet = CityStory.VelvetRequest(c, career);
+                        velvet.ReturnTo = CityDistricts.ReturnTag(map.DistrictId, "court.arena");
+                        list.Add(new CityActivity { Label = Loc.T("THE VELVET INVITATIONAL"), Primary = true, Request = velvet,
+                                                    Detail = Loc.T("VELVET SQUAD") + "  ·  " + Loc.T("LEGENDARY") + "  ·  " + Loc.T("The comic's last page.") });
+                    }
                     list.AddRange(CityArena.Choices(career, c, day, CityDistricts.ReturnTag(map.DistrictId, "court.arena")));
                     break;
+                case "ride":
+                    list.AddRange(RideChoices(map, career));
+                    break;
+                case "bigrun":
+                {
+                    var region = WorldRegions.RegionOf(map.DistrictId).Id;
+                    list.AddRange(CityBigRun.Choices(career, c, region, day, DateTime.Now.DayOfWeek, CityDistricts.ReturnTag(map.DistrictId, NearestSpawn(map, portal.Center))));
+                    break;
+                }
                 case "crib.trophies":
                 case "crib.banners":
                 case "crib.safe":
@@ -187,6 +216,26 @@ namespace CallerRetroBall.Logic
                 case "barber":
                     list.Add(new CityActivity { Label = portal.Label, Locked = "Opening soon." });
                     break;
+            }
+            return list;
+        }
+
+        /// <summary>
+        /// 28 Oct 2026 (BALLER WORLD): YOUR RIDE. The world map, and a drive to every region you can reach (under 30
+        /// seconds); regions the comic hasn't reached yet say when they open.
+        /// </summary>
+        public static List<CityActivity> RideChoices(CityMap map, CareerSaveData career)
+        {
+            var list = new List<CityActivity> { new CityActivity { Label = Loc.T("WORLD MAP"), Detail = Loc.T("Every region, and where the comic goes next."), Action = CityAction.WorldMap } };
+            var here = WorldRegions.RegionOf(map.DistrictId);
+            foreach (var r in WorldRegions.All)
+            {
+                if (r.Id == here.Id) continue;
+                string locked = WorldRegions.LockedReason(career, r);
+                list.Add(locked != null
+                    ? new CityActivity { Label = Loc.T("DRIVE TO") + " " + Loc.T(r.Name), Locked = locked }
+                    : new CityActivity { Label = Loc.T("DRIVE TO") + " " + Loc.T(r.Name), Detail = Loc.T(r.Tagline), Action = CityAction.Drive, ItemId = r.Id,
+                                         Primary = CityStory.Current(career?.world)?.Region == r.Id });
             }
             return list;
         }

@@ -278,3 +278,53 @@ Tests: `BallerCityMissionsTests` (17) plus the updated `BallerCityTests`. The fu
 - `BallerCityBigTimeTests` (12); the full logic suite passes, 1,013 of 1,013.
 - The Unity reference compile is clean, and the Spanish text and App Store audits pass.
 - Not yet run on the phone.
+
+---
+
+## BALLER WORLD (W1–W10), 28 Oct 2026
+
+The city gets a purpose: a comic you play through, a guide to point the way, daily achievements, side jobs, Big Runs for big street cash, and four more regions to drive to. All play money, all offline, no new data collected.
+
+**W1: THE COMIC** (`CityStory`, `ComicArt`, `ComicCast`)
+- 11 issues: NEW KID ON THE BLOCK, THE FLYER, CONCRETE JUNGLE, KING OF NEW YORK, WEST COAST, GOLDEN HOUR, BRIGHT LIGHTS, THE MAIN EVENT, FOG CITY, THE TOWN, ALL-WORLD.
+- Each issue opens with comic pages (pixel backdrops, halftone, speech, SFX), sets 3–4 goals, and pays cash and SP when it's done. Original cast: DEE, your agent, and the villain MR. VELVET.
+- The finale is THE VELVET INVITATIONAL at the Baller Arena against the VELVET SQUAD.
+- MENU ► THE COMIC shows the goals, rereads the issue, and turns the guide on or off.
+
+**W2: THE GUIDE** (`CityGuide`): an objective ticker at the top and an arrow with a distance. It finds a route across districts, and across regions it says to drive. It tracks the comic or your side job.
+
+**W3: DAILY ACHIEVEMENTS** (`CityAchievements`)
+- Six a day (the same all day). Hitting 3, 5 and 6 pays BRONZE, SILVER and GOLD ($10K / $15K / $25K plus SP).
+- A bronze day keeps the streak alive, with bonuses at 3, 7, 14 and 30 days.
+- 23 badges. MENU ► ACHIEVEMENTS.
+
+**W4: SIDE JOBS** (`CitySideJobs`): 27 jobs from locals marked "!". Kinds: win, score or margin at a court, beat a crew, timed errands, and find-the-items. They're comic-panel pitches, one active at a time.
+
+**W5: BIG RUNS** (`CityBigRun`): a three-round bracket per region, once a day, entered at the region's poster. The purse grows each round (up to $250K in the Bay) and doubles at weekends. Win all three for the region's KING title.
+
+**W6: THE WORLD** (`World`, `HighwayDrive`, `CityDrive`)
+- Five regions: Baller City, New York, Los Angeles, Las Vegas and The Bay. The comic opens them in order.
+- YOUR RIDE stands in each main district, and MENU ► WORLD MAP shows every region.
+- THE DRIVE is a three-lane highway run with steering, boost, traffic, near misses and the roadside changing by biome. It's tuned to about 22 s, and a catch-up assist guarantees arrival under 28 s. A clean drive pays a bonus.
+
+**W7–W10: the regions:** two districts each, with their own building styles, ground, props, six courts and four crews (two LEGENDARY).
+- **New York:** brownstones, glass towers, a subway, a cage court, a rooftop, a pier.
+- **Los Angeles:** a beach boardwalk, lifeguard towers, bungalows, Spanish-mission buildings, a taco truck, murals.
+- **Las Vegas:** a neon strip, a fountain, a desert edge, a motel. No casino or gambling imagery.
+- **The Bay:** painted Victorians, cable cars, a bridge, a freeway, warehouses, the port.
+
+**Tests:** `BallerWorldTests` (18) cover these:
+- every region and district is reachable and walkable
+- every court id exists
+- every side-job spot is walkable
+- the story advances
+- achievements pay once
+- the save round-trips
+- the drive's worst case finishes under 30 s
+
+The full logic suite passes (1,086 of 1,086). The Unity reference compile is clean, and the Spanish text audit, App Store audit and release gate pass.
+
+**Not yet done:**
+- It hasn't run in the Unity editor or on a phone.
+- Comic dialogue, side-job pitches and achievement texts are English-only in Spanish mode for now.
+- The 24 new courts also appear in Quick Play's court list.

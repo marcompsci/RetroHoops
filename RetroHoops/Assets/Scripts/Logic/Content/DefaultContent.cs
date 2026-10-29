@@ -117,6 +117,7 @@ namespace CallerRetroBall.Logic
             c.Courts.Add(Court(CityArena.CourtId, "Baller Arena", CourtCircuit.League,
                 "Downtown's big room: polished maple, a scoreboard over centre court and a sold-out crowd.",
                 "#D8A35D", "#14141F", "#F72585", "#0B0B1A", "#4CC9F0", 0.95f));
+            AddWorldCourts(c); // 28 Oct 2026 (BALLER WORLD)
             c.Courts.Add(Court("court.grove_gym", "Grove Gym", CourtCircuit.League,
                 "Timber rafters and a floor with a hand-painted tree at centre.",
                 "#C49A6C", "#111111", "#1E5631", "#0B2E1A", "#D4A017", 0.70f));
@@ -263,6 +264,74 @@ namespace CallerRetroBall.Logic
             var court = Court(id, name, CourtCircuit.Holiday, description, floor, lines, paint, skyTop, skyBottom, crowd);
             court.theme = theme;
             c.Courts.Add(court);
+        }
+
+        /// <summary>
+        /// 28 Oct 2026 (Omari, BALLER WORLD): the regions' courts. New York, Los Angeles, Las Vegas and the Bay, three
+        /// courts to a district, each with its own floor, colours and stands.
+        /// </summary>
+        private static void AddWorldCourts(ContentCatalog c)
+        {
+            void W(string id, string name, string description, string floor, string lines, string paint, string skyTop, string skyBottom, float crowd,
+                   FloorStyle style, StandsStyle stands)
+            {
+                var k = Court(id, name, CourtCircuit.Blacktop, description, floor, lines, paint, skyTop, skyBottom, crowd);
+                k.floorStyle = (int)style;
+                k.stands = stands;
+                c.Courts.Add(k);
+            }
+            // New York.
+            W("court.ny_cage", "The Cage", "A caged half court on the avenue. Chain-link on every side and a crowd pressed against it.",
+              "#4A4A52", "#FFFFFF", "#E63946", "#1B1B1E", "#F2C14E", 0.75f, FloorStyle.Asphalt, StandsStyle.Fence);
+            W("court.ny_brownstone", "Brownstone Park", "Red rubber in the park between the brownstones. The stoops are the bleachers.",
+              "#B5533C", "#F4F1DE", "#2B2D42", "#2B2D42", "#E9C46A", 0.55f, FloorStyle.Rubber, StandsStyle.Brick);
+            W("court.ny_subway", "Subway Court", "Tiles under the elevated tracks. The train is the horn.",
+              "#8E9AAF", "#FFFFFF", "#2A9D8F", "#22223B", "#9A8C98", 0.5f, FloorStyle.Tiles, StandsStyle.Fence);
+            W("court.ny_plaza", "Steel Plaza", "A tiled court on the plaza between the glass towers.",
+              "#9DA3AF", "#14141F", "#4361EE", "#0B132B", "#5BC0BE", 0.55f, FloorStyle.Tiles, StandsStyle.Crowd);
+            W("court.ny_rooftop", "Rooftop 9", "Nine floors up, fenced in, the skyline for a backdrop.",
+              "#3A3A42", "#F2C14E", "#E63946", "#10002B", "#F77F00", 0.45f, FloorStyle.Asphalt, StandsStyle.Fence);
+            W("court.ny_pier", "River Pier", "Out on the pier over the river. Wind off the water on every jumper.",
+              "#4E5D6C", "#F1FAEE", "#1D3557", "#1D3557", "#A8DADC", 0.4f, FloorStyle.Asphalt, StandsStyle.Fence);
+            // Los Angeles.
+            W("court.la_ocean", "Ocean Walk Courts", "Concrete on the sand, a boardwalk crowd and the ocean behind the hoop.",
+              "#B7A99A", "#FFFFFF", "#E76F51", "#FFB703", "#FB8500", 0.7f, FloorStyle.Asphalt, StandsStyle.Crowd);
+            W("court.la_lifeguard", "Lifeguard Court", "Blue rubber by the lifeguard tower. Sand in your shoes.",
+              "#2A9D8F", "#FFFFFF", "#F4A261", "#48CAE4", "#FFD166", 0.5f, FloorStyle.Rubber, StandsStyle.Fence);
+            W("court.la_sunset", "Sunset Court", "Maple in the palm park, glowing at golden hour.",
+              "#D4A373", "#3D405B", "#E07A5F", "#8338EC", "#FF006E", 0.5f, FloorStyle.Hardwood, StandsStyle.Crowd);
+            W("court.la_overpass", "The Overpass", "Under the freeway between the pillars. The traffic never stops.",
+              "#55555F", "#FFD166", "#118AB2", "#3A3A42", "#FFB703", 0.5f, FloorStyle.Asphalt, StandsStyle.Brick);
+            W("court.la_mural", "Mural Court", "Painted tiles in front of the block's biggest mural.",
+              "#E9C46A", "#264653", "#E76F51", "#264653", "#2A9D8F", 0.55f, FloorStyle.Tiles, StandsStyle.Brick);
+            W("court.la_taco", "Taco Truck Lot", "The lot behind the taco truck. Winners eat first.",
+              "#5B5B66", "#FFFFFF", "#F77F00", "#3D348B", "#F18701", 0.45f, FloorStyle.Asphalt, StandsStyle.Fence);
+            // Las Vegas.
+            W("court.lv_marquee", "Marquee Roof", "A neon grid on the roof under the biggest marquee on the Strip.",
+              "#1A1A2E", "#00F0FF", "#FF2E88", "#0B0B1A", "#7209B7", 0.6f, FloorStyle.NeonGrid, StandsStyle.Crowd);
+            W("court.lv_fountain", "Fountain Plaza", "Tiles between the fountains. The water dances when you score.",
+              "#CDB4DB", "#14141F", "#4CC9F0", "#14082B", "#F72585", 0.6f, FloorStyle.Tiles, StandsStyle.Crowd);
+            W("court.lv_stage", "The Stage", "A sprung maple stage under the lights, a crowd on one side.",
+              "#C68E52", "#14141F", "#F72585", "#14082B", "#FFD166", 0.85f, FloorStyle.Hardwood, StandsStyle.Crowd);
+            W("court.lv_desert", "Desert Lot", "Painted dirt-lot asphalt among the cactus. Bring water.",
+              "#9C6644", "#FFF1D6", "#BC4749", "#F4A261", "#E76F51", 0.35f, FloorStyle.Asphalt, StandsStyle.Fence);
+            W("court.lv_motel", "Motel Pool Court", "Tiles by the motel pool. The vacancy sign buzzes all night.",
+              "#90E0EF", "#03045E", "#FF006E", "#03045E", "#FF8FAB", 0.4f, FloorStyle.Tiles, StandsStyle.Fence);
+            W("court.lv_neonyard", "Neon Yard", "Among the old signs in the yard, still glowing.",
+              "#2B2D42", "#FFD60A", "#F72585", "#10002B", "#FF8C42", 0.45f, FloorStyle.NeonGrid, StandsStyle.Fence);
+            // The Bay.
+            W("court.bay_painted", "Painted Ladies Park", "Rubber in the park below the painted houses.",
+              "#C1666B", "#FFFFFF", "#4A6FA5", "#A8DADC", "#F1FAEE", 0.5f, FloorStyle.Rubber, StandsStyle.Crowd);
+            W("court.bay_cable", "Cable Car Court", "On the brick plaza where the cable car turns. The bell is the buzzer.",
+              "#6C757D", "#F8F9FA", "#C1121F", "#1D3557", "#8D99AE", 0.55f, FloorStyle.Asphalt, StandsStyle.Brick);
+            W("court.bay_bridge", "Bridge View", "Maple on the waterfront with the red bridge behind the hoop, fog rolling in.",
+              "#C8A27A", "#1D3557", "#E63946", "#8D99AE", "#EDF2F4", 0.6f, FloorStyle.Hardwood, StandsStyle.Crowd);
+            W("court.bay_freeway", "Under The Freeway", "Concrete under the freeway, the pillars painted by the whole block.",
+              "#5A5A64", "#FFD60A", "#2EC4B6", "#22223B", "#FF9F1C", 0.55f, FloorStyle.Asphalt, StandsStyle.Brick);
+            W("court.bay_port", "Port Cranes", "By the water under the container cranes. The whole Town shows up.",
+              "#4A4E69", "#F2E9E4", "#FFB703", "#22223B", "#E36414", 0.7f, FloorStyle.Asphalt, StandsStyle.Fence);
+            W("court.bay_lake", "Lakeside", "Green rubber by the lake, ducks for referees.",
+              "#2D6A4F", "#FFFFFF", "#FFD60A", "#74C69D", "#D8F3DC", 0.45f, FloorStyle.Rubber, StandsStyle.Crowd);
         }
 
         private static CourtDef Court(string id, string name, CourtCircuit circuit, string description,

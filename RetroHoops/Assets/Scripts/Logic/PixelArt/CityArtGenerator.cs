@@ -8,7 +8,7 @@ namespace CallerRetroBall.Logic.PixelArt
     /// the props (trees, streetlights, parked cars, chain-link fences, hoops...). Row 0 is the bottom, like every
     /// canvas in the game. Deterministic per seed.
     /// </summary>
-    public static class CityArtGenerator
+    public static partial class CityArtGenerator
     {
         public const int Tile = 16;
 
@@ -129,6 +129,10 @@ namespace CallerRetroBall.Logic.PixelArt
                     if (n < 0.06f) return RgbColor.FromHex("#E4EEF6");
                     return RgbColor.FromHex("#F4F8FB");
                 }
+                case CityGround.Brick:
+                case CityGround.Desert:
+                case CityGround.Rail:
+                    return WorldGround(map, g, tx, ty, x, y, px, py, n);
                 default: // interior wall, seen from above: a dark top with a lighter lip
                 {
                     bool lip = map.Get(tx, ty - 1) != CityGround.Wall && y < 3;
@@ -372,6 +376,7 @@ namespace CallerRetroBall.Logic.PixelArt
         /// <summary>A building: a flat roof (with a water tower or AC units) over a front wall of windows, the door and a sign.</summary>
         public static PixelCanvas Building(CityBuilding b, bool lit)
         {
+            if (b.Style >= CityDistricts.Brownstone) return WorldBuilding(b, lit); // 28 Oct 2026: the regions' buildings
             int w = b.W * Tile, h = b.H * Tile;
             var c = new PixelCanvas(w, h);
             int style = Math.Max(0, Math.Min(Wall.Length - 1, b.Style));
@@ -479,7 +484,7 @@ namespace CallerRetroBall.Logic.PixelArt
 
         // ------------------------------------------------------------------ props
 
-        private static readonly string[] CarColors = { "#D62828", "#1D4ED8", "#F2F2F2", "#E9C46A", "#2EC4B6", "#7209B7" };
+        private static readonly string[] CarColors = { "#D62828", "#1D4ED8", "#F2F2F2", "#E9C46A", "#2EC4B6", "#7209B7", /** 28 Oct 2026: a yellow cab, two lowriders */ "#FFD60A", "#5A189A", "#0B6E4F" };
 
         /// <summary>
         /// A prop's art. <paramref name="pivotX"/> / <paramref name="pivotY"/> (art pixels) is where it touches the ground,
@@ -489,6 +494,7 @@ namespace CallerRetroBall.Logic.PixelArt
         {
             pivotX = 0;
             pivotY = 0;
+            if (p.Kind >= CityPropKind.SubwayStairs) return WorldProp(p, lit, out pivotX, out pivotY); // 28 Oct 2026: the regions' props
             switch (p.Kind)
             {
                 case CityPropKind.Tree: return Tree(p.Variant, out pivotX, out pivotY);

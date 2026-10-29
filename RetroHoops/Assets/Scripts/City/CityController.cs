@@ -99,6 +99,7 @@ namespace CallerRetroBall.City
             if (firstTime && def != null) _hud.Toast(def.Name, 2.2f);
             // 17 Oct 2026: missions finished by walking in here (or by a drill best) pay out now.
             AnnounceMissions(CityMissions.Check(career));
+            StartWorld(career, catalog); // BALLER WORLD: the comic, the guide, achievements, side jobs
             App.SaveCareer();
         }
 
@@ -150,7 +151,7 @@ namespace CallerRetroBall.City
 
         private void Update()
         {
-            if (_leaving || _map == null) return;
+            if (_leaving || _map == null || Driving) return;
             float dt = Mathf.Min(Time.deltaTime, 0.05f);
             bool card = _hud.CardOpen;
 
@@ -196,13 +197,14 @@ namespace CallerRetroBall.City
                 if (!card && !_prompt.IsNone) Use(_prompt);
             }
 
+            UpdateWorld(dt);
             RefreshClock(force: false);
             _hud.SetHint(CityOnboarding.Hint(App.Career.city.onboarding));
         }
 
         private void LateUpdate()
         {
-            if (_map == null) return;
+            if (_map == null || Driving) return;
             float dt = Time.deltaTime;
             _meView.Sync(dt, _me.Position, _me.Facing, _me.Velocity.Magnitude > 0.3f, _me.Velocity.Magnitude, false, _reduceMotion);
 
@@ -230,6 +232,7 @@ namespace CallerRetroBall.City
                 _npcViews[i].Sync(dt, p, b.Body.Facing, moving, b.Body.Velocity.Magnitude, arms, _reduceMotion);
             }
             DrawLife(dt, halfW, halfH);
+            LateUpdateGuide();
         }
 
         private void RefreshClock(bool force)
@@ -259,6 +262,8 @@ namespace CallerRetroBall.City
             {
                 var npc = _npcs[p.Npc];
                 _talking = p.Npc;
+                if (_talkedThisVisit.Add(npc.Id)) CityAchievements.NoteTalk(World, _day);
+                if (TryTalkToGiver(npc)) { App.SaveCareer(); return; }
                 if (CityMissions.NoteTalk(career.city, npc.Id))
                 {
                     AnnounceMissions(CityMissions.Check(career));
@@ -354,6 +359,18 @@ namespace CallerRetroBall.City
                 case CityAction.StreetsBoard:
                     OpenStreetsBoard();
                     break;
+                case CityAction.Drive:
+                    StartDrive(a.ItemId);
+                    break;
+                case CityAction.WorldMap:
+                    OpenWorldMap();
+                    break;
+                case CityAction.AcceptJob:
+                    PickJob(a);
+                    break;
+                case CityAction.Comic:
+                    OpenComic();
+                    break;
                 default:
                     if (!string.IsNullOrEmpty(a.Detail)) _hud.Toast(a.Detail, 3f);
                     CloseCard();
@@ -413,11 +430,17 @@ namespace CallerRetroBall.City
             var menu = new CityActivity { Label = "MAIN MENU", Detail = "Your spot in the city is saved.", Action = CityAction.Info };
             var daily = new CityActivity { Label = "CITY CHALLENGES", Detail = "Three a day. $7,500 each, $15,000 more for all three.", Action = CityAction.Info };
             var map = new CityActivity { Label = "MAP", Detail = "Every district, and fast travel to the ones you've visited.", Action = CityAction.Info };
+            var comic = new CityActivity { Label = "THE COMIC", Detail = CityStory.Ticker(App.Career), Action = CityAction.Info };
+            var ach = new CityActivity { Label = Loc.T("ACHIEVEMENTS") + "  " + CityAchievements.DoneCount(World, _day) + "/" + CityAchievements.PerDay, Detail = "Six a day, a streak, and badges.", Action = CityAction.Info };
+            var world = new CityActivity { Label = "WORLD MAP", Detail = "Every region. Drive there in under 30 seconds.", Action = CityAction.Info };
             var weather = new CityActivity { Label = Loc.T("WEATHER") + ": " + Loc.T(s.weatherOff ? "OFF" : "ON"), Detail = "Rain, snow and wind in the city.", Action = CityAction.Info };
-            var list = new List<CityActivity> { resume, map, missions, daily, zoom, weather, battery, menu };
+            var list = new List<CityActivity> { resume, comic, ach, world, map, missions, daily, zoom, weather, battery, menu };
             _hud.ShowCard("BALLER CITY", null, list, a =>
             {
                 if (ReferenceEquals(a, map)) OpenMap();
+                else if (ReferenceEquals(a, comic)) OpenComic();
+                else if (ReferenceEquals(a, ach)) OpenAchievements();
+                else if (ReferenceEquals(a, world)) OpenWorldMap();
                 else if (ReferenceEquals(a, daily)) OpenDaily();
                 else if (ReferenceEquals(a, weather))
                 {
@@ -547,13 +570,14 @@ namespace CallerRetroBall.City
 
         private void OnApplicationPause(bool paused)
         {
-            if (paused && !_leaving && _map != null) SavePosition();
+            if (paused && !_leaving && _map != null && !Driving) SavePosition();
         }
 
         private void OnDestroy()
         {
             PowerMonitor.Gameplay = false;
             if (App.Career?.city != null && App.Career.city.fps30) App.ApplyFrameRate();
+            DestroyWorldOwned();
             if (_hud != null) Destroy(_hud.gameObject);
         }
     }

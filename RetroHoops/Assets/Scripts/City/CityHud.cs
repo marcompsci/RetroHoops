@@ -16,7 +16,7 @@ namespace CallerRetroBall.City
     /// Left-handed mirrors the sides; Large Buttons makes the buttons 25% bigger. Choice cards for courts, doors and
     /// people slide over the bottom of the screen.
     /// </summary>
-    public sealed class CityHud : MonoBehaviour
+    public sealed partial class CityHud : MonoBehaviour
     {
         public static readonly Color ActColor = new Color32(0xFF, 0xD1, 0x66, 255);
         public static readonly Color SprintColor = new Color32(0x3B, 0xD5, 0xFF, 255);
@@ -81,7 +81,7 @@ namespace CallerRetroBall.City
             _hint.rectTransform.anchorMax = new Vector2(0.95f, 1f);
             _hint.rectTransform.pivot = new Vector2(0.5f, 1f);
             _hint.rectTransform.sizeDelta = new Vector2(0f, 110f);
-            _hint.rectTransform.anchoredPosition = new Vector2(0f, -150f);
+            _hint.rectTransform.anchoredPosition = new Vector2(0f, -240f); // 28 Oct 2026: below the objective ticker
             UiKit.ApplyTextShadow(_hint);
 
             _toast = UiKit.Label(safe, "", 52f, Theme.Gold, TextAlignmentOptions.Center, true, "Toast");
@@ -126,6 +126,7 @@ namespace CallerRetroBall.City
             prt.sizeDelta = new Vector2(420f, 60f);
             prt.anchoredPosition = new Vector2(side * 200f * big, 250f * big + 175f * big);
             UiKit.ApplyTextShadow(_prompt);
+            BuildWorld(safe); // 28 Oct 2026 (BALLER WORLD): the guide, the errand clock
         }
 
         private static TouchActionButton MakeButton(RectTransform parent, string text, Color color, float size, Vector2 anchor, Vector2 pos, float alpha)
