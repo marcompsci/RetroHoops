@@ -31,6 +31,7 @@ namespace CallerRetroBall.City
         private Canvas _canvas;
         private TextMeshProUGUI _district, _time, _hint, _toast, _prompt;
         private float _toastUntil;
+        private bool _toastShown;
         private GameObject _card;
         private GameObject _controls;
         private string _lastPrompt;
@@ -207,7 +208,11 @@ namespace CallerRetroBall.City
 
         public void Toast(string text, float seconds = 1.6f)
         {
-            _toast.text = Loc.T(text);
+            string t = Loc.T(text);
+            // 28 Oct 2026 (Emil Kowalski audit): toasts rise and fade in (ease-out, 180 ms) instead of snapping on.
+            if (_toast.text != t || !_toastShown) UiMotion.Enter(_toast, UiMotion.Toast, new Vector2(0f, -14f), 0.98f);
+            _toast.text = t;
+            _toastShown = true;
             _toastUntil = Time.unscaledTime + seconds;
         }
 
@@ -224,7 +229,13 @@ namespace CallerRetroBall.City
 
         private void Update()
         {
-            if (_toast.text.Length > 0 && Time.unscaledTime > _toastUntil) _toast.text = "";
+            if (_toastShown && Time.unscaledTime > _toastUntil)
+            {
+                // Out quicker than in, and it drifts on up the way it came.
+                _toastShown = false;
+                UiTween.Run(_toast.gameObject, UiMotion.ToastOut, UiMotion.Out, null, new UiTween.State { Alpha = 0f, Offset = new Vector2(0f, 10f), Scale = 1f },
+                            () => { if (!_toastShown) _toast.text = ""; });
+            }
         }
 
         // ------------------------------------------------------------------ cards
@@ -235,6 +246,7 @@ namespace CallerRetroBall.City
         /// </summary>
         public void ShowCard(string title, string line, IList<CityActivity> choices, Action<CityActivity> picked, Action closed)
         {
+            bool replacing = _card != null; // going from one card to the next: no entrance, it just changes
             CloseCard(false);
             SetControlsVisible(false);
             var root = UiKit.NewRect("Card", _canvas.transform);
@@ -280,6 +292,13 @@ namespace CallerRetroBall.City
                         UiKit.Size(UiKit.Label(column, detail, 28f, locked ? Theme.Muted : Theme.Cream, TextAlignmentOptions.Center, false), 64f);
                 }
             UiKit.Button(column, "CLOSE", () => { CloseCard(true); closed?.Invoke(); }, ButtonStyle.Ghost, 104f, 40f);
+            if (!replacing)
+            {
+                // 28 Oct 2026 (Emil Kowalski audit): the card is a sheet, so it rises from the bottom edge by its own
+                // height on the iOS drawer curve while the scrim fades in (was: everything snapping on at once).
+                UiMotion.Enter(panel, UiMotion.Sheet, new Vector2(0f, -(height + 24f)), 1f, UiMotion.Drawer);
+                UiMotion.Enter(scrim, UiMotion.Modal, Vector2.zero);
+            }
         }
 
         /// <summary>One district on the city MAP.</summary>
@@ -358,7 +377,13 @@ namespace CallerRetroBall.City
 
         public void CloseCard(bool showControls = true)
         {
-            if (_card != null) Destroy(_card);
+            // A real close (back to walking) fades the card away quickly (140 ms, quicker than it came in); a card being
+            // replaced by the next one, or the scene leaving, goes at once.
+            if (_card != null)
+            {
+                if (showControls) UiMotion.ExitAndDestroy(_card, UiMotion.ModalOut, new Vector2(0f, -24f));
+                else Destroy(_card);
+            }
             _card = null;
             if (showControls) SetControlsVisible(true);
         }

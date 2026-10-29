@@ -47,6 +47,7 @@ namespace CallerRetroBall.City
         private Canvas _canvas;
         private int _lastMisses, _lastBumps;
         private float _bannerUntil;
+        private bool _bannerShown;
         // 28 Oct 2026: the cities along the road (buildings, cross streets, exit signs, state lines, mile markers).
         private const float BuildingPpu = 16f / DriveScenery.TileUnits;
         private List<DriveFeature> _scenery;
@@ -319,9 +320,15 @@ namespace CallerRetroBall.City
                 bool record = _routeBest <= 0f || _drive.Time < _routeBest;
                 Banner(Loc.T("ARRIVED") + "  " + _drive.Time.ToString("0.0") + " s" + (record ? "\n" + Loc.T("NEW ROUTE RECORD!") : _drive.Bumps == 0 ? "\n" + Loc.T("CLEAN DRIVE!") : ""), 3f);
             }
-            if (_banner.text.Length > 0 && Time.unscaledTime > _bannerUntil) _banner.text = "";
-            _time.text = _drive.Time.ToString("0.0") + " s" + (_routeBest > 0f ? "  ·  " + Loc.T("BEST") + " " + _routeBest.ToString("0.0") : "") + (_easy ? "  ·  " + Loc.T("EASY") : "");
-            _speed.text = _drive.Mph + " MPH" + (_drive.Boosting ? "  " + Loc.T("BOOST") : "");
+            if (_bannerShown && Time.unscaledTime > _bannerUntil)
+            {
+                _bannerShown = false;
+                UiTween.Run(_banner.gameObject, UiMotion.ToastOut, UiMotion.Out, null, new UiTween.State { Alpha = 0f, Offset = new Vector2(0f, 10f), Scale = 1f },
+                            () => { if (!_bannerShown) _banner.text = ""; });
+            }
+            // Fixed-width digits so the clock and the speed don't shake as they count.
+            _time.text = UiMotion.Tabular(_drive.Time.ToString("0.0")) + " s" + (_routeBest > 0f ? "  ·  " + Loc.T("BEST") + " " + _routeBest.ToString("0.0") : "") + (_easy ? "  ·  " + Loc.T("EASY") : "");
+ _speed.text = UiMotion.Tabular(_drive.Mph.ToString().PadLeft(3)) + " MPH" + (_drive.Boosting ? "  " + Loc.T("BOOST") : "");
             _misses.text = Loc.T("NEAR MISSES") + " " + _drive.NearMisses;
             _progress.anchorMax = new Vector2(_drive.Progress, 1f);
             _boostFill.anchorMax = new Vector2(_drive.Boost, 1f);
@@ -329,6 +336,9 @@ namespace CallerRetroBall.City
 
         private void Banner(string text, float seconds)
         {
+            // 28 Oct 2026 (Emil Kowalski audit): banners rise and fade in, then drift out (they snapped on and off).
+            if (!_bannerShown || _banner.text != text) UiMotion.Enter(_banner, UiMotion.Toast, new Vector2(0f, -14f), 0.96f);
+            _bannerShown = true;
             _banner.text = text;
             _bannerUntil = Time.unscaledTime + seconds;
         }

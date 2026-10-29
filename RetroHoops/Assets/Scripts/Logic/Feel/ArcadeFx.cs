@@ -112,6 +112,8 @@ namespace CallerRetroBall.Logic
     public static class ScreenWipe
     {
         public const float Seconds = 0.32f;
+        /// <summary>28 Oct 2026: the wipe's real timing (eased, quicker): covering 0.26 s, uncovering 0.24 s.</summary>
+        public const float CoverSeconds = 0.26f, RevealSeconds = 0.24f;
         private static readonly int[] Bayer4 = { 0, 8, 2, 10, 12, 4, 14, 6, 3, 11, 1, 9, 15, 7, 13, 5 };
 
         /// <summary>

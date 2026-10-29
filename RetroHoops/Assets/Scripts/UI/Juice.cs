@@ -4,58 +4,75 @@ using UnityEngine.EventSystems;
 
 namespace CallerRetroBall.UI
 {
-    /// <summary>Buttons squash on press and spring back on release (off with Reduce Motion).</summary>
+    /// <summary>
+    /// Buttons press in a little and come straight back (off with Reduce Motion).
+    /// 28 Oct 2026 (Emil Kowalski audit): the press is a subtle 0.96, not 0.92, and the release no longer overshoots:
+    /// a bounce on every tap reads as a gimmick on something you press hundreds of times. A stiff, critically damped
+    /// spring settles in about 120 ms and can be interrupted mid-press without a jump.
+    /// </summary>
     public sealed class ButtonPop : MonoBehaviour, IPointerDownHandler, IPointerUpHandler, IPointerExitHandler
     {
+        private const float Pressed = 0.96f;
+        private const float Stiffness = 1100f;
+        private static readonly float Damping = 2f * Mathf.Sqrt(Stiffness); // critically damped: no overshoot
+
         private float _target = 1f;
         private float _scale = 1f;
         private float _velocity;
 
-        private static bool Calm => App.Career != null && App.Career.settings.reduceMotion;
-
-        public void OnPointerDown(PointerEventData e) => _target = Calm ? 1f : 0.92f;
-        public void OnPointerUp(PointerEventData e) => Release();
+        public void OnPointerDown(PointerEventData e) => _target = UiMotion.Reduced ? 1f : Pressed;
+        public void OnPointerUp(PointerEventData e) => _target = 1f;
         public void OnPointerExit(PointerEventData e) => _target = 1f;
 
-        private void Release()
+        private void OnDisable()
         {
-            _target = 1f;
-            if (!Calm) _velocity = 6f; // overshoot a little: a springy "pop"
+            _target = _scale = 1f;
+            _velocity = 0f;
+            transform.localScale = Vector3.one;
         }
 
         private void Update()
         {
-            if (Mathf.Approximately(_scale, _target) && Mathf.Abs(_velocity) < 0.01f) return;
+            if (Mathf.Approximately(_scale, _target) && Mathf.Abs(_velocity) < 0.001f) return;
             float dt = Mathf.Min(Time.unscaledDeltaTime, 0.05f);
-            // Critically-damped-ish spring.
-            _velocity += (_target - _scale) * 260f * dt;
-            _velocity *= Mathf.Exp(-18f * dt);
-            _scale += _velocity * dt;
-            if (Mathf.Abs(_scale - _target) < 0.001f && Mathf.Abs(_velocity) < 0.01f) { _scale = _target; _velocity = 0f; }
+            // Two half-steps keep the stiff spring stable at 30 fps.
+            for (int i = 0; i < 2; i++)
+            {
+                float h = dt * 0.5f;
+                float accel = (_target - _scale) * Stiffness - _velocity * Damping;
+                _velocity += accel * h;
+                _scale += _velocity * h;
+            }
+            if (Mathf.Abs(_scale - _target) < 0.0005f && Mathf.Abs(_velocity) < 0.01f) { _scale = _target; _velocity = 0f; }
             transform.localScale = new Vector3(_scale, _scale, 1f);
         }
     }
 
-    /// <summary>Panels grow in from 90% with a short ease-out when they open (off with Reduce Motion).</summary>
+    /// <summary>
+    /// Modal panels (menus, dialogs) fade in from 97% with the strong ease-out, and their scrim fades in under them.
+    /// 28 Oct 2026 (Emil Kowalski audit): was a 90% scale-only pop with the scrim snapping on; menus open tens of times
+    /// a session, so the entrance is now quieter (97%, 200 ms) and centred, as a modal should be. Reduce Motion: fade only.
+    /// </summary>
     public sealed class OverlayPop : MonoBehaviour
     {
-        private const float Seconds = 0.14f;
-        private float _start;
-
         private void OnEnable()
         {
-            _start = Time.unscaledTime;
-            if (App.Career != null && App.Career.settings.reduceMotion) { enabled = false; return; }
-            transform.localScale = new Vector3(0.9f, 0.9f, 1f);
+            UiMotion.Enter(this, UiMotion.Modal, Vector2.zero, 0.97f);
+            // The scrim behind the panel (a sibling or a sibling of a parent named "Scrim") fades in with it.
+            var scrim = FindScrim();
+            if (scrim != null) UiMotion.Enter(scrim, UiMotion.Modal * 0.8f, Vector2.zero, 1f);
+            enabled = false;
         }
 
-        private void Update()
+        private Transform FindScrim()
         {
-            float t = Mathf.Clamp01((Time.unscaledTime - _start) / Seconds);
-            float e = 1f - (1f - t) * (1f - t) * (1f - t);
-            float s = Mathf.Lerp(0.9f, 1f, e);
-            transform.localScale = new Vector3(s, s, 1f);
-            if (t >= 1f) enabled = false;
+            for (var t = transform.parent; t != null; t = t.parent)
+            {
+                var s = t.Find("Scrim");
+                if (s != null) return s;
+                if (t.GetComponent<Canvas>() != null) break;
+            }
+            return null;
         }
     }
 }

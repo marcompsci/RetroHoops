@@ -30,7 +30,7 @@ namespace CallerRetroBall.City
             public Action<string, string> Drive, Spawn;
             public Action Closed;
             public string Footer;
-            // I26 pins, I29 label size, Reduce Motion.
+            // I26 pins, I29 label size, Reduce UiMotion.
             public List<MapPin> Pins = new List<MapPin>();
             public Func<MapPinKind, bool> PinShown;
             public int LabelSize = 1;
@@ -247,8 +247,8 @@ namespace CallerRetroBall.City
             side.pivot = new Vector2(1f, 0.5f);
             side.sizeDelta = new Vector2(150f, 650f);
             side.anchoredPosition = new Vector2(-20f, 0f);
-            AddSideButton(side, "+", 0, () => ZoomAround(1.6f, ViewCenter()));
-            AddSideButton(side, "-", 1, () => ZoomAround(1f / 1.6f, ViewCenter()));
+            AddSideButton(side, "+", 0, () => ZoomAround(1.6f, ViewCenter(), glide: true));
+            AddSideButton(side, "-", 1, () => ZoomAround(1f / 1.6f, ViewCenter(), glide: true));
             AddSideButton(side, "ME", 2, () => FrameRect(WorldAtlas.Frame(WorldRegions.RegionOf(_model.Here).Id), centerOn: _youAt));
             AddSideButton(side, "ALL", 3, () => FrameRect(new MapRect(0f, 0f, WorldAtlas.Width, WorldAtlas.Height)));
             AddSideButton(side, "PINS", 4, () => _showPins = !_showPins);
@@ -314,8 +314,9 @@ namespace CallerRetroBall.City
             var size = _viewport.rect.size;
             _minZoom = Mathf.Min(size.x / WorldAtlas.Width, size.y / WorldAtlas.Height) * 0.95f;
             _maxZoom = Mathf.Max(_minZoom * 4f, size.x / 110f);
-            if (_model.Focus != null) FrameRect(WorldAtlas.Frame(_model.Focus), centerOn: _model.Focus == WorldRegions.RegionOf(_model.Here).Id ? _youAt : (Vector2?)null);
-            else FrameRect(new MapRect(0f, 0f, WorldAtlas.Width, WorldAtlas.Height));
+            // Opening lands straight on the place (no glide): the map card itself fades in.
+            if (_model.Focus != null) FrameRect(WorldAtlas.Frame(_model.Focus), centerOn: _model.Focus == WorldRegions.RegionOf(_model.Here).Id ? _youAt : (Vector2?)null, glide: false);
+            else FrameRect(new MapRect(0f, 0f, WorldAtlas.Width, WorldAtlas.Height), glide: false);
         }
 
         // ------------------------------------------------------------------ every frame
@@ -372,6 +373,7 @@ namespace CallerRetroBall.City
                 if (kb.upArrowKey.isPressed || kb.wKey.isPressed) move.y -= 1f;
                 if (kb.downArrowKey.isPressed || kb.sKey.isPressed) move.y += 1f;
                 if (move != Vector2.zero) PanBy(move * 900f * Time.unscaledDeltaTime);
+                // Keyboard zoom is instant: a key pressed again and again shouldn't wait on an animation.
                 if (kb.equalsKey.wasPressedThisFrame || kb.numpadPlusKey.wasPressedThisFrame) ZoomAround(1.6f, ViewCenter());
                 if (kb.minusKey.wasPressedThisFrame || kb.numpadMinusKey.wasPressedThisFrame) ZoomAround(1f / 1.6f, ViewCenter());
             }
@@ -380,6 +382,7 @@ namespace CallerRetroBall.City
 
         private void LateUpdate()
         {
+            StepMotion(Mathf.Min(Time.unscaledDeltaTime, 0.05f));
             _content.localScale = new Vector3(_zoom, _zoom, 1f);
             _content.anchoredPosition = _pan;
             // Region names everywhere; district names once they're big enough to read.
@@ -397,7 +400,8 @@ namespace CallerRetroBall.City
                 img.enabled = show;
                 if (show) img.rectTransform.anchoredPosition = _pan + at * _zoom;
             }
-            float pulse = _model.ReduceMotion ? 1f : 1f + Mathf.Sin(Time.unscaledTime * 5f) * 0.12f;
+            // YOU breathes slowly so you can find yourself; the district frames stay still (constant pulsing is noise).
+            float pulse = _model.ReduceMotion ? 1f : 1f + Mathf.Sin(Time.unscaledTime * 3f) * 0.06f;
             _you.rectTransform.anchoredPosition = _pan + _youAt * _zoom;
             _you.rectTransform.localScale = new Vector3(pulse, pulse, 1f);
             string hereOutside = CityAtlas.Outside(_model.Here);
@@ -406,12 +410,26 @@ namespace CallerRetroBall.City
                 var r = WorldRegions.RegionOf(kv.Key);
                 Color baseColor = Hex(r.Primary);
                 if (kv.Key == _selected) kv.Value.color = Color.white;
-                else if (kv.Key == hereOutside) kv.Value.color = _model.ReduceMotion ? Theme.Gold : Color.Lerp(baseColor, Color.white, 0.5f + Mathf.Sin(Time.unscaledTime * 4f) * 0.5f);
+                else if (kv.Key == hereOutside) kv.Value.color = Theme.Gold;
                 else kv.Value.color = baseColor;
             }
         }
 
         // ------------------------------------------------------------------ zoom and pan
+        // 28 Oct 2026 (Emil Kowalski audit): the map moves like something physical.
+        // - The zoom buttons, ME and ALL glide there (300 ms strong ease-in-out) instead of jumping a frame.
+        // - A drag that's let go keeps its momentum and slows with friction (a flick is enough to travel).
+        // - Dragging past the edge stretches with growing resistance and springs back, instead of a hard wall.
+        // - Touching the map stops any glide or fling at once (interruptible).
+
+        private bool _gliding;
+        private float _glideStart, _glideSeconds;
+        private float _glideFromZoom, _glideToZoom;
+        private Vector2 _glideFromPan, _glideToPan;
+        private Vector2 _fling, _dragVelocity;
+        private float _lastDragAt;
+        private bool _dragging;
+        private const float Stretch = 140f; // how far the map can be pulled past its edge
 
         private Vector2 ViewCenter() => _viewport.rect.size * 0.5f;
 
@@ -420,39 +438,109 @@ namespace CallerRetroBall.City
         private bool ToLocal(Vector2 screen, Camera cam, out Vector2 local) =>
             RectTransformUtility.ScreenPointToLocalPointInRectangle(_viewport, screen, cam, out local);
 
-        private void ZoomAround(float factor, Vector2 local)
+        /// <summary>Zooms about a point on screen: gliding (buttons, keys) or at once (pinch, scroll).</summary>
+        private void ZoomAround(float factor, Vector2 local, bool glide = false)
         {
-            float z = Mathf.Clamp(_zoom * factor, _minZoom, _maxZoom);
-            var mapPt = ScreenToMap(local);
-            _zoom = z;
-            _pan = local - mapPt * _zoom;
-            ClampPan();
+            float from = _gliding ? _glideToZoom : _zoom;
+            Vector2 fromPan = _gliding ? _glideToPan : _pan;
+            float z = Mathf.Clamp(from * factor, _minZoom, _maxZoom);
+            var mapPt = (local - fromPan) / from;
+            var pan = Clamped(local - mapPt * z, z);
+            if (glide) GlideTo(z, pan);
+            else { StopMotion(); _zoom = z; _pan = pan; }
+        }
+
+        /// <summary>Moves by a finger's delta; past the edge it stretches with resistance (a rubber band).</summary>
+        private void DragBy(Vector2 delta)
+        {
+            var target = _pan + delta;
+            var clamped = Clamped(target, _zoom);
+            for (int axis = 0; axis < 2; axis++)
+            {
+                float over = target[axis] - clamped[axis];
+                if (Mathf.Abs(over) < 0.01f) continue;
+                // Only part of the finger's movement past the edge gets through, less the further it's pulled.
+                float already = _pan[axis] - Clamped(_pan, _zoom)[axis];
+                float resistance = 1f / (1f + Mathf.Abs(already) / Stretch);
+                target[axis] = _pan[axis] + delta[axis] * 0.55f * resistance;
+            }
+            _pan = target;
         }
 
         private void PanBy(Vector2 delta)
         {
-            _pan += delta;
-            ClampPan();
+            StopMotion();
+            _pan = Clamped(_pan + delta, _zoom);
         }
 
-        private void FrameRect(MapRect r, Vector2? centerOn = null)
+        private void FrameRect(MapRect r, Vector2? centerOn = null, bool glide = true)
         {
             var size = _viewport.rect.size;
             // Leave room for the title bar and the footer.
             float usableH = Mathf.Max(200f, size.y - 380f);
-            _zoom = Mathf.Clamp(Mathf.Min(size.x / r.W, usableH / r.H), _minZoom, _maxZoom);
+            float z = Mathf.Clamp(Mathf.Min(size.x / r.W, usableH / r.H), _minZoom, _maxZoom);
             var c = centerOn ?? new Vector2(r.CenterX, r.CenterY);
-            _pan = new Vector2(size.x * 0.5f, 210f + usableH * 0.5f) - c * _zoom;
-            ClampPan();
+            var pan = Clamped(new Vector2(size.x * 0.5f, 210f + usableH * 0.5f) - c * z, z);
+            if (glide) GlideTo(z, pan);
+            else { StopMotion(); _zoom = z; _pan = pan; }
         }
 
-        private void ClampPan()
+        private void GlideTo(float zoom, Vector2 pan, float seconds = UiMotion.Move)
+        {
+            _fling = Vector2.zero;
+            if (UiMotion.Reduced) { _gliding = false; _zoom = zoom; _pan = pan; return; } // no camera movement with Reduce Motion
+            _gliding = true;
+            _glideStart = Time.unscaledTime;
+            _glideSeconds = seconds;
+            _glideFromZoom = _zoom;
+            _glideFromPan = _pan;
+            _glideToZoom = zoom;
+            _glideToPan = pan;
+        }
+
+        private void StopMotion()
+        {
+            _gliding = false;
+            _fling = Vector2.zero;
+        }
+
+        /// <summary>The glide, the fling's momentum and the spring back from a stretched edge, every frame.</summary>
+        private void StepMotion(float dt)
+        {
+            if (_gliding)
+            {
+                float t = Mathf.Clamp01((Time.unscaledTime - _glideStart) / _glideSeconds);
+                float e = UiMotion.InOut(t);
+                // Zoom moves in log space so it feels even at every scale; the pan follows the same curve.
+                _zoom = Mathf.Exp(Mathf.Lerp(Mathf.Log(_glideFromZoom), Mathf.Log(_glideToZoom), e));
+                _pan = Vector2.LerpUnclamped(_glideFromPan, _glideToPan, e);
+                if (t >= 1f) _gliding = false;
+                return;
+            }
+            if (_dragging || _pointers.Count > 0) return;
+            if (_fling.sqrMagnitude > 900f)
+            {
+                _pan += _fling * dt;
+                _fling *= Mathf.Exp(-4.5f * dt); // friction
+                var c = Clamped(_pan, _zoom);
+                // Hitting the edge soaks up the momentum on that axis.
+                if (Mathf.Abs(c.x - _pan.x) > Stretch * 0.3f) _fling.x = 0f;
+                if (Mathf.Abs(c.y - _pan.y) > Stretch * 0.3f) _fling.y = 0f;
+            }
+            else _fling = Vector2.zero;
+            // Spring back inside the edges (ease-out like, frame-rate independent).
+            var inside = Clamped(_pan, _zoom);
+            if ((inside - _pan).sqrMagnitude > 0.01f) _pan = Vector2.Lerp(_pan, inside, 1f - Mathf.Exp(-14f * dt));
+        }
+
+        private Vector2 Clamped(Vector2 pan, float zoom)
         {
             var size = _viewport.rect.size;
-            float w = WorldAtlas.Width * _zoom, h = WorldAtlas.Height * _zoom;
+            float w = WorldAtlas.Width * zoom, h = WorldAtlas.Height * zoom;
             const float slack = 160f;
-            _pan.x = w + slack * 2f < size.x ? (size.x - w) * 0.5f : Mathf.Clamp(_pan.x, size.x - w - slack, slack);
-            _pan.y = h + slack * 2f < size.y ? (size.y - h) * 0.5f : Mathf.Clamp(_pan.y, size.y - h - slack - 150f, slack + 210f);
+            pan.x = w + slack * 2f < size.x ? (size.x - w) * 0.5f : Mathf.Clamp(pan.x, size.x - w - slack, slack);
+            pan.y = h + slack * 2f < size.y ? (size.y - h) * 0.5f : Mathf.Clamp(pan.y, size.y - h - slack - 150f, slack + 210f);
+            return pan;
         }
 
         // ------------------------------------------------------------------ gestures
@@ -460,6 +548,7 @@ namespace CallerRetroBall.City
         public void OnPointerDown(PointerEventData e)
         {
             if (!ToLocal(e.position, e.pressEventCamera, out var local)) return;
+            StopMotion(); // a touch catches the map
             _pointers[e.pointerId] = local;
             if (_pointers.Count == 1)
             {
@@ -467,6 +556,8 @@ namespace CallerRetroBall.City
                 _tapStart = local;
                 _tapTime = Time.unscaledTime;
                 _moved = 0f;
+                _dragVelocity = Vector2.zero;
+                _lastDragAt = Time.unscaledTime;
             }
             else _multi = true;
         }
@@ -477,9 +568,15 @@ namespace CallerRetroBall.City
             if (!ToLocal(e.position, e.pressEventCamera, out var local)) return;
             _pointers[e.pointerId] = local;
             _moved += (local - prev).magnitude;
+            _dragging = true;
             if (_pointers.Count == 1)
             {
-                PanBy(local - prev);
+                var delta = local - prev;
+                DragBy(delta);
+                // The finger's speed, smoothed over the last few frames, for the fling.
+                float dt = Mathf.Max(0.004f, Time.unscaledTime - _lastDragAt);
+                _lastDragAt = Time.unscaledTime;
+                _dragVelocity = Vector2.Lerp(_dragVelocity, delta / dt, 0.35f);
                 return;
             }
             // Pinch: the two first fingers; zoom by how far apart they've moved, pan by how their middle moved.
@@ -489,13 +586,22 @@ namespace CallerRetroBall.City
             var midBefore = (prev + other) * 0.5f;
             var midAfter = (local + other) * 0.5f;
             if (before > 10f) ZoomAround(after / before, midBefore);
-            PanBy(midAfter - midBefore);
+            DragBy(midAfter - midBefore);
+            _dragVelocity = Vector2.zero; // no fling out of a pinch
         }
 
         public void OnPointerUp(PointerEventData e)
         {
             bool tap = _pointers.Count == 1 && !_multi && _moved < 24f && Time.unscaledTime - _tapTime < 0.5f;
+            bool last = _pointers.Count == 1;
             _pointers.Remove(e.pointerId);
+            if (last)
+            {
+                _dragging = false;
+                // A flick: keep going if the finger was still moving when it lifted (not after a pause).
+                bool moving = Time.unscaledTime - _lastDragAt < 0.08f;
+                if (!tap && !_multi && moving && !UiMotion.Reduced && _dragVelocity.magnitude > 300f) _fling = Vector2.ClampMagnitude(_dragVelocity, 6000f);
+            }
             if (tap && ToLocal(e.position, e.pressEventCamera, out var local)) Tap(local);
         }
 
@@ -520,9 +626,12 @@ namespace CallerRetroBall.City
             Audio.AudioManager.Click();
         }
 
+        private bool _sheetWasOpen;
+
         private void ShowSheet(MapChoice c)
         {
-            CloseSheet();
+            _sheetWasOpen = _sheet != null;
+            if (_sheet != null) { Destroy(_sheet.gameObject); _sheet = null; }
             _selected = c.District;
             var root = (RectTransform)transform;
             _sheet = UiKit.NewRect("Sheet", root);
@@ -530,6 +639,8 @@ namespace CallerRetroBall.City
             _sheet.anchorMax = new Vector2(1f, 0f);
             _sheet.pivot = new Vector2(0.5f, 0f);
             _sheet.sizeDelta = new Vector2(0f, 560f);
+            // The sheet rises by its own height on the drawer curve (a new pick while one's open just swaps it).
+            if (!_sheetWasOpen) UiMotion.Enter(_sheet, UiMotion.Sheet, new Vector2(0f, -560f), 1f, UiMotion.Drawer);
             var bg = UiKit.Panel(_sheet, new Color(0.05f, 0.05f, 0.1f, 0.96f), name: "SheetBg");
             UiKit.Stretch(bg.rectTransform);
             bg.raycastTarget = true;
@@ -574,7 +685,7 @@ namespace CallerRetroBall.City
 
         private void CloseSheet()
         {
-            if (_sheet != null) Destroy(_sheet.gameObject);
+            if (_sheet != null) UiMotion.ExitAndDestroy(_sheet.gameObject, UiMotion.SheetOut, new Vector2(0f, -200f));
             _sheet = null;
             _selected = null;
         }

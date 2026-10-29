@@ -135,7 +135,7 @@ namespace CallerRetroBall.City
             if (inside)
             {
                 // Over the target, pointing down at it, bobbing.
-                pos = local + new Vector2(0f, 90f + Mathf.Sin(Time.unscaledTime * 6f) * 10f);
+                pos = local + new Vector2(0f, 90f + (UiMotion.Reduced ? 0f : Mathf.Sin(Time.unscaledTime * 4f) * 6f)); // a gentle bob (none with Reduce Motion)
                 angle = 180f;
             }
             else
@@ -154,7 +154,7 @@ namespace CallerRetroBall.City
 
         public void SetTimer(string text)
         {
-            text = text ?? "";
+            text = UiMotion.Tabular(text ?? ""); // the errand clock counts down without jittering
             if (_timer.text != text) _timer.text = text;
         }
 
@@ -183,9 +183,13 @@ namespace CallerRetroBall.City
             var page = UiKit.NewRect("Page", safe);
             UiKit.Band(page, 0.2f, 0.85f, 36f);
             int index = 0;
+            UiMotion.Enter(scrim, UiMotion.Modal, Vector2.zero); // the comic opens over a fading scrim
             void Show()
             {
                 for (int i = page.childCount - 1; i >= 0; i--) Destroy(page.GetChild(i).gameObject);
+                // 28 Oct 2026 (Emil Kowalski audit): a page turn slides the new page in from the right and fades it up
+                // (160 ms ease-out) instead of swapping in a single frame.
+                UiMotion.Enter(page, UiMotion.Page, new Vector2(28f, 0f));
                 var p = panels[index];
                 // The panel: a black border round the backdrop (120:72).
                 var frame = UiKit.Panel(page, new Color32(0x14, 0x14, 0x1F, 255), name: "Frame");
@@ -353,6 +357,7 @@ namespace CallerRetroBall.City
             UiKit.Stretch(root);
             _card = root.gameObject;
             WorldMapView.Create(root, model);
+            UiMotion.Enter(root, UiMotion.Modal, Vector2.zero, 0.98f);
         }
 
         private void OnDestroy()

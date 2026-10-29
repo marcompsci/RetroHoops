@@ -132,7 +132,7 @@ namespace CallerRetroBall.Core
                 while (t < FadeSeconds)
                 {
                     t += Time.unscaledDeltaTime;
-                    _fade.alpha = Mathf.Lerp(from, to, t / FadeSeconds);
+                    _fade.alpha = Mathf.Lerp(from, to, UI.UiMotion.Out(t / FadeSeconds));
                     yield return null;
                 }
                 _fade.alpha = to;
@@ -140,12 +140,16 @@ namespace CallerRetroBall.Core
             }
             // Pixel wipe: blocks sweep in (or back out) in a dithered diagonal.
             _fade.alpha = 1f;
+            // 28 Oct 2026 (Emil Kowalski audit): the wipe was 0.32 s linear both ways. Covering is movement across the
+            // screen (strong ease-in-out, 0.26 s); uncovering answers you (strong ease-out, a touch quicker at 0.24 s).
             float w = 0f;
-            float seconds = Logic.ScreenWipe.Seconds;
+            bool covering = to > from;
+            float seconds = covering ? Logic.ScreenWipe.CoverSeconds : Logic.ScreenWipe.RevealSeconds;
             while (w < seconds)
             {
                 w += Time.unscaledDeltaTime;
-                SetWipe(Mathf.Lerp(from, to, w / seconds));
+                float k = Mathf.Clamp01(w / seconds);
+                SetWipe(Mathf.Lerp(from, to, covering ? UI.UiMotion.InOut(k) : UI.UiMotion.Out(k)));
                 yield return null;
             }
             SetWipe(to);

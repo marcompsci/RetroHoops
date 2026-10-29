@@ -91,7 +91,7 @@ namespace CallerRetroBall.Gameplay
             rt.pivot = new Vector2(left ? 0f : 1f, 0f);
             rt.anchoredPosition = new Vector2(left ? 24f : -24f, rt.anchoredPosition.y);
         }
-        private const float PunchSeconds = 0.3f;
+        private const float PunchSeconds = 0.24f;
 
         public static MatchHud Create(TeamDef a, TeamDef b)
         {
@@ -279,10 +279,11 @@ namespace CallerRetroBall.Gameplay
         {
             g.blocksRaycasts = false;
             float start = Time.unscaledTime;
-            while (g != null && Time.unscaledTime - start < 2.8f)
+            while (g != null && Time.unscaledTime - start < 2.6f)
             {
                 float t = Time.unscaledTime - start;
-                g.alpha = t < 0.15f ? t / 0.15f : t > 2.2f ? 1f - (t - 2.2f) / 0.6f : 1f;
+                // In 0.18 s, out 0.2 s, both on the strong ease-out (was 0.15 s in and a slow 0.6 s linear out).
+                g.alpha = t < 0.18f ? UiMotion.Out(t / 0.18f) : t > 2.4f ? 1f - UiMotion.Out((t - 2.4f) / 0.2f) : 1f;
                 yield return null;
             }
             if (g != null) Destroy(g.gameObject);
@@ -583,7 +584,7 @@ namespace CallerRetroBall.Gameplay
             while (true)
             {
                 float u = Mathf.Clamp01((Time.unscaledTime - start) / seconds);
-                float e = 1f - (1f - u) * (1f - u);
+                float e = UiMotion.Out(u);
                 label.text = "+" + Mathf.RoundToInt(sp * e) + " SP    +" + Mathf.RoundToInt(fans * e) + " FANS";
                 if (u >= 1f) yield break;
                 yield return null;
@@ -640,9 +641,15 @@ namespace CallerRetroBall.Gameplay
         /// <summary>Brief centre-screen callout ("STEAL!", "BALL!").</summary>
         public void Toast(string text, float seconds = 1.2f)
         {
-            _toast.text = Loc.T(text);
+            string t = Loc.T(text);
+            // Callouts rise and fade in, and fade out instead of vanishing (audit).
+            if (!_toastShown || _toast.text != t) UiMotion.Enter(_toast, UiMotion.Toast, new Vector2(0f, -12f), 0.96f);
+            _toastShown = true;
+            _toast.text = t;
             _toastUntil = Time.unscaledTime + seconds;
         }
+
+        private bool _toastShown, _micHiding;
 
         private void Update()
         {
@@ -650,7 +657,12 @@ namespace CallerRetroBall.Gameplay
             if (_replayButton != null && _replayButton.activeSelf && Time.unscaledTime > _replayButtonUntil) _replayButton.SetActive(false);
             Punch(_scoreA, _punchA);
             Punch(_scoreB, _punchB);
-            if (_micPanel != null && _micPanel.gameObject.activeSelf && Time.unscaledTime > _micUntil) _micPanel.gameObject.SetActive(false);
+            if (_micPanel != null && _micPanel.gameObject.activeSelf && !_micHiding && Time.unscaledTime > _micUntil)
+            {
+                _micHiding = true;
+                UiTween.Run(_micPanel.gameObject, UiMotion.ToastOut, UiMotion.Out, null, new UiTween.State { Alpha = 0f, Offset = Vector2.zero, Scale = 1f },
+                            () => { _micHiding = false; if (_micPanel != null && Time.unscaledTime > _micUntil) _micPanel.gameObject.SetActive(false); });
+            }
             UpdateIntro();
         }
 
@@ -700,7 +712,7 @@ namespace CallerRetroBall.Gameplay
             if (_intro == null) return;
             float left = _introUntil - Time.unscaledTime;
             var group = _intro.GetComponent<CanvasGroup>() ?? _intro.AddComponent<CanvasGroup>();
-            group.alpha = Mathf.Clamp01(left / 0.4f);
+            group.alpha = UiMotion.Out(Mathf.Clamp01(left / 0.25f)); // a quicker, eased fade out (was 0.4 s linear)
             if (left <= 0f)
             {
                 Destroy(_intro);
@@ -714,14 +726,24 @@ namespace CallerRetroBall.Gameplay
             if (_micPanel == null || string.IsNullOrEmpty(line)) return;
             _micText.text = "<color=#4CC9F0>" + speaker + ":</color> " + Loc.T(line);
             _micUntil = Time.unscaledTime + 3f;
-            _micPanel.gameObject.SetActive(true);
+            if (!_micPanel.gameObject.activeSelf || _micHiding)
+            {
+                _micHiding = false;
+                _micPanel.gameObject.SetActive(true);
+                UiMotion.Enter(_micPanel, UiMotion.Toast, new Vector2(0f, 10f));
+            }
         }
 
-        /// <summary>Score bounce: pops to 140 % and settles back over 0.3 s.</summary>
+        /// <summary>
+        /// Score bump. 28 Oct 2026 (Emil Kowalski audit): it jumped straight to 140% on the frame you scored and shrank
+        /// back; on something that happens dozens of times a game that's loud. Now it rises to 115% over the first 60 ms
+        /// (strong ease-out) and settles in the rest of 0.24 s.
+        /// </summary>
         private static void Punch(TextMeshProUGUI label, float since)
         {
             float t = ReduceMotion ? 1f : (Time.unscaledTime - since) / PunchSeconds;
-            float scale = t >= 1f || t < 0f ? 1f : 1f + 0.4f * (1f - t) * (1f - t);
+            float bump = t >= 1f || t < 0f ? 0f : t < 0.25f ? UiMotion.Out(t / 0.25f) : 1f - UiMotion.Out((t - 0.25f) / 0.75f);
+            float scale = 1f + 0.15f * bump;
             label.rectTransform.localScale = new Vector3(scale, scale, 1f);
         }
 
@@ -775,7 +797,12 @@ namespace CallerRetroBall.Gameplay
                 _teamB.text = (m.OffenseTeam == 1 ? "• " : "") + m.Setup.TeamB.abbreviation;
             }
 
-            if (_toast.text.Length > 0 && Time.unscaledTime > _toastUntil) _toast.text = "";
+            if (_toastShown && Time.unscaledTime > _toastUntil)
+            {
+                _toastShown = false;
+                UiTween.Run(_toast.gameObject, UiMotion.ToastOut, UiMotion.Out, null, new UiTween.State { Alpha = 0f, Offset = new Vector2(0f, 8f), Scale = 1f },
+                            () => { if (!_toastShown) _toast.text = ""; });
+            }
         }
 
         // ------------------------------------------------------------------ 14 Oct 2026: quick chat (LIVE / two phones)
