@@ -33,7 +33,7 @@ namespace CallerRetroBall.Logic
                         (double)p.attrs.rebounding, (double)p.attrs.speed, (double)p.attrs.stamina, (double)p.attrs.clutch,
                         (double)p.age, (double)p.potential, (double)p.salary, (double)p.years, (double)p.team, p.prospect ? 1.0 : 0.0, (double)p.scout,
                         (double)p.seasons, (double)p.titles, (double)p.peak, (double)p.gp, (double)p.pts, (double)p.careerPts,
-                        (double)p.draftYear, (double)p.draftPick, p.created ? 1.0 : 0.0,
+                        (double)p.draftYear, (double)p.draftPick, p.created ? 1.0 : 0.0, (double)p.mood,
                     },
                 }),
                 ["season"] = new Dictionary<string, object>
@@ -61,7 +61,38 @@ namespace CallerRetroBall.Logic
                 ["awards"] = List(f.awards, a => new Dictionary<string, object> { ["y"] = a.year, ["k"] = a.kind, ["n"] = a.name, ["t"] = a.team, ["l"] = a.line }),
                 ["moves"] = List(f.moves, m => new Dictionary<string, object> { ["y"] = m.year, ["x"] = m.text }),
                 ["titles"] = f.titles,
+                ["office"] = EncodeOffice(FrontOffice.Of(f)),
             };
+        }
+
+        /// <summary>I61–I70 front office (older saves have none: everything starts at zero).</summary>
+        private static object EncodeOffice(FrontOfficeData o) => new Dictionary<string, object>
+        {
+            ["c"] = o.credits, ["fans"] = o.fanDelta, ["gym"] = o.gym, ["film"] = o.film, ["arena"] = o.arena, ["lounge"] = o.lounge,
+            ["huddle"] = o.huddle, ["press"] = o.press, ["pp"] = o.pressPlayer, ["lock"] = o.locker, ["lp"] = o.lockerPlayer, ["lw"] = o.lockerWeek,
+            ["g"] = o.games, ["st"] = o.streak, ["note"] = o.note ?? "",
+        };
+
+        private static FrontOfficeData DecodeOffice(Dictionary<string, object> d)
+        {
+            var o = new FrontOfficeData();
+            if (d == null) return o;
+            int Lv(string k) => Math.Max(0, Math.Min(FrontOffice.MaxLevel, Int(d, k, 0)));
+            o.credits = Math.Max(0, Math.Min(100000, Int(d, "c", 0)));
+            o.fanDelta = Math.Max(-FrontOffice.BaseFans, Math.Min(100 - FrontOffice.BaseFans, Int(d, "fans", 0)));
+            o.gym = Lv("gym"); o.film = Lv("film"); o.arena = Lv("arena"); o.lounge = Lv("lounge");
+            o.huddle = Bool(d, "huddle", false);
+            o.press = Int(d, "press", -1);
+            if (o.press < -1 || o.press >= FrontOffice.Questions.Length) o.press = -1;
+            o.pressPlayer = Int(d, "pp", -1);
+            o.locker = Int(d, "lock", -1);
+            if (o.locker < -1 || o.locker >= FrontOffice.Events.Length) o.locker = -1;
+            o.lockerPlayer = Int(d, "lp", -1);
+            o.lockerWeek = Int(d, "lw", -1);
+            o.games = Math.Max(0, Int(d, "g", 0));
+            o.streak = Int(d, "st", 0);
+            o.note = Str(d, "note", "");
+            return o;
         }
 
         private static FranchiseSaveData DecodeFranchise(Dictionary<string, object> o)
@@ -99,6 +130,7 @@ namespace CallerRetroBall.Logic
                         years = Math.Max(0, Math.Min(5, I(19))), team = I(20), prospect = I(21) != 0, scout = Math.Max(0, Math.Min(3, I(22))),
                         seasons = I(23), titles = I(24), peak = I(25), gp = I(26), pts = I(27), careerPts = I(28),
                         draftYear = n.Count > 29 ? I(29) : 0, draftPick = n.Count > 30 ? I(30) : 0, created = n.Count > 31 && I(31) != 0,
+                        mood = n.Count > 32 ? Math.Max(-FrontOffice.BaseMorale, Math.Min(100 - FrontOffice.BaseMorale, I(32))) : 0,
                     };
                     if (fp.team >= f.teams.Count || fp.team < -1) fp.team = -1;
                     f.players.Add(fp);
@@ -136,6 +168,7 @@ namespace CallerRetroBall.Logic
                 foreach (var item in Arr(o, "moves"))
                     if (item is Dictionary<string, object> m) f.moves.Add(new FrMove { year = Int(m, "y", 0), text = Str(m, "x", "") });
                 f.titles = Math.Max(0, Int(o, "titles", 0));
+                f.office = DecodeOffice(Obj(o, "office"));
                 f.you = Math.Max(0, Math.Min(f.teams.Count - 1, Int(o, "you", 0)));
 
                 // Rosters must point at real players on that team; anything else is dropped.

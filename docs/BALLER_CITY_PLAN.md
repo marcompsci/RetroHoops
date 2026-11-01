@@ -449,3 +449,44 @@ Probe, 200 games per difficulty, per game (Rookie / Caller / Legend):
 | Stalls | 0 | 0 | 0 |
 
 - **Checks:** full logic suite 1,137 of 1,137. UnityCheck is clean, and the text audit and release gate pass. No new player-facing text. Not played on a phone.
+
+### Improvements I61–I70: the Franchise FRONT OFFICE (1 Nov 2026)
+
+**Research.** I looked at what players and reviewers say about the retro football and soccer hits, and what people want from a retro basketball game.
+- Retro Bowl: loved for a quick, light front office.
+  - After each game you pick who gets the credit: owner = coins, coach = XP, media = fans.
+  - Players have egos and morale, there are press duties, and light off-field events.
+  - Difficulty rises deeper into a franchise.
+  - Criticised for no control on defense and no spin moves. Retro Hoops already has both.
+- Retro Goal: loved for facilities (stadium, training, youth academy) bought with coins earned from matches, team morale and a deep records database.
+  - Asked for: management choices that mean something.
+- Basketball fans keep asking for "a Retro Bowl for basketball". Hoop Land is praised for franchise depth: draft, free agency and trades. Retro Hoops already has those.
+
+What was missing in Retro Hoops was the light front-office layer between games, so I added it. Everything that was already there is unchanged. Logic: `Logic/Progression/FrontOffice.cs`. UI: `UI/FranchiseScreen.Office.cs`, with small hooks in `Franchise.cs` and the save codec.
+
+- **I61 POST-GAME HUDDLE and CREDITS:** every game you play, coach or sim earns front-office credits: 1, plus 2 for a win, plus ARENA level on packed home wins. Then the HUDDLE asks who to thank:
+  - the owner: +3 credits
+  - the staff: +5 mood for the team
+  - the fans: +4 fan rating
+
+  The pick lapses at your next game. Credits are play money only.
+- **I62 FACILITIES** (OFFICE tab), up to level 3 each, costing 6/12/18 credits:
+  - GYM: young players grow more each off-season.
+  - FILM ROOM: +1 scouting point per draft per level, and a small sim edge.
+  - ARENA: more credits and fans from home wins.
+  - PLAYERS' LOUNGE: losses and the bench sting less, and moods settle faster.
+- **I63 PLAYER MOODS:** every player on your club has a mood (FIRED UP … WANTS OUT), shown on roster cards.
+  - Winning and starting lift it; losing and the deep bench drag it down.
+  - At re-signing, a happy player (85+) takes 10% less and an unhappy one (under 40) wants 20% more.
+- **I64 PRESS ROOM:** every third game and after any three-game streak, the press asks one of 8 questions, with 3 answers each. Answers move credits, fans, team mood or one player's mood. NO COMMENT costs 1 fan.
+- **I65 FAN RATING:** 0–100. It moves with results, the huddle, the press, the arena and the season's finish (title +10, playoffs +4, missed −4).
+- **I66 LOCKER ROOM:** about one week in four, a decision with 2 choices, from 6 situations. The unhappiest player is the likeliest story. Choices that cost credits are refused when you can't pay.
+- **I67 LEAGUE HEAT:** each of your titles (up to 4) makes the other clubs half a point stronger in simulated games. This is the Retro Bowl-style rising challenge.
+- **I68 THE ROOM PLAYS:** your team's average mood becomes a small shooting edge in Franchise games you play or coach: up to +3% happy, down to −2% unhappy.
+- **I69 OFFICE TAB:** shows credits, fans, team mood, league heat, facility upgrades and everyone's mood. HOME shows the huddle, press and locker-room cards.
+- **I70 SAVES, SPANISH, TESTS:**
+  - The office and moods save, and older saves load with everything at zero.
+  - 87 new Spanish lines.
+  - `ImprovementsI61Tests` (17).
+
+**Checks:** full logic suite 1,154 of 1,154. UnityCheck is clean, and the text audit and release gate pass. **Not built or seen on a phone yet.** The tab row now has 8 tabs, so check it fits on the phone.

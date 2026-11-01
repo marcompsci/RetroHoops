@@ -16,8 +16,8 @@ namespace CallerRetroBall.UI
     /// </summary>
     public sealed partial class FranchiseScreen : MonoBehaviour
     {
-        private enum Tab { Home = 0, Roster = 1, Trade = 2, League = 3, Market = 4, Draft = 5, History = 6 }
-        private static readonly string[] TabNames = { "HOME", "ROSTER", "TRADE", "LEAGUE", "MARKET", "DRAFT", "HISTORY" };
+        private enum Tab { Home = 0, Roster = 1, Trade = 2, League = 3, Market = 4, Draft = 5, History = 6, Office = 7 }
+        private static readonly string[] TabNames = { "HOME", "ROSTER", "TRADE", "LEAGUE", "MARKET", "DRAFT", "HISTORY", "OFFICE" };
 
         private Tab _tab;
         private RectTransform _content;
@@ -130,6 +130,7 @@ namespace CallerRetroBall.UI
                 case Tab.Market: BuildMarket(); break;
                 case Tab.Draft: BuildDraft(); break;
                 case Tab.History: BuildHistory(); break;
+                case Tab.Office: BuildOffice(); break;
                 default: BuildHome(); break;
             }
         }
@@ -196,7 +197,8 @@ namespace CallerRetroBall.UI
         private static string Card(FrPlayer p, bool contract = true) =>
             "<b>#" + p.number + " " + p.Name.ToUpperInvariant() + "</b>  <color=#FFD166>" + p.Overall + "</color>\n<size=22><color=#8D99AE>"
             + Arch(p) + " · " + Loc.T("AGE") + " " + p.age + (p.age <= 25 ? " · POT " + Franchise.PotentialGrade(p) : "")
-            + (contract ? " · " + Franchise.Money(p.salary) + " × " + p.years : "") + (p.gp > 0 ? " · " + p.Ppg.ToString("0.0") + " PPG" : "") + "</color></size>";
+            + (contract ? " · " + Franchise.Money(p.salary) + " × " + p.years : "") + (p.gp > 0 ? " · " + p.Ppg.ToString("0.0") + " PPG" : "")
+            + (p.team >= 0 && F != null && p.team == F.you ? " · " + MoodTag(p) : "") + "</color></size>";
 
         private static void Toast(string title, string body) => UiControls.Dialog(title, body, ("OK", ButtonStyle.Primary, null));
 
@@ -230,6 +232,7 @@ namespace CallerRetroBall.UI
         private void BuildHome()
         {
             var f = F;
+            OfficeCards(f); // I61, I64, I66: the huddle, the press room and the locker room
             // Phase 33: a GM on the phone.
             if (f.offer != null && FranchiseDepth.StillValid(f, f.offer))
             {

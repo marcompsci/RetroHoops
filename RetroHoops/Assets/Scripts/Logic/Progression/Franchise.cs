@@ -40,6 +40,8 @@ namespace CallerRetroBall.Logic
         public int draftPick;
         /// <summary>Made in CREATE A PLAYER (yours: AI GMs never ask for him in trades).</summary>
         public bool created;
+        /// <summary>I63: mood, as a change from the normal 70 (see <see cref="FrontOffice.Morale"/>).</summary>
+        public int mood;
 
         public int Overall => attrs.Overall;
         public string Name => string.IsNullOrEmpty(last) ? first : first + " " + last;
@@ -126,6 +128,8 @@ namespace CallerRetroBall.Logic
         public ShotChartData teamChart = new ShotChartData();
         /// <summary>Phase 35: COACH MODE (you call plays and subs while your players play), remembered between games.</summary>
         public bool coach;
+        /// <summary>I61–I70: credits, fans, facilities, the huddle, the press room and the locker room.</summary>
+        public FrontOfficeData office = new FrontOfficeData();
     }
 
     public sealed class TradeVerdict
@@ -417,7 +421,7 @@ namespace CallerRetroBall.Logic
                 sum += ovr[i] * weight;
                 w += weight;
             }
-            return w == 0f ? 40f : sum / w;
+            return (w == 0f ? 40f : sum / w) + FrontOffice.StrengthEdge(f, team);
         }
 
         private static void Simulate(FranchiseSaveData f, ScheduledGame g, SeededRandom rng)
@@ -478,6 +482,7 @@ namespace CallerRetroBall.Logic
             var rng = new SeededRandom(StableHash.Of(f.season.seed + ":you:" + g.week + ":" + g.round));
             Credit(f, f.you, yourScore, rng);
             Credit(f, IndexOf(home ? g.awayId : g.homeId), theirScore, rng);
+            FrontOffice.AfterYourGame(f, yourScore > theirScore, Math.Abs(yourScore - theirScore), home);
             FinishSlate(f, c, g.week, g.round);
             return true;
         }
@@ -489,6 +494,9 @@ namespace CallerRetroBall.Logic
             if (g != null)
             {
                 Simulate(f, g, new SeededRandom(StableHash.Of(f.season.seed + ":sim:" + g.week + ":" + g.round)));
+                bool home = g.homeId == TeamId(f.you);
+                int mine = home ? g.homeScore : g.awayScore, theirs = home ? g.awayScore : g.homeScore;
+                FrontOffice.AfterYourGame(f, mine > theirs, Math.Abs(mine - theirs), home);
                 FinishSlate(f, c, g.week, g.round);
                 return;
             }
@@ -517,6 +525,7 @@ namespace CallerRetroBall.Logic
                 if (!g.played && g.week == week && g.round == round) Simulate(f, g, rng);
             if (round == 0) f.season.currentWeek = Math.Max(f.season.currentWeek, week + 1);
             if (round == 0) FranchiseDepth.AfterWeek(f, c);
+            if (round == 0) FrontOffice.AfterWeek(f);
 
             if (f.phase == FranchisePhase.Regular && SeasonEngine.RegularSeasonComplete(f.season))
             {
@@ -570,6 +579,7 @@ namespace CallerRetroBall.Logic
                     foreach (var p in roster) p.titles++;
                     if (t == f.you) f.titles++;
                 }
+                if (t == f.you) FrontOffice.AfterSeason(f, finish);
             }
 
             // MVP: scoring plus rating plus winning. Rookie of the year: best first-year scorer.
@@ -613,6 +623,8 @@ namespace CallerRetroBall.Logic
                 {
                     // Phase 33: your training focus adds to the young players' growth.
                     p.attrs = FranchiseDepth.ApplyFocus(p, (TrainingFocus)f.focus);
+                    int gym = FrontOffice.GymGrowth(f, p); // I62 GYM
+                    if (gym > 0) p.attrs = p.attrs.Offset(gym);
                     int diff = p.Overall - before;
                     f.devReport.Add(p.Name + " (" + p.age + ")  " + before + " → " + p.Overall + (diff > 0 ? "  +" + diff : diff < 0 ? "  " + diff : "  ="));
                 }
@@ -661,7 +673,7 @@ namespace CallerRetroBall.Logic
                 p.salary = 0;
                 p.years = 0;
             }
-            f.scoutPoints = ScoutPointsPerDraft;
+            f.scoutPoints = ScoutPointsPerDraft + FrontOffice.FilmScoutPoints(f);
 
             // Lottery: the four non-playoff teams draw for the first two picks.
             var table = SeasonEngine.Standings(f.season);
@@ -822,7 +834,7 @@ namespace CallerRetroBall.Logic
         {
             var p = Player(f, playerId);
             if (f.phase != FranchisePhase.ReSign || p == null || p.team != f.you || p.years != 0) return false;
-            p.salary = Demand(p);
+            p.salary = FrontOffice.ReSignSalary(p, Demand(p));
             p.years = DemandYears(p);
             return true;
         }
@@ -1118,6 +1130,7 @@ namespace CallerRetroBall.Logic
                 ContextId = "fr:y" + f.year + ":w" + g.week + ":r" + g.round,
                 Round = g.round,
                 Coach = f.coach,
+                ChemistryBonus = FrontOffice.ChemistryFor(f), // I68: the room's mood
             };
         }
 
