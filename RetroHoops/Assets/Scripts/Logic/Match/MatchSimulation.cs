@@ -1323,6 +1323,7 @@ namespace CallerRetroBall.Logic
                     _lastCatcher = Ball.TargetIndex;
                     _lastCatchTime = Time;
                     Events.Add(new MatchEvent(MatchEventType.PassCaught, Ball.TargetIndex, receiver.Team));
+                    ReadyToCatchAndShoot(Ball.TargetIndex);
                     // The finisher has to still be near the rim when the lob arrives.
                     if (_alleyOop && Setup.Court.DistanceToHoop(receiver.Position) <= (_oopToRunner ? BaselineOopRange : Setup.Pass.alleyOopRange + 1f))
                     {
@@ -1451,6 +1452,8 @@ namespace CallerRetroBall.Logic
             if (_reboundable)
             {
                 Stats[best].rebounds++;
+                _lastRebounder = best;
+                _lastReboundAt = Time;
                 Events.Add(new MatchEvent(MatchEventType.Rebound, best, Players[best].Team));
                 _reboundable = false;
             }
@@ -1463,6 +1466,7 @@ namespace CallerRetroBall.Logic
             if (fromCheck || p.Team != OffenseTeam)
             {
                 _pumpFakes = 0; // a new possession: defenders fall for it again
+                _screenCalledThisTrip = false;
                 ResetSkillRepeats();
             }
             _lastTouchTeam = p.Team;

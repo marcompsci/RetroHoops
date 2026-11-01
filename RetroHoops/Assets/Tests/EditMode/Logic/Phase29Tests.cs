@@ -152,7 +152,8 @@ namespace CallerRetroBall.Tests
     public class DifficultyCurveTests
     {
         /// <summary>
-        /// AI-vs-idle simulations (16 games each, Phase 29 report): opponent FG% 34 / 39 / 51 and average margin
+        /// AI-vs-idle simulations (16 games each, Phase 29 report; the check itself runs 16 seeds since 1 Nov 2026 so one
+        /// lucky seed can't flip it): opponent FG% 34 / 39 / 51 and average margin
         /// +5.7 / +7.6 / +14.3 for Rookie / Caller / Legend. This guards that the curve keeps climbing.
         /// </summary>
         [Test]
@@ -163,7 +164,7 @@ namespace CallerRetroBall.Tests
             foreach (var d in new[] { "difficulty.rookie", "difficulty.caller", "difficulty.legend" })
             {
                 int margin = 0, made = 0, att = 0;
-                for (uint s = 1; s <= 8; s++)
+                for (uint s = 1; s <= 16; s++)
                 {
                     var r = MatchRequest.QuickCallDefault(c);
                     r.Seed = s * 13;
@@ -176,7 +177,7 @@ namespace CallerRetroBall.Tests
                         if (m.Players[i].Team == 1) { made += m.Stats.players[i].fieldGoalsMade; att += m.Stats.players[i].fieldGoalsAttempted; }
                 }
                 float fg = made / (float)System.Math.Max(1, att);
-                float avg = margin / 8f;
+                float avg = margin / 16f;
                 Assert.Greater(fg, prevFg, d + " shoots better than the level below");
                 Assert.Greater(avg, prevMargin, d + " wins by more than the level below");
                 prevFg = fg;

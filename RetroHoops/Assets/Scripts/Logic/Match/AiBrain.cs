@@ -34,6 +34,8 @@ namespace CallerRetroBall.Logic
         public float DriveCheckAt;
         /// <summary>I46: an on-ball defender who decided to reach and is stepping up to do it.</summary>
         public bool ReachPending;
+        /// <summary>I55: when the handler first got smothered (or -1 when he has room).</summary>
+        public float SmotheredSince = -1f;
     }
 
     /// <summary>
@@ -275,6 +277,8 @@ namespace CallerRetroBall.Logic
             if (TryAiTrick(p, profile)) return;
             if ((p.Team != Setup.HumanTeam || Coaching || Setup.Demo) && ShotClock > 4f && TryPostMove(p, s, dist)) return;
             if (ContinueDrive(p, s, profile, dist)) return;
+            if (TryPutback(p, s, profile, dist)) return;
+            if (TryCallForScreen(p, s, profile, dist)) return;
             // I47 LATE-CLOCK IQ: the clock pressure builds from 6 s, and at 3 s it's a must-shoot.
             float urgency = GameFeel.ClockUrgency(ShotClock, Setup.Rules.shotClockSeconds);
 
@@ -287,6 +291,8 @@ namespace CallerRetroBall.Logic
                 uShoot = (expected.MakeChance - profile.shotQualityThreshold) * 2f + tend.shoot * 0.25f + urgency;
                 // Phase 35: lean on the spots he's hot from this game, shy away from the cold ones.
                 uShoot += ShotCharts.AiShootBias(Stats[p.Index].chart, ShotZones.SpotOf(p.Position, court));
+                // I57 CATCH AND SHOOT: open on the catch, let it fly. I53: at game point the go-to guy looks for his shot.
+                uShoot += CatchAndShootLean(p) + (IsGoToAtGamePoint(p) ? GameFeelPlus.GoToShotLean : 0f);
             }
 
             // Pass: best open teammate. Friendly AI looks for the human first ("pass back").
@@ -307,6 +313,8 @@ namespace CallerRetroBall.Logic
                     }
                 }
                 if (NearestOpponentDistance(p) < 0.9f) uPass += 0.3f; // trapped: move it
+                // I52 FEED THE HOT HAND, I53 GAME POINT: get it to the guy who's cooking, or to your go-to scorer.
+                FeedTheScorer(p, ref target, ref uPass);
             }
 
             // Drive: attack the rim when the lane is open.
@@ -316,6 +324,7 @@ namespace CallerRetroBall.Logic
                 bool laneOpen = LaneOpenToRim(p);
                 // I43: a step on your man is a drive too (the drive goes around him), not just an empty lane.
                 uDrive = tend.drive * 0.35f + (laneOpen ? 0.15f : -0.1f) + GameFeel.DriveEdge(SeparationFromMan(p), dist);
+                uDrive -= GameFeelPlus.TiredDrivePenalty(p.Stamina); // I56 LEGS
             }
             if (uDrive > float.MinValue) uDrive += urgency * 0.5f;
             float uHold = 0.05f - urgency;
@@ -344,6 +353,7 @@ namespace CallerRetroBall.Logic
             switch (choice)
             {
                 case 0:
+                    if (urgency < 1f && TryAiPumpFake(p, s, profile, dist)) break; // I51
                     BeginCharge(p.Index, SampleReleaseMeter(p, profile));
                     break;
                 case 1:
@@ -509,6 +519,7 @@ namespace CallerRetroBall.Logic
                 // Full Court: contain the ball in the backcourt (give a cushion) unless pressing.
                 if (Setup.FullCourt && man.Position.y > FullCourt.MidY && _scheme[p.Team] != DefenseScheme.Pressure) gap = Math.Max(gap, 2.2f);
                 if (s.ReachPending) gap = Math.Min(gap, GameFeel.ReachGap);
+                if (IsGoToAtGamePoint(man)) gap = Math.Max(0.6f, gap - GameFeelPlus.GamePointTighten); // I59
                 s.Target = toHoop.SqrMagnitude > 0.01f ? court.Clamp(man.Position + toHoop.Normalized * gap) : man.Position;
                 return;
             }
@@ -535,6 +546,8 @@ namespace CallerRetroBall.Logic
             // Guard the man (positions snapshot at decision time → realistic reaction lag).
             s.Intent = AiIntent.Guard;
             s.Target = BackcourtSag(SchemeGuardSpot(p, man, holder), man, p.Team);
+            // I59 GAME POINT DEFENSE: don't let their go-to guy catch it easy.
+            if (IsGoToAtGamePoint(man)) s.Target = Setup.Court.Clamp(Vec2.Lerp(s.Target, man.Position, GameFeelPlus.DenyPull));
         }
 
         // ------------------------------------------------------------------ helpers

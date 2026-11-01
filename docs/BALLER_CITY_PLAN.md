@@ -418,3 +418,34 @@ Measured in AI-vs-AI games:
 The "before" home split also varied (36/40 at Rookie). The AI still takes about 70% of its shots from beyond the arc. In 1s-and-2s those are worth double, so it's a fair choice and I left it.
 
 - **Tests:** full logic suite 1,126 of 1,126. UnityCheck is clean, and the text audit and release gate pass. No new player-facing text. Not played on a phone.
+
+### Game improvements I51–I60: on the court (1 Nov 2026)
+
+These are AI decisions only; no ratings or speeds changed. Code: `Logic/Match/GameFeelPlus.cs`, plus hooks in `AiBrain.cs` and `MatchSimulation.cs`.
+
+- **I51 AI PUMP FAKES:** an AI shooter facing a hard close-out sometimes shows the ball first (smarter AI more often, once a trip). It uses the same bite rules as yours, then reads it again.
+- **I52 FEED THE HOT HAND:** AI passers look for a heated-up teammate who's open. If you're open on your team, you still get it first.
+- **I53 GAME POINT:** when one arc basket wins it, the AI gets the ball to its go-to scorer (most points this game, then shooting and clutch), and he looks for his shot.
+- **I54 PUTBACKS:** an offensive board inside finishing range goes straight back up.
+- **I55 CALL FOR A SCREEN:** a handler who's been smothered for 1.6 s calls a pick-and-roll, once a trip.
+- **I56 TIRED LEGS:** a gassed player attacks off the dribble less.
+- **I57 CATCH AND SHOOT:** an open catcher reads it the moment the ball lands and leans towards shooting.
+- **I58 BALANCE PROBE v2:** the probe also counts assists, AI fakes, scorer feeds, putbacks and screen calls.
+- **I59 GAME POINT DEFENSE:** at their game point, the AI plays the go-to scorer tighter on the ball and denies him off it.
+- **I60 TESTS:** `ImprovementsI51Tests` (11).
+  - Two older chaotic checks now run 16 seeds instead of 6 or 8. These are `DifficultyCurveTests` and Phase 34 spacing.
+  - Both had flipped on a single seed. Over 40 seeds the curve still climbs: FG 37% / 44% / 56% for Rookie / Caller / Legend.
+  - Spacing (an AI teammate within 1.5 m of the handler) is 0.078 at Legend, up from 0.061 because of screens. The limit is 0.12.
+
+Probe, 200 games per difficulty, per game (Rookie / Caller / Legend):
+
+| | Rookie | Caller | Legend |
+| --- | --- | --- | --- |
+| Assists | 2.4 | 4.1 | 8.2 |
+| Screen calls | 1.3 | 1.4 | 3.4 |
+| AI fakes | 0.6 | 0.8 | 0.9 |
+| Putbacks | 0.7 | 0.1 | 0.1 |
+| Home wins | 51% | 54% | 56% |
+| Stalls | 0 | 0 | 0 |
+
+- **Checks:** full logic suite 1,137 of 1,137. UnityCheck is clean, and the text audit and release gate pass. No new player-facing text. Not played on a phone.

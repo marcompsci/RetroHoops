@@ -117,7 +117,7 @@ namespace CallerRetroBall.Tests
             var c = DefaultContent.Create();
             int crowdSteps = 0, offenseSteps = 0, made = 0, att = 0;
             postMoves = 0;
-            for (uint s = 1; s <= 6; s++)
+            for (uint s = 1; s <= 16; s++)
             {
                 var r = MatchRequest.QuickCallDefault(c);
                 r.Seed = s * 17;

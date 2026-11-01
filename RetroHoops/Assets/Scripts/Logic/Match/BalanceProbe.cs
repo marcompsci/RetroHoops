@@ -11,6 +11,8 @@ namespace CallerRetroBall.Logic
         public int OffensiveRebounds, DefensiveRebounds;
         public int Steals, Turnovers, Possessions;
         public int DriveFinishes, KickOuts, CloseOuts, PostMoves, Plays;
+        /// <summary>I58 BALANCE PROBE v2.</summary>
+        public int Assists, AiFakes, ScorerFeeds, Putbacks, ScreenCalls;
         public int TotalMargin;
 
         public float HomeWinShare => Games > 0 ? HomeWins / (float)Games : 0f;
@@ -102,11 +104,16 @@ namespace CallerRetroBall.Logic
                 r.ArcShots += p.arcAttempted;
                 r.Steals += p.steals;
                 r.Turnovers += p.turnovers;
+                r.Assists += p.assists;
             }
             r.DriveFinishes += m.DriveFinishes;
             r.KickOuts += m.KickOuts;
             r.CloseOuts += m.CloseOuts;
             r.PostMoves += m.PostMoves;
+            r.AiFakes += m.AiFakes;
+            r.ScorerFeeds += m.ScorerFeeds;
+            r.Putbacks += m.Putbacks;
+            r.ScreenCalls += m.ScreenCalls;
         }
     }
 }
