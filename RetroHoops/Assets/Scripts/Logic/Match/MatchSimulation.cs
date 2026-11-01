@@ -150,6 +150,8 @@ namespace CallerRetroBall.Logic
                 KeyOnHuman = Math.Max(0f, Math.Min(1f, request.KeyOnHuman)),
                 ForgivingMeter = request.ForgivingMeter,
             };
+            // I41 FAIR DEMO: with nobody playing, the seed decides who checks it up first (no built-in home edge).
+            if (setup.Demo) setup.StartingOffense = (int)(setup.Seed >> 3 & 1u);
             if (request.StartWithBall == 0 || request.StartWithBall == 1) setup.StartingOffense = request.StartWithBall;
             // Practice has no opponent: mirror the player crew so the court still has bodies.
             if (setup.TeamB == null) setup.TeamB = setup.TeamA;
@@ -794,7 +796,7 @@ namespace CallerRetroBall.Logic
                 var p = Players[i];
                 var desired = freezeAll || Time < p.StunnedUntil ? Vec2.Zero : _desired[i];
                 bool dribbling = Ball.IsHeld && Ball.HolderIndex == i;
-                float scale = IsHumanControlled(i) || p.Team == Setup.HumanTeam ? 1f : AiProfile(p.Team).movementScale;
+                float scale = IsHumanControlled(i) || p.Team == Setup.HumanTeam && !Setup.Demo ? 1f : AiProfile(p.Team).movementScale;
                 if (Time < p.ScreenedUntil) scale *= Setup.Defense.screenSlow;
                 float max = Movement.MaxSpeed(p.Def.attributes.speed, dribbling, tuning, scale) * StaminaSpeedFactor(p) * HeatSpeedFactor(p) * SkillSpeedFactor(i);
                 if (Setup.StreetRules && dribbling && !freezeAll) CheckAnkles(i, desired);

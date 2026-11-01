@@ -389,3 +389,32 @@ The full logic suite passes (1,086 of 1,086). The Unity reference compile is cle
 - **I40 TEXT POLISH:** side-job items and tips in Spanish and in the Spanish check.
 - **New badges:** AGAINST THE CLOCK and WORLD COLLECTOR (25 in all).
 - **Tests:** `ImprovementsI31Tests` (7). Full logic suite 1,105 of 1,105. UnityCheck is clean, and the text audit and release gate pass.
+
+### Game improvements I41–I50: on the court (1 Nov 2026)
+
+These change what the AI decides, not ratings or speeds. Code: `Logic/Match/GameFeel.cs`, `BalanceProbe.cs`, plus small edits in `AiBrain.cs`, `DefenseAndPlays.cs` and `MatchSimulation.cs`.
+
+- **I41 FAIR DEMO:** in AI-vs-AI games both benches use the same difficulty, run plays and post moves, and the seed decides who checks it up first. Before, the home side got the teammate brain, full movement speed and every opening possession.
+- **I42 TEAMMATES KEEP UP:** your AI teammates react, decide and avoid mistakes at least as well as the other bench. Their shooting only meets a harder bench halfway, so Legend is still harder.
+- **I43 ATTACK THE RIM:** a drive commits, goes around the man in front, and goes up inside layup range as a layup or dunk. A drive that stops gaining ground is called off. Having a step on your man now counts towards driving.
+- **I44 DRIVE AND KICK:** when help collapses on a drive and a shooter is open, the driver kicks it out. Better decision makers see it more.
+- **I45 BOX OUT:** the defense has inside position on a miss (`DefenseTuning.defensiveReboundEdge`).
+- **I46 PRESSURE:** on-ball defenders step up and reach more, scaled by difficulty. A pressing scheme still doubles it.
+- **I47 LATE-CLOCK IQ:** in modes with a shot clock, pressure builds from 6 s (attack or shoot, stop holding) and becomes a must-shoot at 3 s.
+- **I48 CLOSE-OUTS:** when a pass is in the air to your man out on the floor, his defender sprints to the catch and lands between him and the rim.
+- **I49 BALANCE PROBE:** `BalanceProbe.Run` plays seeded AI-vs-AI games headless and reports home/away split, FG, arc share, rim shots, offensive rebound share, turnovers and margins. It's deterministic.
+- **I50 BALANCE TESTS:** `ImprovementsI41Tests` (18) pins the probe to sane ranges and checks that Legend still shoots clearly better than Rookie.
+
+Measured in AI-vs-AI games:
+
+| | Before (Legend, 40 games) | After (Legend, 200 games) | After (Rookie, 200 games) |
+| --- | --- | --- | --- |
+| Home wins | 25% | 54% | 53% |
+| Offensive rebound share | 55–57% | 34% | 37% |
+| Layups and dunks per game | 0.8 | 3.1 | 4.9 |
+| Drives ending at the rim | Stalled about 4 m out | About 2 m out, then finished | |
+| Turnovers per possession | About 10% (but few possessions) | 16% | 9% |
+
+The "before" home split also varied (36/40 at Rookie). The AI still takes about 70% of its shots from beyond the arc. In 1s-and-2s those are worth double, so it's a fair choice and I left it.
+
+- **Tests:** full logic suite 1,126 of 1,126. UnityCheck is clean, and the text audit and release gate pass. No new player-facing text. Not played on a phone.

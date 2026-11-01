@@ -28,6 +28,12 @@ namespace CallerRetroBall.Logic
         public float IntentUntil;
         /// <summary>Phase 34: when this player last made a post move (one at a time).</summary>
         public float LastPostMove = -99f;
+        /// <summary>I43: which side of his man a driver goes around (+1 / -1), the closest he's got, and when to check progress.</summary>
+        public float DriveSide = 1f;
+        public float DriveBest;
+        public float DriveCheckAt;
+        /// <summary>I46: an on-ball defender who decided to reach and is stepping up to do it.</summary>
+        public bool ReachPending;
     }
 
     /// <summary>
@@ -54,8 +60,16 @@ namespace CallerRetroBall.Logic
 
         public AiState AiStateOf(int playerIndex) => _ai[playerIndex];
 
-        public DifficultyDef AiProfile(int team) =>
-            team == Setup.HumanTeam || Setup.SecondHuman ? FriendlyAi : (Setup.Difficulty ?? DefaultOpponent);
+        public DifficultyDef AiProfile(int team)
+        {
+            var opponent = Setup.Difficulty ?? DefaultOpponent;
+            // I41 FAIR DEMO: with nobody playing, both benches get the same brain (no built-in home edge).
+            if (Setup.Demo) return opponent;
+            if (team == Setup.HumanTeam || Setup.SecondHuman) return _mateProfile ??= GameFeel.TeammateFor(FriendlyAi, opponent);
+            return opponent;
+        }
+
+        private DifficultyDef _mateProfile;
 
         private void InitAi()
         {
@@ -259,8 +273,10 @@ namespace CallerRetroBall.Logic
             float dist = court.DistanceToHoop(p.Position);
             if (TryAiSkillMove(p, profile, dist)) return;
             if (TryAiTrick(p, profile)) return;
-            if ((p.Team != Setup.HumanTeam || Coaching) && ShotClock > 4f && TryPostMove(p, s, dist)) return;
-            float urgency = ShotClock < 3f && Setup.Rules.shotClockSeconds < 99f ? 1f : 0f;
+            if ((p.Team != Setup.HumanTeam || Coaching || Setup.Demo) && ShotClock > 4f && TryPostMove(p, s, dist)) return;
+            if (ContinueDrive(p, s, profile, dist)) return;
+            // I47 LATE-CLOCK IQ: the clock pressure builds from 6 s, and at 3 s it's a must-shoot.
+            float urgency = GameFeel.ClockUrgency(ShotClock, Setup.Rules.shotClockSeconds);
 
             // Shoot: expected chance with a clean release vs. this difficulty's quality bar.
             float uShoot = float.MinValue;
@@ -298,13 +314,15 @@ namespace CallerRetroBall.Logic
             if (dist > 2.2f)
             {
                 bool laneOpen = LaneOpenToRim(p);
-                uDrive = tend.drive * 0.35f + (laneOpen ? 0.15f : -0.1f);
+                // I43: a step on your man is a drive too (the drive goes around him), not just an empty lane.
+                uDrive = tend.drive * 0.35f + (laneOpen ? 0.15f : -0.1f) + GameFeel.DriveEdge(SeparationFromMan(p), dist);
             }
-            float uHold = 0.05f;
+            if (uDrive > float.MinValue) uDrive += urgency * 0.5f;
+            float uHold = 0.05f - urgency;
             CoachBias(p, dist, ref uShoot, ref uDrive, ref target, ref uPass);
 
             // AI teams occasionally run a play.
-            if ((p.Team != Setup.HumanTeam || Coaching && PendingPlay == PlayCall.None) && _play == PlayCall.None && dist > 4f
+            if ((p.Team != Setup.HumanTeam || Setup.Demo || Coaching && PendingPlay == PlayCall.None) && _play == PlayCall.None && dist > 4f
                 && _rng.NextFloat() < 0.12f * (0.5f + tend.drive) * profile.decisionQuality)
             {
                 // Mix it up (no extra random draw, so seeded games keep their shape): mostly pick-and-roll,
@@ -320,7 +338,7 @@ namespace CallerRetroBall.Logic
             // Pick: best option with probability decisionQuality, otherwise any viable one.
             int choice = Best(uShoot, uPass, uDrive, uHold);
             if (_rng.NextFloat() > profile.decisionQuality) choice = RandomViable(uShoot, uPass, uDrive, uHold);
-            if (urgency > 0f && uShoot > float.MinValue) choice = 0;
+            if (urgency >= 1f && uShoot > float.MinValue) choice = 0;
             if (_rng.NextFloat() < profile.errorRate) choice = 3; // hesitation
 
             switch (choice)
@@ -332,10 +350,7 @@ namespace CallerRetroBall.Logic
                     PassFrom(p.Index, Vec2.Zero, target);
                     break;
                 case 2:
-                    s.Intent = AiIntent.Drive;
-                    var toHoop = court.Hoop - p.Position;
-                    s.Target = court.Clamp(court.Hoop - toHoop.Normalized * 0.9f + new Vec2(0f, 0.3f));
-                    s.IntentUntil = Time + 1.5f;
+                    StartDrive(p, s, dist);
                     break;
                 default:
                     s.Intent = AiIntent.Hold;
@@ -373,9 +388,9 @@ namespace CallerRetroBall.Logic
         {
             var t = Setup.Shot;
             float gh = ShotModel.GreenHalfWidth(p.Def.attributes.shooting, t);
-            float accuracy = profile.releaseAccuracy + (p.Team == Setup.HumanTeam ? Setup.ChemistryBonus : 0f)
+            float accuracy = profile.releaseAccuracy + (p.Team == Setup.HumanTeam && !Setup.Demo ? Setup.ChemistryBonus : 0f)
                              // Phase 40 SMART DIFFICULTY (Rise): the other team's shooting eases or sharpens a touch.
-                             + (p.Team != Setup.HumanTeam && !Setup.SecondHuman ? Setup.AiEdge : 0f);
+                             + (p.Team != Setup.HumanTeam && !Setup.SecondHuman && !Setup.Demo ? Setup.AiEdge : 0f);
             if (_rng.NextFloat() < accuracy)
                 return t.greenCenter + (_rng.NextFloat() * 2f - 1f) * gh * 0.8f;
             float side = _rng.NextFloat() < 0.5f ? -1f : 1f;
@@ -474,10 +489,18 @@ namespace CallerRetroBall.Logic
                 // Rise with the shooter (reaction-limited), or gamble for a steal.
                 if (ChargingIndex == man.Index && dist < 1.8f && _rng.NextFloat() > profile.errorRate)
                     Jump(p.Index);
-                else if (dist < Setup.Defense.stealRange
-                         && _rng.NextFloat() < p.Tendencies.gambleForSteals * 0.25f * profile.decisionQuality
-                                               * (_scheme[p.Team] == DefenseScheme.Pressure ? 2f : 1f))
-                    TrySteal(p.Index);
+                else if (dist < Setup.Defense.stealRange + GameFeel.ReachStep
+                         && (s.ReachPending || _rng.NextFloat() < GameFeel.ReachChance(p.Tendencies.gambleForSteals, profile.decisionQuality,
+                                                                                       _scheme[p.Team] == DefenseScheme.Pressure)))
+                {
+                    // I46 PRESSURE: just out of reach, he steps up this decision and pokes at it on the next one.
+                    if (dist < Setup.Defense.stealRange)
+                    {
+                        s.ReachPending = false;
+                        TrySteal(p.Index);
+                    }
+                    else s.ReachPending = true;
+                }
 
                 // On the ball: tight, and closer still when he's rising up to shoot.
                 s.Intent = AiIntent.Guard;
@@ -485,11 +508,14 @@ namespace CallerRetroBall.Logic
                 float gap = ChargingIndex == man.Index ? 0.7f : Math.Max(0.6f, SchemeOnBallGap(p.Team) + ScoutGap(p, man, profile) - KeyOnGap(man));
                 // Full Court: contain the ball in the backcourt (give a cushion) unless pressing.
                 if (Setup.FullCourt && man.Position.y > FullCourt.MidY && _scheme[p.Team] != DefenseScheme.Pressure) gap = Math.Max(gap, 2.2f);
+                if (s.ReachPending) gap = Math.Min(gap, GameFeel.ReachGap);
                 s.Target = toHoop.SqrMagnitude > 0.01f ? court.Clamp(man.Position + toHoop.Normalized * gap) : man.Position;
                 return;
             }
 
+            s.ReachPending = false;
             if (GetBack(p, s, holder)) return;
+            if (CloseOut(p, s, man)) return;
             if (ProtectRim(p, s, profile)) return;
             if (DenyBaselineRunner(p, s, man, profile)) return;
             if (TrapHotHand(p, s, holder, profile)) return;

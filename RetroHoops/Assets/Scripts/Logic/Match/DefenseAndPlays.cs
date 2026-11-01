@@ -42,6 +42,8 @@ namespace CallerRetroBall.Logic
         public float boxOutRadius = 1.1f;
         public float boxOutBonus = 0.3f;
         public float reboundReach = 0.4f;
+        /// <summary>I45 BOX OUT: the defense holds inside position on a miss, so it wins close calls for the board.</summary>
+        public float defensiveReboundEdge = 0.2f;
 
         // Screens
         public float screenRadius = 0.9f;
@@ -329,7 +331,8 @@ namespace CallerRetroBall.Logic
                 float dist = Vec2.Distance(Ball.Position, Players[i].Position);
                 if (dist > t.pickupRadius + d.reboundReach) continue;
                 float score = RatingScale.Normalized(Players[i].Def.attributes.rebounding) * 0.6f - dist * 0.8f
-                              + (IsBoxingOut(i) ? d.boxOutBonus : 0f) + _rng.NextFloat() * 0.2f;
+                              + (IsBoxingOut(i) ? d.boxOutBonus : 0f) + (Players[i].Team != OffenseTeam ? d.defensiveReboundEdge : 0f)
+                              + _rng.NextFloat() * 0.2f;
                 if (score > bestScore)
                 {
                     bestScore = score;
