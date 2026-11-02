@@ -427,7 +427,7 @@ namespace CallerRetroBall.Logic
         private static void Simulate(FranchiseSaveData f, ScheduledGame g, SeededRandom rng)
         {
             int h = IndexOf(g.homeId), a = IndexOf(g.awayId);
-            float diff = Strength(f, h) + 1.5f - Strength(f, a);
+            float diff = Strength(f, h) + 1.5f + FrontOffice.HomeEdge(f, h) - Strength(f, a);
             float p = 1f / (1f + (float)Math.Exp(-diff / 4f));
             bool homeWins = rng.NextFloat() < p;
             int win = 24 + rng.Range(0, 14);
@@ -482,7 +482,7 @@ namespace CallerRetroBall.Logic
             var rng = new SeededRandom(StableHash.Of(f.season.seed + ":you:" + g.week + ":" + g.round));
             Credit(f, f.you, yourScore, rng);
             Credit(f, IndexOf(home ? g.awayId : g.homeId), theirScore, rng);
-            FrontOffice.AfterYourGame(f, yourScore > theirScore, Math.Abs(yourScore - theirScore), home);
+            FrontOffice.AfterYourGame(f, yourScore > theirScore, Math.Abs(yourScore - theirScore), home, yourScore, IndexOf(home ? g.awayId : g.homeId));
             FinishSlate(f, c, g.week, g.round);
             return true;
         }
@@ -496,7 +496,7 @@ namespace CallerRetroBall.Logic
                 Simulate(f, g, new SeededRandom(StableHash.Of(f.season.seed + ":sim:" + g.week + ":" + g.round)));
                 bool home = g.homeId == TeamId(f.you);
                 int mine = home ? g.homeScore : g.awayScore, theirs = home ? g.awayScore : g.homeScore;
-                FrontOffice.AfterYourGame(f, mine > theirs, Math.Abs(mine - theirs), home);
+                FrontOffice.AfterYourGame(f, mine > theirs, Math.Abs(mine - theirs), home, mine, IndexOf(home ? g.awayId : g.homeId));
                 FinishSlate(f, c, g.week, g.round);
                 return;
             }
@@ -1131,6 +1131,7 @@ namespace CallerRetroBall.Logic
                 Round = g.round,
                 Coach = f.coach,
                 ChemistryBonus = FrontOffice.ChemistryFor(f), // I68: the room's mood
+                RulesOverride = FrontOffice.RulesFor(f, c),    // I71: QUICK / STANDARD / LONG
             };
         }
 

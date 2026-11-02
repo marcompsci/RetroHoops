@@ -71,6 +71,9 @@ namespace CallerRetroBall.Logic
             ["c"] = o.credits, ["fans"] = o.fanDelta, ["gym"] = o.gym, ["film"] = o.film, ["arena"] = o.arena, ["lounge"] = o.lounge,
             ["huddle"] = o.huddle, ["press"] = o.press, ["pp"] = o.pressPlayer, ["lock"] = o.locker, ["lp"] = o.lockerPlayer, ["lw"] = o.lockerWeek,
             ["g"] = o.games, ["st"] = o.streak, ["note"] = o.note ?? "",
+            ["len"] = o.length, ["bs"] = o.bestStreak, ["bw"] = o.biggestWin, ["mp"] = o.mostPoints, ["rival"] = o.rival,
+            ["goal"] = o.goal, ["gy"] = o.goalYear, ["ask"] = o.tradeAsk, ["talked"] = o.talked, ["cap"] = o.captain,
+            ["sc"] = o.seasonCredits, ["sf"] = o.seasonFans, ["review"] = Strings(o.review),
         };
 
         private static FrontOfficeData DecodeOffice(Dictionary<string, object> d)
@@ -92,6 +95,21 @@ namespace CallerRetroBall.Logic
             o.games = Math.Max(0, Int(d, "g", 0));
             o.streak = Int(d, "st", 0);
             o.note = Str(d, "note", "");
+            o.length = Math.Max(0, Math.Min(FrontOffice.LengthNames.Length - 1, Int(d, "len", 0)));
+            o.bestStreak = Math.Max(0, Int(d, "bs", 0));
+            o.biggestWin = Math.Max(0, Int(d, "bw", 0));
+            o.mostPoints = Math.Max(0, Int(d, "mp", 0));
+            o.rival = Int(d, "rival", -1);
+            if (o.rival < -1 || o.rival >= Franchise.Teams) o.rival = -1;
+            o.goal = Int(d, "goal", -1);
+            if (o.goal < -1 || o.goal >= FrontOffice.GoalNames.Length) o.goal = -1;
+            o.goalYear = Int(d, "gy", 0);
+            o.tradeAsk = Int(d, "ask", -1);
+            o.talked = Bool(d, "talked", false);
+            o.captain = Int(d, "cap", -1);
+            o.seasonCredits = Math.Max(0, Int(d, "sc", 0));
+            o.seasonFans = Math.Max(0, Math.Min(100, Int(d, "sf", FrontOffice.BaseFans)));
+            o.review = StrList(d, "review");
             return o;
         }
 

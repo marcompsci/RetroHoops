@@ -232,6 +232,9 @@ namespace CallerRetroBall.Logic
         /// <summary>Make it, take it: the scorer keeps the ball.</summary>
         public bool makeItTakeIt;
 
+        /// <summary>A copy to change for one game (I71 Franchise game length).</summary>
+        public GameRulesDef CloneRules() => (GameRulesDef)MemberwiseClone();
+
         public string Id => id;
     }
 

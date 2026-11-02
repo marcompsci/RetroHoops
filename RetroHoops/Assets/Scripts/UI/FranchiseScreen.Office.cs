@@ -22,6 +22,30 @@ namespace CallerRetroBall.UI
             var o = FrontOffice.Of(f);
             if (!string.IsNullOrEmpty(o.note)) Line(o.note, Theme.Cyan, 24f, 44f);
 
+            // I79: last season's front-office review, through the off-season.
+            if (f.phase != FranchisePhase.Regular && f.phase != FranchisePhase.Playoffs && o.review != null && o.review.Count > 0)
+            {
+                Heading("SEASON REVIEW");
+                foreach (var l in o.review) Line(l, Theme.Cream, 26f, 40f);
+                if (o.rival >= 0) Line(Loc.T("RIVAL") + "  " + (Team(o.rival)?.FullName.ToUpperInvariant() ?? "?"), Theme.Pink, 26f, 40f);
+            }
+
+            // I74: what the owner wants this season.
+            if ((f.phase == FranchisePhase.Regular || f.phase == FranchisePhase.Playoffs) && o.goal >= 0)
+                Line(Loc.T("OWNER'S GOAL") + ": <color=#FFD166>" + Loc.T(FrontOffice.GoalText(f)) + "</color>", Theme.Cream, 26f, 44f);
+
+            // I75: a trade request.
+            var asker = o.tradeAsk >= 0 ? Franchise.Player(f, o.tradeAsk) : null;
+            if (asker != null && asker.team == f.you)
+            {
+                Heading("TRADE REQUEST");
+                Line(asker.Name + " " + Loc.T("wants out. Every game he stays, the room gets a little worse."), Theme.Pink, 26f, 70f);
+                bool canTalk = !o.talked && o.credits >= FrontOffice.TalkCost;
+                Row(Loc.T("Once a season") + ", " + FrontOffice.TalkCost + " " + Loc.T("credits"), canTalk ? Theme.Muted : Theme.Pink, 70f,
+                    ("TALK IT OUT", ButtonStyle.Secondary, canTalk ? () => { FrontOffice.TalkItOut(f); Save(); } : (System.Action)null),
+                    ("TRADE TAB", ButtonStyle.Ghost, () => Show(Tab.Trade)));
+            }
+
             if (o.huddle)
             {
                 Heading("POST-GAME HUDDLE");
@@ -77,6 +101,14 @@ namespace CallerRetroBall.UI
             if (heat > 0)
                 Line(Loc.T("LEAGUE HEAT") + " " + heat + "/4: " + Loc.T("every title makes the other clubs a little better prepared."), Theme.Pink, 24f, 60f);
 
+            // I71: how long your games are.
+            UiControls.ChoiceRow(_content, "GAME LENGTH", FrontOffice.LengthNames, Mathf.Clamp(o.length, 0, 2), i => { o.length = i; Save(); });
+            Line("QUICK is two minutes, LONG is six. Simulated games aren't affected.", Theme.Muted, 22f, 40f);
+
+            // I73, I77
+            if (o.rival >= 0) Line(Loc.T("RIVAL") + "  " + (Team(o.rival)?.FullName.ToUpperInvariant() ?? "?") + "  ·  " + Loc.T("beat them for extra credits and fans."), Theme.Pink, 24f, 50f);
+            if (FrontOffice.IsSellout(f)) Line("SELL-OUT CROWDS: +1 credit every home game, and the building is worth a little extra.", Theme.Gold, 24f, 50f);
+
             Heading("FACILITIES");
             for (int i = 0; i < FrontOffice.FacilityNames.Length; i++)
             {
@@ -91,11 +123,27 @@ namespace CallerRetroBall.UI
                      can ? () => { FrontOffice.Upgrade(f, which); Save(); } : (System.Action)null));
             }
 
+            // I72: the club record book.
+            Heading("CLUB RECORDS");
+            foreach (var l in FrontOffice.RecordLines(f)) Line(l, Theme.Cream, 26f, 40f);
+
+            // I76: the captain.
+            Heading("CAPTAIN");
+            var cap = FrontOffice.Captain(f);
+            Line(cap != null ? cap.Name + "  " + MoodTag(cap) : Loc.T("No captain yet."), Theme.Cream, 26f, 40f);
+            Line("A happy captain takes the sting out of losses for the whole team.", Theme.Muted, 22f, 40f);
+
             Heading("THE ROOM");
             Line("Winning, starting and the huddle lift moods; losing and the deep bench drag them down. A happy room shoots a touch better and re-signs for less. An unhappy player wants paying to stay.",
                  Theme.Muted, 24f, 100f);
             foreach (var p in Franchise.Roster(f, f.you))
-                Line(p.Short + "  <color=#FFD166>" + FrontOffice.Morale(p) + "</color>  " + MoodTag(p), Theme.Cream, 26f, 40f);
+            {
+                int id = p.id;
+                bool isCap = cap != null && cap.id == id;
+                Row(p.Short + "  <color=#FFD166>" + FrontOffice.Morale(p) + "</color>  " + MoodTag(p), Theme.Cream, 60f,
+                    (isCap ? "CAPTAIN" : "MAKE CAPTAIN", isCap ? ButtonStyle.Ghost : ButtonStyle.Secondary,
+                     isCap ? (System.Action)null : () => { FrontOffice.SetCaptain(f, id); Save(); }));
+            }
         }
     }
 }

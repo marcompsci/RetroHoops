@@ -27,6 +27,26 @@ namespace CallerRetroBall.Logic
         public int streak;
         /// <summary>The last thing the front office did, for the HOME screen.</summary>
         public string note = "";
+
+        // ---- I71–I80
+        /// <summary>I71: game length for your Franchise games (0 = STANDARD 4 min, 1 = QUICK 2 min, 2 = LONG 6 min).</summary>
+        public int length;
+        /// <summary>I72 CLUB RECORDS: best win streak, biggest win, most points in a game.</summary>
+        public int bestStreak, biggestWin, mostPoints;
+        /// <summary>I73: the RIVAL club (team index, −1 = none yet).</summary>
+        public int rival = -1;
+        /// <summary>I74: the owner's goal this season (−1 = not set), the year it's for, and whether it's met.</summary>
+        public int goal = -1;
+        public int goalYear;
+        /// <summary>I75: a player who has asked to be traded (−1 = none), and whether you've talked to him this season.</summary>
+        public int tradeAsk = -1;
+        public bool talked;
+        /// <summary>I76: the team captain (player id, −1 = none).</summary>
+        public int captain = -1;
+        /// <summary>I79: credits and fans this season, and last season's front-office review.</summary>
+        public int seasonCredits;
+        public int seasonFans = FrontOffice.BaseFans;
+        public List<string> review = new List<string>();
     }
 
     public enum Facility { Gym = 0, Film = 1, Arena = 2, Lounge = 3 }
@@ -40,7 +60,7 @@ namespace CallerRetroBall.Logic
     /// PLAYERS' LOUNGE. Players have moods; a happy room plays a touch better and signs for less, an unhappy one
     /// costs you. Each title turns up the league's heat. All original; nothing here is real money.
     /// </summary>
-    public static class FrontOffice
+    public static partial class FrontOffice
     {
         public const int BaseMorale = 70;
         public const int BaseFans = 50;
@@ -152,15 +172,20 @@ namespace CallerRetroBall.Logic
 
         // ------------------------------------------------------------------ after each of your games (I61, I63, I64, I65)
 
-        public static void AfterYourGame(FranchiseSaveData f, bool won, int margin, bool home)
+        public static void AfterYourGame(FranchiseSaveData f, bool won, int margin, bool home, int yourScore = 0, int opponent = -1)
         {
             var o = Of(f);
+            SeasonGoal(f); // I74: the owner sets this season's goal on your first game
+            bool rival = opponent >= 0 && opponent == o.rival;
+            Records(f, won, margin, yourScore);
             o.games++;
             o.streak = won ? Math.Max(1, o.streak + 1) : Math.Min(-1, o.streak - 1);
             // Credits: one for showing up, two more for a win, the ARENA pays on packed home wins.
-            int credits = 1 + (won ? 2 : 0) + (won && home && Fans(f) >= 60 ? o.arena : 0);
+            int credits = 1 + (won ? 2 : 0) + (won && home && Fans(f) >= 60 ? o.arena : 0)
+                          + (home && IsSellout(f) ? 1 : 0) + (won && rival ? 2 : 0);
             o.credits += credits;
-            AddFans(f, (won ? 1 : -1) + (won && home && o.arena > 0 ? 1 : 0) + (won && margin >= 10 ? 1 : 0));
+            o.seasonCredits += credits;
+            AddFans(f, (won ? 1 : -1) + (won && home && o.arena > 0 ? 1 : 0) + (won && margin >= 10 ? 1 : 0) + (rival ? (won ? 2 : -1) : 0));
             // Moods: winning helps everyone; starters like starting; the deep bench gets restless. The lounge softens it.
             var r = Franchise.Roster(f, f.you);
             for (int i = 0; i < r.Count; i++)
@@ -168,12 +193,13 @@ namespace CallerRetroBall.Logic
                 int d = won ? 2 : -2;
                 if (i < 5) d += 1;
                 else if (i >= 7) d -= 2;
-                if (d < 0) d = Math.Min(0, d + o.lounge / 2 + (o.lounge >= MaxLevel ? 1 : 0));
+                if (d < 0) d = Math.Min(0, d + o.lounge / 2 + (o.lounge >= MaxLevel ? 1 : 0) + (CaptainSteadies(f) ? 1 : 0));
                 AddMood(r[i], d);
                 // Moods drift back towards normal a little every game (faster with a lounge).
                 if (r[i].mood > 0) r[i].mood = Math.Max(0, r[i].mood - 1);
                 else if (r[i].mood < 0) r[i].mood = Math.Min(0, r[i].mood + 1 + o.lounge / 2);
             }
+            TradeAskDrag(f); // I75: a player who wants out wears on the room
             o.huddle = true; // a new game: the old huddle (if you skipped it) is gone, this one is waiting
             // I64: the press want you every third game, and after any three-game streak.
             if (o.press < 0 && (o.games % 3 == 0 || Math.Abs(o.streak) == 3))
@@ -312,6 +338,7 @@ namespace CallerRetroBall.Logic
         {
             var o = Of(f);
             if (f.phase != FranchisePhase.Regular) return;
+            CheckTradeAsk(f);
             int week = f.season.currentWeek;
             if (o.lockerWeek == week || o.locker >= 0) return;
             o.lockerWeek = week;
@@ -361,6 +388,7 @@ namespace CallerRetroBall.Logic
         public static void AfterSeason(FranchiseSaveData f, int finish)
         {
             var o = Of(f);
+            SeasonReview(f, finish); // I74 goal, I79 review (before the reset below)
             AddFans(f, finish >= 3 ? 10 : finish >= 1 ? 4 : -4);
             o.credits += finish >= 3 ? 6 : finish >= 1 ? 3 : 1;
             foreach (var p in f.players) p.mood /= 2;

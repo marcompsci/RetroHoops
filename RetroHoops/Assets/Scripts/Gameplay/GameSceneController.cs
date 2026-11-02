@@ -2988,6 +2988,7 @@ namespace CallerRetroBall.Gameplay
                     var frGame = Franchise.NextGame(fr);
                     int frRound = frGame != null ? frGame.round : 0;
                     App.OpenFranchiseOnMenu = true;
+                    int creditsBefore = FrontOffice.Of(fr).credits;
                     if (Franchise.RecordYourGame(fr, App.Catalog, summary.HumanScore, summary.OpponentScore, summary.TeamTotals(summary.humanTeam).chart))
                     {
                         string champ = Franchise.ChampionId(fr);
@@ -3004,6 +3005,9 @@ namespace CallerRetroBall.Gameplay
                         else if (frRound == 1)
                             note = summary.HumanWon ? "On to the final!" : "Knocked out in the semifinal.";
                         else note = "Runners-up. The off-season starts in the front office.";
+                        // I78: what the front office got out of it.
+                        int earned = FrontOffice.Of(fr).credits - creditsBefore;
+                        if (earned > 0) note += "\n+" + earned + " " + Loc.T("credits") + (FrontOffice.Of(fr).huddle ? "  ·  " + Loc.T("POST-GAME HUDDLE") : "");
                     }
                 }
                 if (rewarded && _request.Mode == GameMode.Tournament)

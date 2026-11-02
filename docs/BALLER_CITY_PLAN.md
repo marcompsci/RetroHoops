@@ -490,3 +490,32 @@ What was missing in Retro Hoops was the light front-office layer between games, 
   - `ImprovementsI61Tests` (17).
 
 **Checks:** full logic suite 1,154 of 1,154. UnityCheck is clean, and the text audit and release gate pass. **Not built or seen on a phone yet.** The tab row now has 8 tabs, so check it fits on the phone.
+
+### Improvements I71–I80: more front office (1 Nov 2026)
+
+This builds on I61–I70, again drawing on what players love in the retro football and soccer hits. Logic: `Logic/Progression/FrontOfficeSeason.cs`. UI: the OFFICE tab and HOME cards.
+
+- **I71 GAME LENGTH:** QUICK (2 min), STANDARD (4) or LONG (6) for your Franchise games. It changes only the clock, through a copy of the Full Court rules. Simulated games aren't affected.
+- **I72 CLUB RECORDS:** the longest win streak, biggest win, most points in a game, titles and best season. New records show as a note.
+- **I73 RIVAL:** the club that knocks you out of the playoffs becomes your RIVAL. Beating them pays +2 credits and +2 fans; losing to them costs a fan.
+- **I74 OWNER'S GOAL:** set on your first game each season, based on how good your team is:
+  - REACH THE FINAL for a contender
+  - MAKE THE PLAYOFFS
+  - WIN HALF YOUR GAMES
+  - GET THE FANS TO 70 for a club the fans have turned on
+
+  Meeting it pays +10 credits and +5 fans; missing it costs 5 fans.
+- **I75 TRADE REQUESTS:** a player who hits WANTS OUT asks to be traded.
+  - Every game he stays, everyone else loses 1 mood.
+  - TALK IT OUT costs 3 credits, once a season, and gives +25 mood. Trading him away also ends it.
+  - Created players never ask.
+- **I76 CAPTAIN:** pick a captain in OFFICE. A happy captain (65+) takes 1 off every mood loss for the team.
+- **I77 SELL-OUTS:** at 80+ fans, every home game pays +1 credit, and your home crowd is worth +0.75 in simulated games.
+- **I78 POST-GAME NOTE:** after a Franchise game, the result screen shows the credits you earned and that the huddle is waiting.
+- **I79 SEASON REVIEW:** shown on HOME through the off-season: the owner's goal (met or missed), credits earned, the fan change, team mood and your rival.
+- **I80 SAVES, SPANISH, TESTS:**
+  - All the new fields save, and older saves load with defaults.
+  - 28 new Spanish lines.
+  - `ImprovementsI71Tests` (12), including three full seasons.
+
+**Checks:** full logic suite 1,166 of 1,166. UnityCheck is clean, and the text audit and release gate pass.
