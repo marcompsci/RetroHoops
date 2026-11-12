@@ -6,7 +6,7 @@ Build: ______   Commit: ______   Date: ______   Checked by: ______
 
 ## A. Before building (anyone, any machine)
 
-- [ ] `bash tools/release_gate.sh` ends with **RELEASE GATE: automated checks pass**. The logic tests, text audit and App Store audit all run; any FAIL stops the release.
+- [ ] `UNITY_REFS=<Unity refs> UNITYCHECK_DIR=<UnityCheck build> bash tools/release_gate.sh` ends with **RELEASE GATE: every check that ran passed** and exits 0. It runs the logic tests, the text audit (`--strict`), the App Store audit (63 checks: secrets, signing files and play money included) and UnityCheck. Any FAIL stops the release. The last line counts what was **NOT RUN**: those steps are still owed.
 - [ ] The GitHub **Release gate** workflow is green on the commit being shipped, or you know why it didn't run.
 - [ ] UnityCheck (cloud) or a Unity Editor compile on the Mac shows 0 errors.
 - [ ] Nothing new collects data, tracks, or adds an SDK. If something does, update `PrivacyInfo.xcprivacy`, `PRIVACY.md` and the App Privacy answers **first**.
@@ -45,6 +45,8 @@ Delete the app first, so it's a first launch.
   - [ ] LIVE ▸ UNBLOCK ALL clears the block.
 - [ ] Two phones nearby: a game starts, and a custom team's name shows on the other phone as typed (clean names aren't changed).
 - [ ] Airplane mode: every offline mode still plays, and LIVE says it can't connect without hanging.
+- [ ] BALLER WORLD: open the WORLD MAP, pinch and pan, drive to another region and spawn in one; read a comic page (and READ COMIC ALOUD if it's on).
+- [ ] FRANCHISE (Pro): play one game and sim one. The result note shows credits, and the HUDDLE, PRESS ROOM and OFFICE tab work. Change GAME LENGTH to QUICK and play: the clock starts at 2:00. The 8 tabs fit on the smallest iPhone you have.
 - [ ] Note the device, iOS version and any crash. Check TestFlight ▸ Crashes a day later.
 
 ## D. TestFlight metadata (App Store Connect)
@@ -52,7 +54,8 @@ Delete the app first, so it's a first launch.
 - [ ] **What to Test** pasted from `app-review-notes.md` and updated for this build.
 - [ ] **Beta App Description**, **Feedback Email** (rodlonbell16@gmail.com), **Privacy Policy URL** and **Marketing URL** (optional) filled in under Test Information.
 - [ ] **Beta App Review Information:** contact name, phone and email; "Sign-in required" **off** (no login); the notes from `app-review-notes.md`.
-- [ ] Age rating answers are current (see `apple-compliance-report.md` finding 10).
+- [ ] Age rating answers are current (see `apple-compliance-report.md` findings 10 and 41). From 16 Nov 2026, also answer **Shared Location: No** and **Dating and Relationships: No**; every app must have these by 12 Jan 2027.
+- [ ] Review notes mention the secret codes and hidden teams and courts (guideline 2.5.19: no hidden or undocumented features).
 - [ ] App Privacy says **Data Not Collected** (still true while the server is off).
 
 ## E. External testing

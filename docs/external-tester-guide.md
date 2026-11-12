@@ -14,7 +14,8 @@ Beta builds expire after 90 days. TestFlight tells you when there's a newer one.
 
 - **QUICK CALL** (PLAY ▸ QUICK CALL): one game, a few minutes.
 - **THE STREETS**: 3 on 3 to 21 with tricks and SHOWSTOPPERS.
-- **BALLER CITY**: walk the city, find games and shops.
+- **BALLER CITY / BALLER WORLD**: walk the city, open the WORLD MAP, drive to another region, follow the comic story. Street cash is play money: you can't buy it.
+- **FRANCHISE** (Retro Hoops Pro): play or sim a few games, then open the **OFFICE** tab (huddle, facilities, moods, press room, owner's goal). Tell us if the tabs don't fit on your phone.
 - **RISE MODE**: the story career.
 - **2 PLAYER**: on one device, or two phones next to each other.
 - **LIVE**: free online games through Game Center. Sign in to Game Center first (Settings ▸ GAME CENTER).

@@ -1,8 +1,62 @@
 # Retro Hoops: Apple App Review and external TestFlight compliance report
 
-*16 October 2026. Repository state: the commit that adds this file (on top of `ca33f18`). Bundle `com.phoronomicstudios.retrohoops`, version 1.0.0.*
+*Re-run on 12 November 2026 against `8d7e3ee` plus this gate commit. The first full gate was on 16 October 2026 (`a53aa88`); its findings 1–28 are kept below. Bundle `com.phoronomicstudios.retrohoops`, version 1.0.0.*
 
-**Source of truth:** Apple's [App Review Guidelines](https://developer.apple.com/app-store/review/guidelines/) as published on 16 Oct 2026, and Apple's [upcoming requirements](https://www.developer.apple.com/news/upcoming-requirements/) page (Xcode 26 / iOS 26 SDK for uploads since 28 Apr 2026; age-rating questions due 31 Jan 2026). Nothing here guarantees approval: App Review decides.
+**Source of truth:** Apple's [App Review Guidelines](https://developer.apple.com/app-store/review/guidelines/) and [upcoming requirements](https://www.developer.apple.com/news/upcoming-requirements/). The re-run also used [Apple Developer News](https://developer.apple.com/news/) up to 12 Nov 2026: the 16 Oct 2026 guideline update (1.2, new 2.3.14, new 2.5.19, 3.1.1(a), 5) and the 16 Nov 2026 age-rating descriptors. Nothing here guarantees approval: App Review decides.
+
+## Re-run, 12 Nov 2026: result **CONDITIONAL**
+
+**What changed since 16 Oct.** Nine commits: BALLER WORLD (W1–W10), the world map and bigger regions, improvements I21–I80, and the UI motion pass. They touched Unity C# only. `Assets/Plugins`, the editor post-processor, `server/` and CI were **not changed**. So the Info.plist keys, entitlements, permissions, privacy manifest, StoreKit and Game Center code are the same as the code the first gate audited.
+
+**Highest risks looked for first:**
+- new data collection or network use
+- new permissions
+- anything sold for real money
+- simulated gambling and other age-rating content
+- real brands
+- secrets
+- save size against the iCloud limit
+- crash risk in the new save fields
+
+**Findings in this re-run:**
+
+| # | Guideline | Where | Severity | Finding | Remediation | Implemented | Verified by |
+|---|---|---|---|---|---|---|---|
+| 29 | 3.1.1 | `StreetCash.cs`, `RegionStore.cs`, `FrontOffice*.cs` | INFO | Street cash (BALLER CITY / WORLD) and front-office credits (Franchise) are play money. They're earned by playing and spent on cosmetics or facilities. There are no product ids for them; the only StoreKit product the game starts is Pro. | Audit checks added: only the Pro product id, no cash/credit/coin/gem product ids, and the front office says credits aren't real money. | Yes | `tools/AppStoreAudit` (63 checks), code reading |
+| 30 | Age rating (simulated gambling) | `CityStory.cs` | LOW | No betting, wagering, casino or slot mechanics anywhere: Las Vegas / NEON MILE is a basketball court district with a store. One comic line ("…when there's real money on the court") hinted at playing for money. | Line changed to "…when the whole block is watching" (Spanish too). An audit check now fails on casino/poker/roulette/blackjack/jackpot/wager words in game code. | Yes | Audit; grep of all game text |
+| 31 | 5.2 | Game text | INFO | The real-brand and real-league scan is still clean after BALLER WORLD. Real city and region names are used (New York, LA, Las Vegas, the Bay); place names aren't trademarks of a competitor. "Apple Music" is named only for the MusicKit feature. | None. | — | Audit plus a wider grep (leagues, shoe and drink brands, players, streaming and social apps) |
+| 32 | 5.1.1, 5.1.2 | New features | INFO | None of the new features collect or send anything. The front office, world progress, records and moods live in the save file. READ COMIC ALOUD uses the existing on-device speech voices (`RetroSpeech.mm`): offline, no permission. No new SDKs. App Privacy stays **Data Not Collected**. | None. | — | `git diff a53aa88..HEAD -- Plugins Editor server` is empty; code reading |
+| 33 | 2.1 | Saves | LOW | New save fields (front office, captain, rival, goal, review, mood). Old saves load with defaults, and bad values are clamped. An 8-season Franchise save encodes to about 90 KB, well under the 900 KB iCloud guard (`CloudSave.MaxChars`) and iCloud's 1 MB key-value limit. | Round-trip tests (`ImprovementsI61Tests`, `ImprovementsI71Tests`). | Yes | Logic tests; a size probe in the cloud workspace |
+| 34 | Security | Repository | INFO | No signing keys, certificates, provisioning profiles, `.env` files or API tokens are tracked. The only private key in the repo is generated at test time by `server/test/helpers.ts`. | Two audit checks added (signing files; secret patterns: private keys, `sk_live_`, GitHub, AWS, Slack and Google key formats). The patterns were tested against fake keys. | Yes | Audit |
+| 35 | CI honesty | `tools/release_gate.sh` | MEDIUM → fixed | The gate ran the text audit without `--strict`, so missing Spanish or glyphs could never fail it. Its last line said "automated checks pass" even when Unity and Xcode steps were skipped. | Text audit now `--strict`. UnityCheck runs when `UNITY_REFS` and `UNITYCHECK_DIR` are set, and **fails the gate** on errors (tried: a wrong path failed it). The last line now says how many checks were **NOT RUN** and that it's not a release PASS. | Yes | Ran the gate both ways |
+| 36 | 2.1 | Franchise screen | LOW (open) | The Franchise tab row went from 7 to 8 tabs (OFFICE). It might be cramped on the smallest iPhone. | Check on a device (checklist C). | No | — |
+| 37 | 2.1 | Whole app | HIGH (open, carried from #12) | I41–I80 changed AI decisions and added Franchise systems. They're covered by logic tests and the AI-vs-AI balance probe. I71–I80 was installed on "iPhone (2)" on 1 Nov and launched, but nobody has played a full session on a device and reported back. | Fresh-install playthrough (checklist C), including a Franchise season with the OFFICE tab and a BALLER WORLD drive. | No | Install log only |
+| 39 | 2.5.19 (new, 16 Oct 2026) and 2.3.1 | Secret codes, hidden teams and courts, secret milestones | LOW | Apple now bans hidden, dormant or undocumented features in a guideline of its own. The game's secrets are play content, not hidden functionality: SECRETS is a visible Settings screen, hints are earned in play, and codes never unlock paid content. `DEV: UNLOCK ALL` exists only in development builds (audit). | `app-review-notes.md` already describes secret codes. It now also cites 2.5.19 and names the hidden teams, courts and secret milestones. Keep them in the notes for every submission. | Yes (notes) | Audit "DEV: UNLOCK ALL only in editor / development builds"; notes |
+| 40 | 1.2 (16 Oct 2026 wording: nonconsensual intimate imagery) | UGC | INFO | No images or free text go between players. Kits and courts are shared as colour and style codes with a filtered name; LIVE chat is 8 preset lines. Nothing in the game can carry an image from one player to another. | None. | — | Code reading |
+| 41 | Age rating (new descriptors from 16 Nov 2026) | App Store Connect | MEDIUM (open, Omari) | App Store Connect is adding **Shared Location** and **Dating and Relationships**. They're required on the next update or questionnaire change, and for every app by 12 Jan 2027. Retro Hoops has neither: no real-world location (the world map is fictional and Core Location isn't used) and no dating or companion features. | Answer **No** to both when you next submit or edit the questionnaire, together with #10. | No | Code reading (no CoreLocation in plugins or Info.plist keys) |
+| 42 | SDK and assets (watch list) | Mac / App Store Connect | LOW (watch) | Apple recommends Xcode 27.x SDKs now (27.3 betas on 3 Nov 2026). The current upload rule is still the iOS 26 SDK, which build 19's Xcode 26.6 meets. From April 2027, submissions need iPhone Duo screenshots. New guideline 2.3.14 covers App Store creative assets. | Plan to move to Xcode 27 before the next SDK deadline. Re-check Apple's upcoming-requirements page at submission. | No | Apple Developer News, 12 Nov 2026 |
+| 38 | CI | GitHub Actions | LOW (open) | The cloud workspace can't read the repository's Actions runs, so it's unknown whether the Release gate workflow has run green on GitHub. | Omari: check github.com/marcompsci/RetroHoops/actions. | No | — |
+
+**Checks run on 12 Nov:**
+- Logic tests: **1,166 of 1,166 pass**.
+- UnityCheck (Unity 6000.6.3f1 reference assemblies, iOS defines): **0 errors, 0 warnings** in all five assemblies.
+- Text audit, `--strict`: 0 missing glyphs, 0 untranslated literal UI lines.
+- App Store audit: **63 automated checks, 0 failing**, plus 9 MANUAL items listed as not verified.
+
+**Not run:** Xcode archive and upload, any device test, App Store Connect state (agreements, age rating, screenshots, TestFlight status).
+
+**Why CONDITIONAL and not PASS.**
+- No device playthrough of the current code has been reported (#37).
+- External TestFlight still depends on the agreement problem in #13. Its status on 12 Nov isn't known from here.
+- The age-rating answers (#10), now including the two new descriptors (#41), and the screenshots (#11) need Omari in App Store Connect.
+- No build containing the 16 Oct and later fixes has been uploaded yet (#14). The 1 Nov phone install was a development build, not an App Store build.
+
+**Not FAIL:** every finding that can be fixed in the repository is fixed and checked.
+
+---
+
+*The 16 October 2026 gate follows.*
+
 
 ## Release-readiness result: **CONDITIONAL**
 

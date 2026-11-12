@@ -154,11 +154,40 @@ for doc in ("apple-compliance-report.md", "testflight-release-checklist.md", "ap
 reqs = read("docs", "APP_STORE_REQUIREMENTS.md")
 check("APP_STORE_REQUIREMENTS doesn't describe the old explicit-song playlist", "All 7 playlist songs are explicit" not in reqs)
 
+# 12 Nov 2026 gate re-run: secrets, signing files, play money, simulated gambling, new player text.
+import subprocess
+tracked = subprocess.run(["git", "ls-files"], cwd=ROOT, capture_output=True, text=True).stdout.split("\n")
+signing = [t for t in tracked if re.search(r"\.(p8|p12|mobileprovision|cer|pem|key)$", t, re.I) or re.search(r"(^|/)\.env($|\.)", t)]
+check("No signing keys, certificates, profiles or .env files are committed", not signing, ", ".join(signing[:5]))
+secret_re = re.compile(r"BEGIN (RSA |EC |OPENSSH )?PRIVATE KEY|sk_live_[0-9A-Za-z]{10}|ghp_[A-Za-z0-9]{30}|github_pat_[A-Za-z0-9_]{20}|AKIA[0-9A-Z]{16}|xox[bp]-[0-9A-Za-z-]{10}|AIza[0-9A-Za-z_-]{30}")
+secret_hits = []
+for t in tracked:
+    if not t or t.startswith("server/test/") or not re.search(r"\.(cs|mm|m|swift|ts|js|json|plist|md|sh|command|py|txt|yml|yaml|toml)$", t):
+        continue
+    try:
+        text = open(os.path.join(ROOT, t), encoding="utf-8", errors="ignore").read()
+    except OSError:
+        continue
+    if secret_re.search(text):
+        secret_hits.append(t)
+check("No API secrets or private keys in tracked files (server/test generates throwaway keys)", not secret_hits, ", ".join(secret_hits[:5]))
+scripts_all = ""
+for p in glob.glob(os.path.join(GAME, "Assets", "Scripts", "**", "*.cs"), recursive=True):
+    scripts_all += open(p, encoding="utf-8", errors="ignore").read()
+check("3.1.1: play money (street cash, front-office credits) is never sold: only the Pro product id exists",
+      re.findall(r'"com\.phoronomicstudios\.retrohoops\.[a-z.]+"', scripts_all).count('"com.phoronomicstudios.retrohoops.pro"') >= 1
+      and not re.search(r'"com\.phoronomicstudios\.retrohoops\.(cash|credits|coins|gems)', scripts_all))
+gamble = re.search(r"\b(casino|roulette|blackjack|poker|jackpot|slot machine|wager)\b", scripts_all, re.I)
+check("Age rating: no simulated gambling words in game code (casino, poker, wager...)", gamble is None, gamble.group(0) if gamble else "")
+check("Front office says credits are play money", "Nothing here costs real money." in scripts_all)
+
 # Things only a person can confirm. They're listed so a skipped check never looks like a pass.
 MANUAL = [
     "App Store Connect: App Privacy answers match PrivacyInfo.xcprivacy (Data Not Collected while the Live server is off)",
-    "App Store Connect: age rating questionnaire answered for Live play with strangers and preset quick chat",
-    "App Store Connect: screenshots show the current game (THE STREETS, BALLER CITY)",
+    "App Store Connect: age rating questionnaire answered for Live play with strangers and preset quick chat, plus the 16 Nov 2026 descriptors (Shared Location: No, Dating and Relationships: No; due for every app by 12 Jan 2027)",
+    "App Store Connect: review notes list the secret codes, hidden teams and courts (guideline 2.5.19: nothing hidden or undocumented)",
+    "GitHub: the Release gate workflow is green on the commit being shipped (not readable from the cloud workspace)",
+    "App Store Connect: screenshots show the current game (THE STREETS, BALLER CITY / BALLER WORLD, Franchise OFFICE)",
     "App Store Connect: Retro Hoops Pro IAP is Ready to Submit and attached to the version",
     "Agreements: BETA_CONTRACT_MISSING resolved before external TestFlight",
     "Xcode signed in (Settings > Accounts) so the export/upload step can run",

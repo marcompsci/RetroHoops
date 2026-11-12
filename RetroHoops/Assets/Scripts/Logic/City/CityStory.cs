@@ -115,7 +115,7 @@ namespace CallerRetroBall.Logic
                 Outro = new[]
                 {
                     P(null, null, ComicScene.Night, "ACROSS TOWN, SOMEBODY'S WATCHING...", null, BC),
-                    P("VELVET", "A BALLER crew? Cute. Let's see what you do when there's real money on the court.", ComicScene.Night, null, "TAP TAP"),
+                    P("VELVET", "A BALLER crew? Cute. Let's see what you do when the whole block is watching.", ComicScene.Night, null, "TAP TAP"),
                 },
             },
             new StoryIssue

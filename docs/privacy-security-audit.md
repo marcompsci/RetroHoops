@@ -1,6 +1,6 @@
 # Retro Hoops: privacy and security audit
 
-*16 October 2026. Checked against the repository and the build 19 archive on the Mac (`7fbffb1`: Info.plist, entitlements and privacy manifests). See `apple-compliance-report.md` for the overall result.*
+*16 October 2026, re-run 12 November 2026 (see the end). Checked against the repository and the build 19 archive on the Mac (`7fbffb1`: Info.plist, entitlements and privacy manifests). See `apple-compliance-report.md` for the overall result.*
 
 ## Data inventory
 
@@ -35,6 +35,15 @@ No analytics, advertising, attribution or crash-reporting SDKs: the plugins hold
 | P11 | Children | INFO | Not in the Kids category; nothing is collected from anyone. Keep Kids unselected (a purchase and a mailto link have no parental gate). | OK | APP_STORE.md |
 | P12 | Deletion | INFO | No accounts. Settings ▸ RESET SAVE erases the career; deleting the app removes local data; iCloud data is removed in iOS settings. If the server is ever switched on, DELETE MY LIVE DATA appears (already built, `BackendConfig.Enabled`). | OK | Code; SUPPORT.md |
 | P13 | Reports | MEDIUM (process) | Report emails contain another player's Game Center name and id. Keep them only while handling the report (the policy says so), and don't share them. | Policy updated | — |
+
+## Re-run, 12 Nov 2026
+
+| # | Area | Severity | Finding | Status | Verified |
+|---|---|---|---|---|---|
+| P14 | New features since 16 Oct | INFO | BALLER WORLD, I21–I80 and the motion pass changed only Unity C#. No plugin, Info.plist, entitlement, manifest or server change (`git diff a53aa88..HEAD` on those paths is empty). The front office, moods, records, world progress and settings are new **save-file** fields: on the device, and in the player's own iCloud when sync is on. READ COMIC ALOUD uses the existing offline speech voices. No new data leaves the device, so App Privacy stays **Data Not Collected**. | OK | Diff; code reading |
+| P15 | Secrets | INFO → automated | P7 is now enforced by the App Store audit on every gate run: no tracked signing files (`.p8/.p12/.mobileprovision/.cer/.pem/.key/.env`), and no private-key or token patterns outside `server/test`. | Automated | Audit (63 checks) |
+| P16 | iCloud size | INFO | An 8-season Franchise save is about 90 KB, against the 900 KB guard and iCloud key-value storage's 1 MB limit. | OK | Size probe |
+| P17 | Location | INFO | The world map is fictional, and Core Location isn't used anywhere (no plugin code, no location purpose string). Answer No to the new Shared Location age-rating descriptor. | OK | Code reading |
 
 ## Not verified
 

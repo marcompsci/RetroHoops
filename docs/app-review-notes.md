@@ -1,6 +1,6 @@
 # Retro Hoops: notes for App Review and TestFlight Beta App Review
 
-Paste the blocks below into App Store Connect. Update the build-specific lines each time. Everything here describes the game as it is in the repository on 16 Oct 2026. Check it against the build you upload: if a feature isn't in that build, delete its line.
+Paste the blocks below into App Store Connect. Update the build-specific lines each time. Everything here describes the game as it is in the repository on 12 Nov 2026 (first written 16 Oct 2026). Check it against the build you upload: if a feature isn't in that build, delete its line.
 
 ## Beta App Review / App Review notes ("Notes")
 
@@ -18,7 +18,11 @@ Paste the blocks below into App Store Connect. Update the build-specific lines e
 >
 > **Apple Music (optional):** the in-game phone's RETRO HOOPS playlist is the game's own instrumental beats. MY MIX can play songs the player picks from their own Apple Music via MusicKit (needs their subscription). EXPLICIT SONGS is off by default and iOS Screen Time limits still apply.
 >
-> **Secret codes:** Settings ▸ SECRETS ▸ ENTER A CODE takes four-symbol codes (hints are earned by playing). They unlock fun toggles (big heads and similar) and hidden teams and courts. They never unlock purchased content.
+> **Secret codes (no hidden features, guidelines 2.3.1 and 2.5.19):** Settings ▸ SECRETS ▸ ENTER A CODE takes four-symbol codes (hints are earned by playing). They unlock fun toggles (big heads and similar) and hidden teams and courts. Some street milestones and badges show as ??? until earned. All of this is play content shown in the game's own menus. Nothing unlocks purchased content, and there are no features that switch on after review.
+>
+> **BALLER CITY / BALLER WORLD** (main menu): walk or drive a fictional city and world map, play pickup games and crews, read the comic story. **Street cash** there is play money earned in games and spent on cosmetics; it can't be bought.
+>
+> **FRANCHISE** (Pro): the OFFICE tab adds a post-game huddle, facilities, player moods, press questions and an owner's goal. **Credits** there are also play money earned by playing; they can't be bought.
 >
 > **Permissions are asked only when used:** Local Network (two phones), add-only Photos (save a highlight), Apple Music (MY MIX). The game works if any is declined.
 >
@@ -31,9 +35,15 @@ Paste the blocks below into App Store Connect. Update the build-specific lines e
 > Please try: a QUICK CALL game, THE STREETS, a walk around BALLER CITY, and, if you can, a LIVE game with a friend (two Game Center accounts).
 > Tell us: anything that crashes or freezes, anything hard to read or tap, and anything that isn't fun. Use TestFlight's Send Beta Feedback (take a screenshot in the game). SEND FEEDBACK on the main menu copies your build and phone details for you to paste.
 
+## What to Test (next build, after 12 Nov 2026)
+
+> Thanks for testing Retro Hoops! New since the last build: BALLER WORLD (a comic story, a world map you can zoom, drive between regions), smarter on-court AI (drives to the rim, kick-outs, close-outs, pump fakes) and the Franchise OFFICE (post-game huddle, facilities, player moods, press room, owner's goal, game length).
+> Please try: a QUICK CALL game, a BALLER WORLD drive, and (with Pro) a few Franchise games, including the OFFICE tab. Check that the Franchise tabs fit on your screen.
+> Tell us about crashes, anything hard to read or tap, and anything that isn't fun (TestFlight ▸ Send Beta Feedback).
+
 ## Beta App Description
 
-> Retro Hoops is an original pixel-art arcade basketball game for iPhone and iPad. Play quick 2-on-2 games, 3-on-3 street ball to 21, a story career, a franchise, a walkable city, two-player games on one phone or two, and free online LIVE matches through Game Center. No ads, no tracking, and nearly everything works offline.
+> Retro Hoops is an original pixel-art arcade basketball game for iPhone and iPad. Play quick 2-on-2 games, 3-on-3 street ball to 21, a story career, a franchise with a front office, a walkable city and world, two-player games on one phone or two, and free online LIVE matches through Game Center. No ads, no tracking, and nearly everything works offline.
 
 ## What the reviewer must not be told
 

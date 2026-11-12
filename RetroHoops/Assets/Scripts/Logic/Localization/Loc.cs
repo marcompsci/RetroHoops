@@ -459,7 +459,7 @@ namespace CallerRetroBall.Logic
             ["Who's running them?"] = "¿Quién los organiza?",
             ["They call him MR. VELVET. Make a name here first. Meet the block, win a run, beat a BALLER crew."] = "Le dicen MR. VELVET. Primero hazte un nombre aquí. Conoce el barrio, gana un partido, vence a un equipo BALLER.",
             ["ACROSS TOWN, SOMEBODY'S WATCHING..."] = "AL OTRO LADO DE LA CIUDAD, ALGUIEN OBSERVA...",
-            ["A BALLER crew? Cute. Let's see what you do when there's real money on the court."] = "¿Un equipo BALLER? Qué tierno. A ver qué haces cuando haya dinero de verdad en la cancha.",
+            ["A BALLER crew? Cute. Let's see what you do when the whole block is watching."] = "¿Un equipo BALLER? Qué tierno. A ver qué haces cuando todo el barrio esté mirando.",
             ["THE FLYER"] = "EL VOLANTE",
             ["One hundred thousand reasons to show up."] = "Cien mil razones para presentarse.",
             ["Win 3 more city games"] = "Gana 3 partidos más en la ciudad",
