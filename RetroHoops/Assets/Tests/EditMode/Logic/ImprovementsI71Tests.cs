@@ -194,6 +194,8 @@ namespace CallerRetroBall.Tests
                 foreach (var p in Franchise.FreeAgents(_f))
                     if (_f.teams[_f.you].roster.Count < Franchise.MinRoster && Franchise.CannotSign(_f, p) == null) Franchise.SignFreeAgent(_f, p.id);
                 Franchise.FinishFreeAgency(_f, _c);
+                // I103 (14 Nov): three missed owner's goals get you fired; take the first job offered and carry on.
+                if (FranchiseLeague.Of(_f).fired) FranchiseLife.TakeJob(_f, FranchiseLeague.Of(_f).jobOffers[0]);
                 while (Franchise.CannotStart(_f) != null && _f.teams[_f.you].roster.Count > Franchise.MaxRoster)
                     Franchise.Release(_f, _f.teams[_f.you].roster[_f.teams[_f.you].roster.Count - 1]);
                 Assert.IsTrue(Franchise.StartSeason(_f, _c), Franchise.CannotStart(_f));

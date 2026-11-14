@@ -47,6 +47,8 @@ namespace CallerRetroBall.Logic
         public int seasonCredits;
         public int seasonFans = FrontOffice.BaseFans;
         public List<string> review = new List<string>();
+        /// <summary>I103: whether last season's owner's goal was met.</summary>
+        public bool lastGoalMet = true;
     }
 
     public enum Facility { Gym = 0, Film = 1, Arena = 2, Lounge = 3 }

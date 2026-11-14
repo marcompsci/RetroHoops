@@ -220,6 +220,7 @@ namespace CallerRetroBall.Logic
             SeasonGoal(f); // a season simmed with no game of yours recorded still gets judged
             var lines = new List<string>();
             bool met = GoalMet(f, finish);
+            o.lastGoalMet = met; // I103 the hot seat
             lines.Add(Loc.T("OWNER'S GOAL") + ": " + Loc.T(GoalText(f)) + "  ·  " + Loc.T(met ? "MET" : "MISSED"));
             if (met)
             {

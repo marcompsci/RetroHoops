@@ -560,3 +560,32 @@ The aim: match what players love in Hoop Land (full stats, careers, awards, cust
 **Checks:** full logic suite 1,182 of 1,182. UnityCheck has 0 errors, the strict text audit passes, and the App Store audit has 63 of 63 passing.
 
 **Not seen on a phone yet.** Roster rows now have four buttons (CARD, UP, DOWN, CUT), so check they fit on the smallest iPhone.
+
+### Improvements I96–I110: a living Franchise league (14 Nov 2026)
+
+The league now moves on its own, and your job has stakes. Logic: `Logic/Progression/FranchiseLife.cs`. UI: `UI/FranchiseScreen.Life.cs`, plus hooks in `Franchise.cs`, `FranchiseDepth.cs`, `FrontOffice*.cs` and the save codec.
+
+- **I96 COMMISSIONER** (OFFICE): turn the salary cap off, set trade difficulty (EASY 0.4×, NORMAL, HARD 1.6× the value GMs want back), switch GM calls off, and edit ratings (±1 per tap). The number of edits made is shown.
+- **I97 HEADLINES** (HOME, latest 5, 40 kept). Your trades, signings and extensions, Player of the Week, milestones, five-game streaks, All-Star weekend, deadline deals, the title, Finals MVP, new records, retired numbers, and the hot seat.
+- **I98 ALL-STAR WEEKEND:** at the trade deadline the league's ten best seasons are named. A simulated East–West game and its MVP go in the headlines. Your All-Stars get +5 mood, and the selection is counted on their card.
+- **I99 FINALS MVP:** the champion's best player.
+- **I100 RETIRED NUMBERS:** when one of your legends retires, his number goes up in your arena (HISTORY) and new players can't wear it. A legend has 4 seasons with you, or 3 and a title.
+- **I101 MENTORS:** each veteran on your club (30+, OVR 70+) takes your two youngest players (23 and under, below potential): +1 growth a season. Mentored players show it on their card.
+- **I102 CONTINUITY:** the average number of seasons your top seven have spent together (up to 4). It's worth up to +1 in simulated strength and up to +1% shooting in games you play.
+- **I103 THE HOT SEAT:**
+  - Miss the owner's goal twice running and you're warned.
+  - Miss it a third time and you're let go. The three lowest-finishing clubs offer you a job.
+  - You keep your legacy, credits and history. The new club comes with its own building, fans and name, and your old club becomes your rival.
+- **I104 RECORD BOOK** (LEAGUE): single-season PPG, RPG and APG (half a season's games needed) and most wins. New records make the headlines.
+- **I105 HOMETOWN DISCOUNT:** once per player at re-signing. A happy player (60+) signs on the spot for 10% less; anyone else is insulted (−8 mood). The re-sign list now shows the mood-adjusted price, which is what I63 has always charged.
+- **I106 DEADLINE DAY:** up to two fair bench trades between other clubs, in the moves log and headlines. Off when GM calls are off.
+- **I107 MILESTONES:** 500 / 1,000 / 2,000 / 3,000 points and 300 / 750 rebounds and assists. Yours (and any 1,000+ milestone) make the headlines and lift mood.
+- **I108 PLAYER OF THE WEEK:** the most points that week.
+- **I109 WHAT'S NEW:** a dismissible card on HOME explaining the new systems.
+- **I110 SAVES, SPANISH, TESTS:**
+  - Everything saves. Older saves load safely: a "fired" save without offers is cleared, and tenure starts counting from now.
+  - 50 new Spanish lines.
+  - `ImprovementsI96Tests`: 15 tests, including firing and a new job, and three seasons.
+  - `ImprovementsI71Tests.I80` now takes a job if it gets fired. That's new behaviour, not a bug.
+
+**Checks:** full logic suite 1,197 of 1,197. UnityCheck has 0 errors, the strict text audit is clean, and the App Store audit passes 63 of 63. **Not seen on a phone yet.**

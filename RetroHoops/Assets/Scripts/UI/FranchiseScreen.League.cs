@@ -23,6 +23,9 @@ namespace CallerRetroBall.UI
             sb.Append(Arch(p)).Append(" · ").Append(Loc.T("AGE")).Append(' ').Append(p.age).Append(" · OVR ").Append(p.Overall);
             if (p.team >= 0) sb.Append(" · ").Append(TeamName(p.team));
             if (p.team == f.you) sb.Append("\n").Append(Loc.T("MOOD")).Append(' ').Append(FrontOffice.Morale(p)).Append(" (").Append(Loc.T(FrontOffice.MoodName(FrontOffice.Morale(p)))).Append(')');
+            if (p.tenure > 0 && p.team >= 0) sb.Append("\n").Append(p.tenure + 1).Append(' ').Append(Loc.T("seasons with this club"));
+            if (p.allStarNods > 0) sb.Append("\n").Append(Loc.T("ALL-STAR")).Append(" × ").Append(p.allStarNods);
+            if (p.team == f.you && FranchiseLife.Mentees(f).Contains(p)) sb.Append("\n").Append(Loc.T("Learning from a veteran mentor"));
             if (p.injured > 0) sb.Append("\n").Append(Loc.T("INJURED")).Append(": ").Append(p.injured).Append(' ').Append(Loc.T(p.injured == 1 ? "game" : "games"));
             sb.Append("\n").Append(Franchise.Money(p.salary)).Append(" × ").Append(p.years);
             if (p.extension > 0) sb.Append("  →  ").Append(Franchise.Money(p.extension)).Append(" ").Append(Loc.T("from next season"));

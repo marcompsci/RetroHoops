@@ -36,6 +36,7 @@ namespace CallerRetroBall.Logic
                         (double)p.draftYear, (double)p.draftPick, p.created ? 1.0 : 0.0, (double)p.mood,
                         (double)p.reb, (double)p.ast, (double)p.stl, (double)p.blk, (double)p.careerReb, (double)p.careerAst,
                         (double)p.startOvr, (double)p.injured, (double)p.injSlot, p.onBlock ? 1.0 : 0.0, (double)p.extension,
+                        (double)p.weekPts, (double)p.milestones, (double)p.allStarNods, (double)p.allStarMvps, (double)p.tenure, (double)p.lastTeam,
                     },
                     ["h"] = List(p.history, h => (object)new List<object> { (double)h.year, (double)h.team, (double)h.gp, (double)h.pts, (double)h.reb, (double)h.ast, (double)h.ovr }),
                 }),
@@ -77,7 +78,7 @@ namespace CallerRetroBall.Logic
             ["g"] = o.games, ["st"] = o.streak, ["note"] = o.note ?? "",
             ["len"] = o.length, ["bs"] = o.bestStreak, ["bw"] = o.biggestWin, ["mp"] = o.mostPoints, ["rival"] = o.rival,
             ["goal"] = o.goal, ["gy"] = o.goalYear, ["ask"] = o.tradeAsk, ["talked"] = o.talked, ["cap"] = o.captain,
-            ["sc"] = o.seasonCredits, ["sf"] = o.seasonFans, ["review"] = Strings(o.review),
+            ["lgm"] = o.lastGoalMet, ["sc"] = o.seasonCredits, ["sf"] = o.seasonFans, ["review"] = Strings(o.review),
         };
 
         private static FrontOfficeData DecodeOffice(Dictionary<string, object> d)
@@ -112,6 +113,7 @@ namespace CallerRetroBall.Logic
             o.talked = Bool(d, "talked", false);
             o.captain = Int(d, "cap", -1);
             o.seasonCredits = Math.Max(0, Int(d, "sc", 0));
+            o.lastGoalMet = Bool(d, "lgm", true);
             o.seasonFans = Math.Max(0, Math.Min(100, Int(d, "sf", FrontOffice.BaseFans)));
             o.review = StrList(d, "review");
             return o;
@@ -124,6 +126,13 @@ namespace CallerRetroBall.Logic
             ["pv"] = List(l.preview, t => (object)(double)t), ["pvy"] = l.previewYear, ["pvr"] = l.previewResult ?? "",
             ["grades"] = List(l.grades, g => new Dictionary<string, object> { ["y"] = g.year, ["t"] = g.team, ["g"] = g.grade, ["l"] = g.line }),
             ["ext"] = List(l.extended, id => (object)(double)id),
+            ["capOff"] = l.capOff, ["offersOff"] = l.offersOff, ["tl"] = l.tradeLevel, ["edits"] = l.commishEdits,
+            ["news"] = Strings(l.news), ["lwd"] = l.lastWeekDone, ["potw"] = l.potw, ["asy"] = l.allStarYear, ["asm"] = l.allStarMvp,
+            ["as"] = List(l.allStars, id => (object)(double)id), ["missed"] = l.missedGoals, ["jobs"] = l.jobs, ["fired"] = l.fired,
+            ["offers"] = List(l.jobOffers, t => (object)(double)t),
+            ["records"] = List(l.records, r => new Dictionary<string, object> { ["k"] = r.kind, ["v"] = r.value, ["n"] = r.name, ["t"] = r.team, ["y"] = r.year }),
+            ["banners"] = List(l.banners, b => new Dictionary<string, object> { ["n"] = b.number, ["name"] = b.name, ["y"] = b.year, ["l"] = b.line }),
+            ["asked"] = List(l.asked, id => (object)(double)id), ["wn"] = l.whatsNew,
         };
 
         private static FrLeagueData DecodeLeague(Dictionary<string, object> d)
@@ -144,6 +153,30 @@ namespace CallerRetroBall.Logic
                 if (item is Dictionary<string, object> g)
                     l.grades.Add(new FrDraftGrade { year = Int(g, "y", 0), team = Int(g, "t", 0), grade = Str(g, "g", ""), line = Str(g, "l", "") });
             foreach (var v in Arr(d, "ext")) if (v is double x) l.extended.Add((int)x);
+            l.capOff = Bool(d, "capOff", false);
+            l.offersOff = Bool(d, "offersOff", false);
+            l.tradeLevel = Math.Max(0, Math.Min(FranchiseLife.TradeLevels.Length - 1, Int(d, "tl", 1)));
+            l.commishEdits = Math.Max(0, Int(d, "edits", 0));
+            l.news = StrList(d, "news");
+            if (l.news.Count > FranchiseLife.MaxNews) l.news.RemoveRange(0, l.news.Count - FranchiseLife.MaxNews);
+            l.lastWeekDone = Int(d, "lwd", 0);
+            l.potw = Math.Max(0, Int(d, "potw", 0));
+            l.allStarYear = Int(d, "asy", 0);
+            l.allStarMvp = Int(d, "asm", -1);
+            foreach (var v in Arr(d, "as")) if (v is double x) l.allStars.Add((int)x);
+            l.missedGoals = Math.Max(0, Int(d, "missed", 0));
+            l.jobs = Math.Max(0, Int(d, "jobs", 0));
+            l.fired = Bool(d, "fired", false);
+            foreach (var v in Arr(d, "offers")) if (v is double x && x >= 0 && x < Franchise.Teams) l.jobOffers.Add((int)x);
+            if (l.fired && l.jobOffers.Count == 0) l.fired = false; // can't be stuck without a way out
+            foreach (var item in Arr(d, "records"))
+                if (item is Dictionary<string, object> r)
+                    l.records.Add(new FrRecord { kind = Str(r, "k", ""), value = Int(r, "v", 0), name = Str(r, "n", ""), team = Int(r, "t", -1), year = Int(r, "y", 0) });
+            foreach (var item in Arr(d, "banners"))
+                if (item is Dictionary<string, object> b)
+                    l.banners.Add(new FrBanner { number = Math.Max(0, Math.Min(99, Int(b, "n", 0))), name = Str(b, "name", ""), year = Int(b, "y", 0), line = Str(b, "l", "") });
+            foreach (var v in Arr(d, "asked")) if (v is double x) l.asked.Add((int)x);
+            l.whatsNew = Math.Max(0, Int(d, "wn", 0));
             return l;
         }
 
@@ -192,6 +225,13 @@ namespace CallerRetroBall.Logic
                         fp.injured = Math.Max(0, Math.Min(5, I(40))); fp.injSlot = I(41); fp.onBlock = I(42) != 0;
                         fp.extension = Math.Max(0, Math.Min(Franchise.MaxSalary, I(43)));
                     }
+                    if (n.Count > 49)
+                    {
+                        // I96–I110.
+                        fp.weekPts = Math.Max(0, I(44)); fp.milestones = Math.Max(0, I(45)); fp.allStarNods = Math.Max(0, I(46));
+                        fp.allStarMvps = Math.Max(0, I(47)); fp.tenure = Math.Max(0, Math.Min(30, I(48))); fp.lastTeam = I(49);
+                    }
+                    else fp.lastTeam = fp.team; // older saves: count time together from now
                     foreach (var hv in Arr(p, "h"))
                     {
                         if (!(hv is List<object> hl) || hl.Count < 7) continue;

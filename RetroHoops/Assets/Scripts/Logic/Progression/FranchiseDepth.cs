@@ -66,7 +66,7 @@ namespace CallerRetroBall.Logic
             if (f.offerWeek == week) return;
             f.offerWeek = week;
             var rng = new SeededRandom(StableHash.Of("fr:offer:" + f.seed + ":" + f.year + ":" + week));
-            if (!rng.Chance(FranchiseLeague.OfferChance(f))) return; // I87: the trade block draws more calls
+            if (!FranchiseLife.OffersOn(f) || !rng.Chance(FranchiseLeague.OfferChance(f))) return; // I96: GM calls can be switched off // I87: the trade block draws more calls
             f.offer = MakeOffer(f, c, rng, week);
         }
 

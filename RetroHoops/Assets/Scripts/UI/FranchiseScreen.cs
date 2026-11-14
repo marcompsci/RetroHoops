@@ -232,6 +232,7 @@ namespace CallerRetroBall.UI
         private void BuildHome()
         {
             var f = F;
+            LifeCards(f);   // I97, I103, I109: what's new, a job hunt, headlines
             OfficeCards(f); // I61, I64, I66: the huddle, the press room and the locker room
             // Phase 33: a GM on the phone.
             if (f.offer != null && FranchiseDepth.StillValid(f, f.offer))
@@ -475,6 +476,7 @@ namespace CallerRetroBall.UI
                 foreach (var g in last) Line(Abbr(g.awayId) + " " + g.awayScore + " @ " + Abbr(g.homeId) + " " + g.homeScore, Theme.Cream);
             }
             LeagueExtras(f); // I82, I92, I93
+            RecordBook(f);   // I104
         }
 
         // ------------------------------------------------------------------ market
@@ -486,8 +488,13 @@ namespace CallerRetroBall.UI
             foreach (var p in expiring)
             {
                 int id = p.id;
-                Row(Card(p, false) + "\n<size=22><color=#4CC9F0>" + Loc.T("asks") + " " + Franchise.Money(Franchise.Demand(p)) + " × " + Franchise.DemandYears(p) + "</color></size>",
-                    Theme.Cream, 130f, ("RE-SIGN", ButtonStyle.Primary, () => { Franchise.ReSign(f, id); Save(); }));
+                var buttons = new System.Collections.Generic.List<(string, ButtonStyle, System.Action)>
+                {
+                    ("RE-SIGN", ButtonStyle.Primary, () => { Franchise.ReSign(f, id); Save(); }),
+                };
+                AskDiscountButton(f, p, buttons); // I105
+                Row(Card(p, false) + "\n<size=22><color=#4CC9F0>" + Loc.T("asks") + " " + Franchise.Money(FrontOffice.ReSignSalary(p, Franchise.Demand(p))) + " × " + Franchise.DemandYears(p) + "</color></size>",
+                    Theme.Cream, 130f, buttons.ToArray());
             }
         }
 
@@ -579,6 +586,7 @@ namespace CallerRetroBall.UI
             UiControls.Stat(_content, "PLAYOFFS", t.playoffs.ToString());
             UiControls.Stat(_content, "TITLES", t.titles.ToString());
             LegacyBlock(f); // I90
+            Banners(f);     // I100
             foreach (var h in f.history)
                 if (h.team == f.you)
                     Line(Loc.T("YEAR") + " " + h.year + ":  " + h.wins + "-" + h.losses + "  " + Loc.T(Franchise.FinishName(h.finish)) + "\n<size=22><color=#8D99AE>" + h.best + " · "

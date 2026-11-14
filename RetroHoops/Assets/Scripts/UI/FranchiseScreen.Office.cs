@@ -134,6 +134,7 @@ namespace CallerRetroBall.UI
             Line("A happy captain takes the sting out of losses for the whole team.", Theme.Muted, 22f, 40f);
 
             OfficeLeagueExtras(f); // I88, I89
+            Commissioner(f);       // I96
 
             Heading("THE ROOM");
             Line("Winning, starting and the huddle lift moods; losing and the deep bench drag them down. A happy room shoots a touch better and re-signs for less. An unhappy player wants paying to stay.",

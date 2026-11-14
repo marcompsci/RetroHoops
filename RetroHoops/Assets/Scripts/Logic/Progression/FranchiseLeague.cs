@@ -41,6 +41,28 @@ namespace CallerRetroBall.Logic
         public List<FrDraftGrade> grades = new List<FrDraftGrade>();
         /// <summary>I85: extensions signed this season (one per player per season).</summary>
         public List<int> extended = new List<int>();
+
+        // ---- I96–I110 (FranchiseLife)
+        /// <summary>I96 commissioner: salary cap off, trade difficulty (0 EASY, 1 NORMAL, 2 HARD), GM calls off, rating edits made.</summary>
+        public bool capOff, offersOff;
+        public int tradeLevel = 1, commishEdits;
+        /// <summary>I97: the latest headlines, oldest first.</summary>
+        public List<string> news = new List<string>();
+        public int lastWeekDone;
+        /// <summary>I108: your PLAYER OF THE WEEK wins.</summary>
+        public int potw;
+        /// <summary>I98: this season's All-Stars and the game's MVP.</summary>
+        public int allStarYear, allStarMvp = -1;
+        public List<int> allStars = new List<int>();
+        /// <summary>I103: owner's goals missed in a row, fired, the clubs calling, and jobs you've taken.</summary>
+        public int missedGoals, jobs;
+        public bool fired;
+        public List<int> jobOffers = new List<int>();
+        /// <summary>I104 record book, I100 retired numbers, I105 discount asks this off-season, I109 WHAT'S NEW seen.</summary>
+        public List<FrRecord> records = new List<FrRecord>();
+        public List<FrBanner> banners = new List<FrBanner>();
+        public List<int> asked = new List<int>();
+        public int whatsNew;
     }
 
     /// <summary>
@@ -199,6 +221,7 @@ namespace CallerRetroBall.Logic
                 case "IMPROVED": return "MOST IMPROVED";
                 case "ALL": return "ALL-LEAGUE FIRST TEAM";
                 case "GM": return "EXECUTIVE OF THE YEAR";
+                case "FINALS": return "FINALS MVP";
                 default: return kind;
             }
         }
@@ -259,6 +282,7 @@ namespace CallerRetroBall.Logic
             // I90: the GM legacy score.
             o.legacy += LegacyForSeason(f, table);
             o.extended.Clear();
+            o.asked.Clear();
         }
 
         private static float Season(FrPlayer p) => p.Ppg * 2f + PerGame(p, 1) + PerGame(p, 2) * 1.5f + (PerGame(p, 3) + PerGame(p, 4)) * 2f + p.Overall * 0.3f;
@@ -292,6 +316,7 @@ namespace CallerRetroBall.Logic
             p.years = Franchise.DemandYears(p) + 1;
             Of(f).extended.Add(p.id);
             FrontOffice.AddMood(p, 6);
+            FranchiseLife.Headline(f, Loc.T("EXTENDED") + ": " + p.Name);
             f.moves.Add(new FrMove { year = f.year, text = "EXTENDED: " + p.Name + " · " + Franchise.Money(p.extension) + " × " + (p.years - 1) });
             return true;
         }

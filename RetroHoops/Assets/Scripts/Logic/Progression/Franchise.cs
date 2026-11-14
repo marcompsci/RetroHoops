@@ -54,6 +54,9 @@ namespace CallerRetroBall.Logic
         public int extension;
         /// <summary>I83: his finished seasons.</summary>
         public List<FrSeasonLine> history = new List<FrSeasonLine>();
+        /// <summary>I96–I110: season points at the start of the week (PLAYER OF THE WEEK), career milestones reached (bits),
+        /// All-Star selections and All-Star MVPs, seasons with his current club and the club he ended last season with.</summary>
+        public int weekPts, milestones, allStarNods, allStarMvps, tenure, lastTeam = -1;
         public float Rpg => gp == 0 ? 0f : reb / (float)gp;
         public float Apg => gp == 0 ? 0f : ast / (float)gp;
 
@@ -320,6 +323,7 @@ namespace CallerRetroBall.Logic
                 p.years = 0;
             }
             foreach (var t in f.teams) TrimToCap(f, f.teams.IndexOf(t));
+            foreach (var p in f.players) p.lastTeam = p.team; // I102: the opening rosters count as together from day one
             NewSchedule(f);
             return f;
         }
@@ -437,7 +441,7 @@ namespace CallerRetroBall.Logic
                 sum += ovr[i] * weight;
                 w += weight;
             }
-            return (w == 0f ? 40f : sum / w) + FrontOffice.StrengthEdge(f, team);
+            return (w == 0f ? 40f : sum / w) + FrontOffice.StrengthEdge(f, team) + FranchiseLife.ContinuityEdge(f, team); // I102
         }
 
         private static void Simulate(FranchiseSaveData f, ScheduledGame g, SeededRandom rng)
@@ -546,6 +550,7 @@ namespace CallerRetroBall.Logic
             if (round == 0) f.season.currentWeek = Math.Max(f.season.currentWeek, week + 1);
             if (round == 0) FranchiseDepth.AfterWeek(f, c);
             if (round == 0) FrontOffice.AfterWeek(f);
+            if (round == 0) FranchiseLife.AfterWeek(f, c, week); // I97, I98, I106, I107, I108
             FranchiseLeague.AfterGameInjuries(f, f.season.seed + ":" + f.year + ":" + week + ":" + round); // I88 (only when on)
 
             if (f.phase == FranchisePhase.Regular && SeasonEngine.RegularSeasonComplete(f.season))
@@ -618,6 +623,8 @@ namespace CallerRetroBall.Logic
             if (roy != null) f.awards.Add(new FrAward { year = f.year, kind = "ROOKIE", name = roy.Name, team = roy.team, line = roy.Ppg.ToString("0.0") + " PPG" });
 
             FranchiseLeague.EndOfSeason(f, table); // I83, I84, I90, I92
+            FranchiseLife.EndOfSeason(f, c, table, champ); // I99, I103, I104
+            FranchiseLife.UpdateTenure(f); // I102
             Age(f);
             FranchiseLeague.StartExtensions(f); // I85: extended players' new salaries start
             foreach (var p in f.players) { p.injured = 0; p.injSlot = -1; p.onBlock = false; }
@@ -632,6 +639,7 @@ namespace CallerRetroBall.Logic
         {
             var rng = new SeededRandom(StableHash.Of("fr:age:" + f.seed + ":" + f.year));
             var retired = new List<FrPlayer>();
+            var mentees = FranchiseLife.Mentees(f); // I101
             f.devReport = new List<string>();
             f.offer = null;
             foreach (var p in f.players)
@@ -649,6 +657,7 @@ namespace CallerRetroBall.Logic
                     p.attrs = FranchiseDepth.ApplyFocus(p, (TrainingFocus)f.focus);
                     int gym = FrontOffice.GymGrowth(f, p); // I62 GYM
                     if (gym > 0) p.attrs = p.attrs.Offset(gym);
+                    if (mentees.Contains(p) && p.Overall < p.potential) p.attrs = p.attrs.Offset(1); // I101 mentor
                     int diff = p.Overall - before;
                     f.devReport.Add(p.Name + " (" + p.age + ")  " + before + " → " + p.Overall + (diff > 0 ? "  +" + diff : diff < 0 ? "  " + diff : "  ="));
                 }
@@ -659,6 +668,7 @@ namespace CallerRetroBall.Logic
             }
             foreach (var p in retired)
             {
+                FranchiseLife.OnRetire(f, p); // I100: legends get their number raised
                 if (p.team >= 0) f.teams[p.team].roster.Remove(p.id);
                 f.players.Remove(p);
                 bool hall = p.peak >= HallPeak && p.seasons >= HallSeasons;
@@ -828,6 +838,7 @@ namespace CallerRetroBall.Logic
         {
             var used = new HashSet<int>();
             foreach (var q in Roster(f, team)) used.Add(q.number);
+            if (team == f.you) foreach (var b in FranchiseLeague.Of(f).banners) used.Add(b.number); // I100 retired numbers
             int n = Math.Max(0, Math.Min(99, wanted));
             for (int guard = 0; guard < 100 && used.Contains(n); guard++) n = (n + 7) % 100;
             return n;
@@ -912,7 +923,7 @@ namespace CallerRetroBall.Logic
             if (f.phase == FranchisePhase.Playoffs) return "No signings during the playoffs.";
             if (f.teams[f.you].roster.Count >= MaxRoster) return "Roster full (" + MaxRoster + "). Release someone first.";
             int demand = Demand(p);
-            if (demand > MinSalary && Payroll(f, f.you) + demand > Cap) return "Not enough cap room: " + Money(CapRoom(f, f.you)) + " left, asks " + Money(demand) + ".";
+            if (FranchiseLife.CapOn(f) && demand > MinSalary && Payroll(f, f.you) + demand > Cap) return "Not enough cap room: " + Money(CapRoom(f, f.you)) + " left, asks " + Money(demand) + ".";
             // I86: he has to want to come.
             int interest = FranchiseLeague.Interest(f, p);
             if (interest < FranchiseLeague.InterestNeeded) return p.Name + " isn't interested (" + interest + "%). Win more, grow the fans, build facilities, or offer a starting spot.";
@@ -929,6 +940,7 @@ namespace CallerRetroBall.Logic
             p.number = FreeNumber(f, f.you, p.number);
             f.teams[f.you].roster.Add(p.id);
             f.moves.Add(new FrMove { year = f.year, text = "SIGNED: " + p.Name + " · " + Money(p.salary) + " × " + p.years });
+            FranchiseLife.Headline(f, Loc.T("SIGNED") + ": " + p.Name + " (" + p.Overall + ")");
             return true;
         }
 
@@ -984,6 +996,7 @@ namespace CallerRetroBall.Logic
         /// <summary>Why the new season can't start yet, or null when your roster is legal.</summary>
         public static string CannotStart(FranchiseSaveData f)
         {
+            if (FranchiseLeague.Of(f).fired) return "You were let go. Pick your next job on HOME first."; // I103
             int n = f.teams[f.you].roster.Count;
             if (n < MinRoster) return "You need at least " + MinRoster + " players (you have " + n + "). Sign free agents.";
             if (n > MaxRoster) return "Too many players: cut down to " + MaxRoster + ".";
@@ -1046,14 +1059,15 @@ namespace CallerRetroBall.Logic
             int outYou = 0, outThem = 0;
             foreach (var p in gp) outYou += p.salary;
             foreach (var p in tp) outThem += p.salary;
-            if (!SalaryOk(Payroll(f, f.you), outYou, outThem)) { v.Reason = "Your payroll would go over the cap: send out more salary."; return v; }
-            if (!SalaryOk(Payroll(f, other), outThem, outYou)) { v.Reason = "Their payroll would go over the cap."; return v; }
+            bool cap = FranchiseLife.CapOn(f); // I96: the commissioner can switch the cap off
+            if (cap && !SalaryOk(Payroll(f, f.you), outYou, outThem)) { v.Reason = "Your payroll would go over the cap: send out more salary."; return v; }
+            if (cap && !SalaryOk(Payroll(f, other), outThem, outYou)) { v.Reason = "Their payroll would go over the cap."; return v; }
 
             foreach (var p in gp) v.TheyGet += Value(p);
             foreach (var p in tp) v.TheyGive += Value(p);
             // Extra bodies clog a roster; consolidating into one better player is worth a little.
             v.TheyGet -= Math.Max(0, gp.Count - tp.Count) * 2f;
-            float margin = 1.5f + v.TheyGive * 0.06f;
+            float margin = (1.5f + v.TheyGive * 0.06f) * FranchiseLife.TradeMargin(f); // I96 trade difficulty
             if (v.TheyGet >= v.TheyGive + margin)
             {
                 v.Accepted = true;
@@ -1094,6 +1108,7 @@ namespace CallerRetroBall.Logic
             }
             SortRoster(f, other);
             f.moves.Add(new FrMove { year = f.year, text = "TRADE: " + (names.Count > 0 ? string.Join(", ", names) : "nothing") + " for " + (back.Count > 0 ? string.Join(", ", back) : "nothing") });
+            FranchiseLife.Headline(f, Loc.T("TRADE") + ": " + (names.Count > 0 ? string.Join(", ", names) : "-") + " / " + (back.Count > 0 ? string.Join(", ", back) : "-"));
             return true;
         }
 
@@ -1159,7 +1174,7 @@ namespace CallerRetroBall.Logic
                 ContextId = "fr:y" + f.year + ":w" + g.week + ":r" + g.round,
                 Round = g.round,
                 Coach = f.coach,
-                ChemistryBonus = FrontOffice.ChemistryFor(f), // I68: the room's mood
+                ChemistryBonus = FrontOffice.ChemistryFor(f) + FranchiseLife.ContinuityShooting(f), // I68 mood, I102 continuity
                 RulesOverride = FrontOffice.RulesFor(f, c),    // I71: QUICK / STANDARD / LONG
             };
         }
