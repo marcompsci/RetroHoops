@@ -519,3 +519,44 @@ This builds on I61–I70, again drawing on what players love in the retro footba
   - `ImprovementsI71Tests` (12), including three full seasons.
 
 **Checks:** full logic suite 1,166 of 1,166. UnityCheck is clean, and the text audit and release gate pass.
+
+### Improvements I81–I95: a deeper Franchise league (13 Nov 2026)
+
+The aim: match what players love in Hoop Land (full stats, careers, awards, customising) and in the retro sports hits (an easy-to-read front office, a climb across seasons), and go past them. Logic: `Logic/Progression/FranchiseLeague.cs`. UI: `UI/FranchiseScreen.League.cs`, with hooks in `Franchise.cs`, `FranchiseDepth.cs`, the save codec and `GameSceneController`.
+
+- **I81 FULL STAT LINES:** every player now has rebounds, assists, steals and blocks, not just points.
+  - Simulated games share them out by rating, using a hash, so simulated scores don't change.
+  - Games you play record your players' **real box score**.
+- **I82 LEAGUE LEADERS:** the LEAGUE tab shows the top three in PPG, RPG, APG, SPG and BPG. Players need a third of the season's games to qualify.
+- **I83 PLAYER CARDS:** a CARD button on the roster and in free agency. It shows:
+  - this season's line and the career line
+  - the last eight seasons (team, OVR, points/rebounds/assists)
+  - awards, mood, injury, and contract (including an extension)
+- **I84 MORE AWARDS:** Defensive Player, Sixth Man, Most Improved, the All-League First Team (five players) and Executive of the Year. Executive of the Year goes to the club that beat its preseason preview by the most.
+- **I85 CONTRACT EXTENSIONS:** in the regular season before the deadline, extend a player in his last year from his card.
+  - The price is his demand, adjusted for mood. He won't talk while unhappy.
+  - The new salary starts next season.
+- **I86 FREE-AGENT INTEREST:** free agents weigh your last season, playoffs, fans, facilities and whether they'd start.
+  - Each one shows INTEREST %. Under 35%, he won't sign.
+  - Stars are pickier, so the front office matters.
+- **I87 TRADE BLOCK:** put a player on the block from his card.
+  - GMs call 75% of weeks instead of 40%, and ask about him first.
+  - He notices: −3 mood.
+- **I88 INJURIES (optional, off by default):** turned on in OFFICE.
+  - Starters can pick up knocks of 1–3 games. Older players get hurt a little more often, and the PLAYERS' LOUNGE shortens knocks.
+  - The injured sit at the end of the depth chart and return to their spot when healthy. A team always keeps five who can play.
+  - Injured players don't count in simulated strength.
+- **I89 RENAME YOUR CLUB:** set the city, nickname and abbreviation in OFFICE. Names are run through the bad-word filter and stripped of rich text.
+- **I90 GM LEGACY:** points every season for wins, the playoffs, titles and your club's awards. Seven ranks, from INTERN to LEGEND GM, shown in HISTORY.
+- **I91 DRAFT GRADES:** every club's draft class gets a grade from A to D, with its picks, on the DRAFT tab.
+- **I92 SEASON PREVIEW:** the preseason prediction (by roster strength). It's locked in for the season and compared with where you finished.
+- **I93 POWER RANKINGS:** record, point differential and roster, with movement against the preview (▲/▼).
+- **I94 SIM TO THE TRADE DEADLINE:** a button on game day.
+- **I95 SAVES, SPANISH, TESTS:**
+  - New player fields, season history and league settings all save; older saves load with zeros.
+  - 46 new Spanish lines.
+  - `ImprovementsI81Tests` (16 tests), including three seasons with injuries on.
+
+**Checks:** full logic suite 1,182 of 1,182. UnityCheck has 0 errors, the strict text audit passes, and the App Store audit has 63 of 63 passing.
+
+**Not seen on a phone yet.** Roster rows now have four buttons (CARD, UP, DOWN, CUT), so check they fit on the smallest iPhone.

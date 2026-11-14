@@ -42,6 +42,20 @@ namespace CallerRetroBall.Logic
         public bool created;
         /// <summary>I63: mood, as a change from the normal 70 (see <see cref="FrontOffice.Morale"/>).</summary>
         public int mood;
+        /// <summary>I81: this season's rebounds, assists, steals and blocks, and career rebounds and assists.</summary>
+        public int reb, ast, stl, blk, careerReb, careerAst;
+        /// <summary>I84: overall at the start of the season (for MOST IMPROVED).</summary>
+        public int startOvr;
+        /// <summary>I88: games left out injured (0 = healthy), and his depth-chart spot before he got hurt.</summary>
+        public int injured, injSlot = -1;
+        /// <summary>I87: on your trade block.</summary>
+        public bool onBlock;
+        /// <summary>I85: the salary his extension pays from next season (0 = none).</summary>
+        public int extension;
+        /// <summary>I83: his finished seasons.</summary>
+        public List<FrSeasonLine> history = new List<FrSeasonLine>();
+        public float Rpg => gp == 0 ? 0f : reb / (float)gp;
+        public float Apg => gp == 0 ? 0f : ast / (float)gp;
 
         public int Overall => attrs.Overall;
         public string Name => string.IsNullOrEmpty(last) ? first : first + " " + last;
@@ -130,6 +144,8 @@ namespace CallerRetroBall.Logic
         public bool coach;
         /// <summary>I61–I70: credits, fans, facilities, the huddle, the press room and the locker room.</summary>
         public FrontOfficeData office = new FrontOfficeData();
+        /// <summary>I81–I95: injuries switch, your club's name, legacy, preview, draft grades, extensions.</summary>
+        public FrLeagueData league = new FrLeagueData();
     }
 
     public sealed class TradeVerdict
@@ -392,7 +408,7 @@ namespace CallerRetroBall.Logic
             }
             f.season = s;
             f.teamChart = new ShotChartData();
-            foreach (var p in f.players) { p.gp = 0; p.pts = 0; }
+            foreach (var p in f.players) { p.gp = 0; p.pts = 0; FranchiseLeague.ResetSeason(p); }
         }
 
         /// <summary>Your next game (regular season or playoffs), or null when you have none to play.</summary>
@@ -411,7 +427,7 @@ namespace CallerRetroBall.Logic
         /// <summary>Team strength for simulated games: the five starters count most, the bench a little.</summary>
         public static float Strength(FranchiseSaveData f, int team)
         {
-            var r = Roster(f, team);
+            var r = Roster(f, team).FindAll(p => p.injured == 0); // I88: the injured don't play
             var ovr = r.ConvertAll(p => p.Overall);
             ovr.Sort((a, b) => b.CompareTo(a));
             float sum = 0f, w = 0f;
@@ -463,13 +479,16 @@ namespace CallerRetroBall.Logic
                 r[i].pts += share;
                 r[i].careerPts += share;
             }
+            // I81: rebounds, assists, steals and blocks too (no draws from rng, so simulated scores don't change).
+            FranchiseLeague.CreditBox(f, team, f.season.seed + ":" + f.year + ":" + team + ":" + r[0].gp + ":" + points);
         }
 
         /// <summary>
         /// Records the game you just played (your score first) and simulates the rest of that week or round.
         /// <paramref name="teamShots"/> (Phase 35) is your team's shot chart from that game.
         /// </summary>
-        public static bool RecordYourGame(FranchiseSaveData f, ContentCatalog c, int yourScore, int theirScore, ShotChartData teamShots = null)
+        public static bool RecordYourGame(FranchiseSaveData f, ContentCatalog c, int yourScore, int theirScore, ShotChartData teamShots = null,
+                                          IList<SummaryLine> box = null, int humanTeam = 0)
         {
             var g = NextGame(f);
             if (g == null) return false;
@@ -480,7 +499,8 @@ namespace CallerRetroBall.Logic
             g.awayScore = home ? theirScore : yourScore;
             g.played = true;
             var rng = new SeededRandom(StableHash.Of(f.season.seed + ":you:" + g.week + ":" + g.round));
-            Credit(f, f.you, yourScore, rng);
+            // I81: your players get their real box score when the game passes it; otherwise the usual share.
+            if (!FranchiseLeague.CreditRealBox(f, box, humanTeam)) Credit(f, f.you, yourScore, rng);
             Credit(f, IndexOf(home ? g.awayId : g.homeId), theirScore, rng);
             FrontOffice.AfterYourGame(f, yourScore > theirScore, Math.Abs(yourScore - theirScore), home, yourScore, IndexOf(home ? g.awayId : g.homeId));
             FinishSlate(f, c, g.week, g.round);
@@ -526,6 +546,7 @@ namespace CallerRetroBall.Logic
             if (round == 0) f.season.currentWeek = Math.Max(f.season.currentWeek, week + 1);
             if (round == 0) FranchiseDepth.AfterWeek(f, c);
             if (round == 0) FrontOffice.AfterWeek(f);
+            FranchiseLeague.AfterGameInjuries(f, f.season.seed + ":" + f.year + ":" + week + ":" + round); // I88 (only when on)
 
             if (f.phase == FranchisePhase.Regular && SeasonEngine.RegularSeasonComplete(f.season))
             {
@@ -596,7 +617,10 @@ namespace CallerRetroBall.Logic
             if (mvp != null) f.awards.Add(new FrAward { year = f.year, kind = "MVP", name = mvp.Name, team = mvp.team, line = mvp.Ppg.ToString("0.0") + " PPG" });
             if (roy != null) f.awards.Add(new FrAward { year = f.year, kind = "ROOKIE", name = roy.Name, team = roy.team, line = roy.Ppg.ToString("0.0") + " PPG" });
 
+            FranchiseLeague.EndOfSeason(f, table); // I83, I84, I90, I92
             Age(f);
+            FranchiseLeague.StartExtensions(f); // I85: extended players' new salaries start
+            foreach (var p in f.players) { p.injured = 0; p.injSlot = -1; p.onBlock = false; }
             NewDraftClass(f, c);
             f.year++;
             f.phase = FranchisePhase.Draft;
@@ -820,6 +844,7 @@ namespace CallerRetroBall.Logic
                 p.salary = Demand(p);
                 p.years = 0;
             }
+            FranchiseLeague.GradeDraft(f, null); // I91
             f.phase = FranchisePhase.ReSign;
             AiReSign(f);
         }
@@ -888,6 +913,9 @@ namespace CallerRetroBall.Logic
             if (f.teams[f.you].roster.Count >= MaxRoster) return "Roster full (" + MaxRoster + "). Release someone first.";
             int demand = Demand(p);
             if (demand > MinSalary && Payroll(f, f.you) + demand > Cap) return "Not enough cap room: " + Money(CapRoom(f, f.you)) + " left, asks " + Money(demand) + ".";
+            // I86: he has to want to come.
+            int interest = FranchiseLeague.Interest(f, p);
+            if (interest < FranchiseLeague.InterestNeeded) return p.Name + " isn't interested (" + interest + "%). Win more, grow the fans, build facilities, or offer a starting spot.";
             return null;
         }
 
@@ -1106,6 +1134,7 @@ namespace CallerRetroBall.Logic
                     team.homeCourtId = src.homeCourtId; team.motto = src.motto; team.scheme = src.scheme;
                     team.customKit = src.customKit; team.shorts = src.shorts; team.shoes = src.shoes;
                 }
+                FranchiseLeague.ApplyName(f, i, team); // I89
                 team.rosterPlayerIds = f.teams[i].roster.ConvertAll(PlayerId);
             }
         }

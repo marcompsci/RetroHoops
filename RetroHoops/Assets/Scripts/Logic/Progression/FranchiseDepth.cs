@@ -66,7 +66,7 @@ namespace CallerRetroBall.Logic
             if (f.offerWeek == week) return;
             f.offerWeek = week;
             var rng = new SeededRandom(StableHash.Of("fr:offer:" + f.seed + ":" + f.year + ":" + week));
-            if (!rng.Chance(OfferChance)) return;
+            if (!rng.Chance(FranchiseLeague.OfferChance(f))) return; // I87: the trade block draws more calls
             f.offer = MakeOffer(f, c, rng, week);
         }
 
@@ -88,7 +88,10 @@ namespace CallerRetroBall.Logic
                 targets.RemoveAll(x => x.created); // your created players aren't on the table
                 if (targets.Count == 0) continue;
                 targets.Sort((x, y) => Franchise.Value(y).CompareTo(Franchise.Value(x)));
-                if (targets.Count > 1) targets.RemoveAt(0);
+                // I87: with players on the block, GMs ask about them first.
+                var block = targets.FindAll(x => x.onBlock);
+                if (block.Count > 0) targets = block;
+                else if (targets.Count > 1) targets.RemoveAt(0);
                 int pickTarget = Math.Min(targets.Count - 1, rng.Range(0, Math.Max(1, Math.Min(3, targets.Count))));
                 var want = targets[pickTarget];
                 FrPlayer best = null;

@@ -34,7 +34,10 @@ namespace CallerRetroBall.Logic
                         (double)p.age, (double)p.potential, (double)p.salary, (double)p.years, (double)p.team, p.prospect ? 1.0 : 0.0, (double)p.scout,
                         (double)p.seasons, (double)p.titles, (double)p.peak, (double)p.gp, (double)p.pts, (double)p.careerPts,
                         (double)p.draftYear, (double)p.draftPick, p.created ? 1.0 : 0.0, (double)p.mood,
+                        (double)p.reb, (double)p.ast, (double)p.stl, (double)p.blk, (double)p.careerReb, (double)p.careerAst,
+                        (double)p.startOvr, (double)p.injured, (double)p.injSlot, p.onBlock ? 1.0 : 0.0, (double)p.extension,
                     },
+                    ["h"] = List(p.history, h => (object)new List<object> { (double)h.year, (double)h.team, (double)h.gp, (double)h.pts, (double)h.reb, (double)h.ast, (double)h.ovr }),
                 }),
                 ["season"] = new Dictionary<string, object>
                 {
@@ -62,6 +65,7 @@ namespace CallerRetroBall.Logic
                 ["moves"] = List(f.moves, m => new Dictionary<string, object> { ["y"] = m.year, ["x"] = m.text }),
                 ["titles"] = f.titles,
                 ["office"] = EncodeOffice(FrontOffice.Of(f)),
+                ["league"] = EncodeLeague(FranchiseLeague.Of(f)),
             };
         }
 
@@ -113,6 +117,36 @@ namespace CallerRetroBall.Logic
             return o;
         }
 
+        /// <summary>I81–I95 league extras.</summary>
+        private static object EncodeLeague(FrLeagueData l) => new Dictionary<string, object>
+        {
+            ["inj"] = l.injuries, ["city"] = l.city ?? "", ["nick"] = l.nickname ?? "", ["abbr"] = l.abbr ?? "", ["legacy"] = l.legacy,
+            ["pv"] = List(l.preview, t => (object)(double)t), ["pvy"] = l.previewYear, ["pvr"] = l.previewResult ?? "",
+            ["grades"] = List(l.grades, g => new Dictionary<string, object> { ["y"] = g.year, ["t"] = g.team, ["g"] = g.grade, ["l"] = g.line }),
+            ["ext"] = List(l.extended, id => (object)(double)id),
+        };
+
+        private static FrLeagueData DecodeLeague(Dictionary<string, object> d)
+        {
+            var l = new FrLeagueData();
+            if (d == null) return l;
+            l.injuries = Bool(d, "inj", false);
+            l.city = TextSafety.Field(Str(d, "city", ""), "");
+            l.nickname = TextSafety.Field(Str(d, "nick", ""), "");
+            l.abbr = TextSafety.Plain(TextSafety.Field(Str(d, "abbr", ""), ""), FranchiseLeague.MaxAbbr);
+            if (l.city.Length > FranchiseLeague.MaxCity) l.city = l.city.Substring(0, FranchiseLeague.MaxCity);
+            if (l.nickname.Length > FranchiseLeague.MaxNickname) l.nickname = l.nickname.Substring(0, FranchiseLeague.MaxNickname);
+            l.legacy = Math.Max(0, Int(d, "legacy", 0));
+            foreach (var v in Arr(d, "pv")) if (v is double x && x >= 0 && x < Franchise.Teams) l.preview.Add((int)x);
+            l.previewYear = Int(d, "pvy", 0);
+            l.previewResult = Str(d, "pvr", "");
+            foreach (var item in Arr(d, "grades"))
+                if (item is Dictionary<string, object> g)
+                    l.grades.Add(new FrDraftGrade { year = Int(g, "y", 0), team = Int(g, "t", 0), grade = Str(g, "g", ""), line = Str(g, "l", "") });
+            foreach (var v in Arr(d, "ext")) if (v is double x) l.extended.Add((int)x);
+            return l;
+        }
+
         private static FranchiseSaveData DecodeFranchise(Dictionary<string, object> o)
         {
             var f = new FranchiseSaveData();
@@ -150,6 +184,21 @@ namespace CallerRetroBall.Logic
                         draftYear = n.Count > 29 ? I(29) : 0, draftPick = n.Count > 30 ? I(30) : 0, created = n.Count > 31 && I(31) != 0,
                         mood = n.Count > 32 ? Math.Max(-FrontOffice.BaseMorale, Math.Min(100 - FrontOffice.BaseMorale, I(32))) : 0,
                     };
+                    if (n.Count > 43)
+                    {
+                        // I81–I95 (older saves don't have these: zeros).
+                        fp.reb = Math.Max(0, I(33)); fp.ast = Math.Max(0, I(34)); fp.stl = Math.Max(0, I(35)); fp.blk = Math.Max(0, I(36));
+                        fp.careerReb = Math.Max(0, I(37)); fp.careerAst = Math.Max(0, I(38)); fp.startOvr = Math.Max(0, I(39));
+                        fp.injured = Math.Max(0, Math.Min(5, I(40))); fp.injSlot = I(41); fp.onBlock = I(42) != 0;
+                        fp.extension = Math.Max(0, Math.Min(Franchise.MaxSalary, I(43)));
+                    }
+                    foreach (var hv in Arr(p, "h"))
+                    {
+                        if (!(hv is List<object> hl) || hl.Count < 7) continue;
+                        int H(int k) => hl[k] is double d ? (int)Math.Round(d) : 0;
+                        fp.history.Add(new FrSeasonLine { year = H(0), team = H(1), gp = Math.Max(0, H(2)), pts = Math.Max(0, H(3)), reb = Math.Max(0, H(4)), ast = Math.Max(0, H(5)), ovr = H(6) });
+                        if (fp.history.Count >= 20) break;
+                    }
                     if (fp.team >= f.teams.Count || fp.team < -1) fp.team = -1;
                     f.players.Add(fp);
                 }
@@ -187,6 +236,7 @@ namespace CallerRetroBall.Logic
                     if (item is Dictionary<string, object> m) f.moves.Add(new FrMove { year = Int(m, "y", 0), text = Str(m, "x", "") });
                 f.titles = Math.Max(0, Int(o, "titles", 0));
                 f.office = DecodeOffice(Obj(o, "office"));
+                f.league = DecodeLeague(Obj(o, "league"));
                 f.you = Math.Max(0, Math.Min(f.teams.Count - 1, Int(o, "you", 0)));
 
                 // Rosters must point at real players on that team; anything else is dropped.

@@ -326,6 +326,8 @@ namespace CallerRetroBall.UI
                     SceneFlow.GoTo(SceneNames.Game);
                 });
                 Big("SIM GAME", () => { Franchise.SimNext(f, C); Save(); }, ButtonStyle.Secondary);
+                if (f.phase == FranchisePhase.Regular && f.season.currentWeek < Franchise.TradeDeadlineWeek)
+                    Big("SIM TO THE TRADE DEADLINE", () => { FranchiseLeague.SimToDeadline(f, C); Save(); }, ButtonStyle.Ghost); // I94
                 Big(f.phase == FranchisePhase.Regular ? "SIM TO PLAYOFFS" : "SIM PLAYOFFS", () => { Franchise.SimToEnd(f, C); Save(); }, ButtonStyle.Ghost);
                 var mine = Franchise.Roster(f, f.you);
                 if (f.coach) Line("COACH MODE: your players play; you call plays, the offense, the defense and subs.", Theme.Muted, 24f, 40f, TextAlignmentOptions.Center);
@@ -368,7 +370,9 @@ namespace CallerRetroBall.UI
                 var p = roster[i];
                 int id = p.id;
                 bool canRelease = f.phase != FranchisePhase.Playoffs && !(f.phase == FranchisePhase.Regular && roster.Count <= Franchise.MinRoster);
-                Row(Card(p), i < 5 ? Theme.Cream : Theme.Muted, 110f,
+                Row(Card(p) + (p.onBlock ? "  <color=#FF6B8B>" + Loc.T("ON THE BLOCK") + "</color>" : "")
+                    + (p.injured > 0 ? "  <color=#FF6B8B>" + Loc.T("INJURED") + "</color>" : ""), i < 5 ? Theme.Cream : Theme.Muted, 110f,
+                    ("CARD", ButtonStyle.Secondary, () => ShowCard(p)),
                     ("UP", ButtonStyle.Ghost, i > 0 ? (System.Action)(() => { Franchise.MoveInRotation(f, id, -1); Save(); }) : null),
                     ("DOWN", ButtonStyle.Ghost, i < roster.Count - 1 ? (System.Action)(() => { Franchise.MoveInRotation(f, id, 1); Save(); }) : null),
                     ("CUT", ButtonStyle.Ghost, canRelease ? (System.Action)(() => ConfirmRelease(p)) : null));
@@ -470,11 +474,7 @@ namespace CallerRetroBall.UI
                 Heading(Loc.T("WEEK") + " " + (week + 1) + " " + Loc.T("RESULTS"));
                 foreach (var g in last) Line(Abbr(g.awayId) + " " + g.awayScore + " @ " + Abbr(g.homeId) + " " + g.homeScore, Theme.Cream);
             }
-            Heading("TOP SCORERS");
-            var scorers = f.players.FindAll(p => p.team >= 0 && p.gp > 0);
-            scorers.Sort((a, b) => b.Ppg.CompareTo(a.Ppg));
-            for (int i = 0; i < Mathf.Min(5, scorers.Count); i++)
-                Line(scorers[i].Name + " (" + Abbr(Franchise.TeamId(scorers[i].team)) + ")  " + scorers[i].Ppg.ToString("0.0") + " PPG", Theme.Cream);
+            LeagueExtras(f); // I82, I92, I93
         }
 
         // ------------------------------------------------------------------ market
@@ -509,8 +509,9 @@ namespace CallerRetroBall.UI
             {
                 int id = p.id;
                 string why = Franchise.CannotSign(f, p);
-                Row(Card(p, false) + "\n<size=22><color=#4CC9F0>" + Loc.T("asks") + " " + Franchise.Money(Franchise.Demand(p)) + " × " + Franchise.DemandYears(p) + "</color></size>",
-                    Theme.Cream, 130f, ("SIGN", ButtonStyle.Primary, () =>
+                Row(Card(p, false) + "\n<size=22><color=#4CC9F0>" + Loc.T("asks") + " " + Franchise.Money(Franchise.Demand(p)) + " × " + Franchise.DemandYears(p) + "</color>  "
+                    + InterestTag(f, p) + "</size>",
+                    Theme.Cream, 130f, ("CARD", ButtonStyle.Ghost, () => ShowCard(p)), ("SIGN", ButtonStyle.Primary, () =>
                     {
                         if (why != null) { Toast("CAN'T SIGN", why); return; }
                         Franchise.SignFreeAgent(f, id);
@@ -534,6 +535,7 @@ namespace CallerRetroBall.UI
                 if (rookies.Count > 0) Heading("LATEST DRAFT CLASS");
                 foreach (var p in rookies)
                     Line(Loc.T("PICK") + " " + p.draftPick + ": " + p.Name + " (" + (p.team >= 0 ? Abbr(Franchise.TeamId(p.team)) : "FA") + ")  " + p.Overall, Theme.Cream);
+                DraftGrades(f); // I91
                 return;
             }
             Franchise.DraftUntilYou(f);
@@ -576,6 +578,7 @@ namespace CallerRetroBall.UI
             UiControls.Stat(_content, "RECORD", t.wins + "-" + t.losses);
             UiControls.Stat(_content, "PLAYOFFS", t.playoffs.ToString());
             UiControls.Stat(_content, "TITLES", t.titles.ToString());
+            LegacyBlock(f); // I90
             foreach (var h in f.history)
                 if (h.team == f.you)
                     Line(Loc.T("YEAR") + " " + h.year + ":  " + h.wins + "-" + h.losses + "  " + Loc.T(Franchise.FinishName(h.finish)) + "\n<size=22><color=#8D99AE>" + h.best + " · "
@@ -586,7 +589,7 @@ namespace CallerRetroBall.UI
                 if (h.finish == 3) Line(Loc.T("YEAR") + " " + h.year + ":  " + Team(h.team)?.FullName + "  (" + h.wins + "-" + h.losses + ")", h.team == f.you ? Theme.Gold : Theme.Cream);
             Heading("AWARDS");
             foreach (var a in f.awards)
-                Line(Loc.T("YEAR") + " " + a.year + "  " + a.kind + ":  " + a.name + (a.team >= 0 && a.kind != "HALL" ? " (" + Abbr(Franchise.TeamId(a.team)) + ")" : "") + "  " + a.line,
+                Line(Loc.T("YEAR") + " " + a.year + "  " + Loc.T(FranchiseLeague.AwardName(a.kind)) + ":  " + a.name + (a.team >= 0 && a.kind != "HALL" ? " (" + Abbr(Franchise.TeamId(a.team)) + ")" : "") + "  " + a.line,
                      a.kind == "HALL" ? Theme.Gold : Theme.Cream, 26f, 44f);
             Heading("TRANSACTIONS");
             for (int i = f.moves.Count - 1; i >= 0 && i >= f.moves.Count - 12; i--)

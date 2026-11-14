@@ -2989,7 +2989,8 @@ namespace CallerRetroBall.Gameplay
                     int frRound = frGame != null ? frGame.round : 0;
                     App.OpenFranchiseOnMenu = true;
                     int creditsBefore = FrontOffice.Of(fr).credits;
-                    if (Franchise.RecordYourGame(fr, App.Catalog, summary.HumanScore, summary.OpponentScore, summary.TeamTotals(summary.humanTeam).chart))
+                    if (Franchise.RecordYourGame(fr, App.Catalog, summary.HumanScore, summary.OpponentScore, summary.TeamTotals(summary.humanTeam).chart,
+                                             summary.lines, summary.humanTeam))
                     {
                         string champ = Franchise.ChampionId(fr);
                         if (frRound == 2 && champ == Franchise.TeamId(fr.you))
