@@ -116,6 +116,7 @@ namespace CallerRetroBall.Logic
                 ["customTeam"] = EncodeTeam(d.customTeam ?? new CustomTeamData()),
                 ["kits"] = EncodeKits(d.kits ?? new KitSaveData()),
                 ["franchise"] = EncodeFranchise(d.franchise),
+                ["frSlots"] = List(d.franchiseSlots ?? new List<FranchiseSaveData>(), x => EncodeFranchise(x)),
                 ["allStar"] = EncodeAllStar(d.allStar),
                 ["courts"] = EncodeCourts(d.courts),
                 ["legacy"] = EncodeLegacy(d.legacy),
@@ -596,6 +597,13 @@ namespace CallerRetroBall.Logic
                 d.customTeam = DecodeTeam(Obj(o, "customTeam"));
                 d.kits = DecodeKits(Obj(o, "kits"));
                 d.franchise = DecodeFranchise(Obj(o, "franchise"));
+                d.franchiseSlots = new List<FranchiseSaveData>();
+                foreach (var item in Arr(o, "frSlots"))
+                    if (item is Dictionary<string, object> slot && d.franchiseSlots.Count < FranchiseExtras.MaxSlots - 1)
+                    {
+                        var parked = DecodeFranchise(slot);
+                        if (parked.active) d.franchiseSlots.Add(parked);
+                    }
                 d.allStar = DecodeAllStar(Obj(o, "allStar"));
                 d.courts = DecodeCourts(Arr(o, "courts"));
                 d.legacy = DecodeLegacy(Obj(o, "legacy"));

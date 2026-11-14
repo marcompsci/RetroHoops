@@ -507,6 +507,7 @@ namespace CallerRetroBall.Logic
             if (!FranchiseLeague.CreditRealBox(f, box, humanTeam)) Credit(f, f.you, yourScore, rng);
             Credit(f, IndexOf(home ? g.awayId : g.homeId), theirScore, rng);
             FrontOffice.AfterYourGame(f, yourScore > theirScore, Math.Abs(yourScore - theirScore), home, yourScore, IndexOf(home ? g.awayId : g.homeId));
+            FranchiseExtras.AfterYourGame(f, c, yourScore, theirScore, IndexOf(home ? g.awayId : g.homeId)); // I115, I120
             FinishSlate(f, c, g.week, g.round);
             return true;
         }
@@ -521,6 +522,7 @@ namespace CallerRetroBall.Logic
                 bool home = g.homeId == TeamId(f.you);
                 int mine = home ? g.homeScore : g.awayScore, theirs = home ? g.awayScore : g.homeScore;
                 FrontOffice.AfterYourGame(f, mine > theirs, Math.Abs(mine - theirs), home, mine, IndexOf(home ? g.awayId : g.homeId));
+                FranchiseExtras.AfterYourGame(f, c, mine, theirs, IndexOf(home ? g.awayId : g.homeId)); // I115, I120
                 FinishSlate(f, c, g.week, g.round);
                 return;
             }
@@ -624,6 +626,7 @@ namespace CallerRetroBall.Logic
 
             FranchiseLeague.EndOfSeason(f, table); // I83, I84, I90, I92
             FranchiseLife.EndOfSeason(f, c, table, champ); // I99, I103, I104
+            FranchiseExtras.EndOfSeason(f, c, table, champ); // I112, I113, I124
             FranchiseLife.UpdateTenure(f); // I102
             Age(f);
             FranchiseLeague.StartExtensions(f); // I85: extended players' new salaries start

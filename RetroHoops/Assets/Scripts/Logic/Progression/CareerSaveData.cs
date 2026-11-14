@@ -297,6 +297,8 @@ namespace CallerRetroBall.Logic
         public KitSaveData kits = new KitSaveData();
         /// <summary>Franchise mode: your GM career with one Caller League club.</summary>
         public FranchiseSaveData franchise = new FranchiseSaveData();
+        /// <summary>I111: parked franchises (up to two besides the active one).</summary>
+        public List<FranchiseSaveData> franchiseSlots = new List<FranchiseSaveData>();
         /// <summary>All-Star Weekend (Rise) and contest titles.</summary>
         public AllStarSaveData allStar = new AllStarSaveData();
         /// <summary>Court Builder slots.</summary>

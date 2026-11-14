@@ -292,7 +292,7 @@ namespace CallerRetroBall.Tests
                 Assert.AreEqual(FranchisePhase.Regular, _f.phase, Franchise.CannotStart(_f));
             }
             Assert.Less(_f.players.Count, 160);
-            foreach (var p in _f.players) Assert.LessOrEqual(p.history.Count, 20);
+            foreach (var p in _f.players) Assert.LessOrEqual(p.history.Count, FranchiseLeague.MaxHistory);
         }
     }
 }

@@ -133,6 +133,9 @@ namespace CallerRetroBall.Logic
             ["records"] = List(l.records, r => new Dictionary<string, object> { ["k"] = r.kind, ["v"] = r.value, ["n"] = r.name, ["t"] = r.team, ["y"] = r.year }),
             ["banners"] = List(l.banners, b => new Dictionary<string, object> { ["n"] = b.number, ["name"] = b.name, ["y"] = b.year, ["l"] = b.line }),
             ["asked"] = List(l.asked, id => (object)(double)id), ["wn"] = l.whatsNew,
+            ["tro"] = l.trophies, ["troc"] = l.trophiesClaimed, ["ts"] = l.titleStreak, ["bts"] = l.bestTitleStreak,
+            ["h2hw"] = List(l.h2hWins, x => (object)(double)x), ["h2hl"] = List(l.h2hLosses, x => (object)(double)x),
+            ["camp"] = l.campYear, ["tl2"] = Strings(l.timeline),
         };
 
         private static FrLeagueData DecodeLeague(Dictionary<string, object> d)
@@ -177,6 +180,15 @@ namespace CallerRetroBall.Logic
                     l.banners.Add(new FrBanner { number = Math.Max(0, Math.Min(99, Int(b, "n", 0))), name = Str(b, "name", ""), year = Int(b, "y", 0), line = Str(b, "l", "") });
             foreach (var v in Arr(d, "asked")) if (v is double x) l.asked.Add((int)x);
             l.whatsNew = Math.Max(0, Int(d, "wn", 0));
+            l.trophies = Math.Max(0, Int(d, "tro", 0));
+            l.trophiesClaimed = Math.Max(0, Int(d, "troc", 0)) & l.trophies;
+            l.titleStreak = Math.Max(0, Int(d, "ts", 0));
+            l.bestTitleStreak = Math.Max(l.titleStreak, Int(d, "bts", 0));
+            foreach (var v in Arr(d, "h2hw")) if (v is double x && l.h2hWins.Count < Franchise.Teams) l.h2hWins.Add(Math.Max(0, (int)x));
+            foreach (var v in Arr(d, "h2hl")) if (v is double x && l.h2hLosses.Count < Franchise.Teams) l.h2hLosses.Add(Math.Max(0, (int)x));
+            l.campYear = Int(d, "camp", 0);
+            l.timeline = StrList(d, "tl2");
+            if (l.timeline.Count > 30) l.timeline.RemoveRange(0, l.timeline.Count - 30);
             return l;
         }
 
@@ -237,7 +249,7 @@ namespace CallerRetroBall.Logic
                         if (!(hv is List<object> hl) || hl.Count < 7) continue;
                         int H(int k) => hl[k] is double d ? (int)Math.Round(d) : 0;
                         fp.history.Add(new FrSeasonLine { year = H(0), team = H(1), gp = Math.Max(0, H(2)), pts = Math.Max(0, H(3)), reb = Math.Max(0, H(4)), ast = Math.Max(0, H(5)), ovr = H(6) });
-                        if (fp.history.Count >= 20) break;
+                        if (fp.history.Count >= FranchiseLeague.MaxHistory) break;
                     }
                     if (fp.team >= f.teams.Count || fp.team < -1) fp.team = -1;
                     f.players.Add(fp);

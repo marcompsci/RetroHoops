@@ -48,6 +48,8 @@ namespace CallerRetroBall.UI
                         Save();
                     }));
             }
+            var camp = CampButton(f, p, Save); // I116
+            if (camp.HasValue && buttons.Count < 2) buttons.Add(camp.Value);
             buttons.Add(("CLOSE", ButtonStyle.Ghost, null));
             UiControls.Dialog("#" + p.number + " " + p.Name.ToUpperInvariant(), sb.ToString(), buttons.ToArray());
         }

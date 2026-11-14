@@ -225,6 +225,7 @@ namespace CallerRetroBall.UI
                 _tab = Tab.Home;
                 Save();
             });
+            SlotsOnStart(); // I111
         }
 
         // ------------------------------------------------------------------ home
@@ -233,6 +234,7 @@ namespace CallerRetroBall.UI
         {
             var f = F;
             LifeCards(f);   // I97, I103, I109: what's new, a job hunt, headlines
+            AssistantAndRaces(f); // I118, I121, I122
             OfficeCards(f); // I61, I64, I66: the huddle, the press room and the locker room
             // Phase 33: a GM on the phone.
             if (f.offer != null && FranchiseDepth.StillValid(f, f.offer))
@@ -318,6 +320,7 @@ namespace CallerRetroBall.UI
                 Line((home ? Loc.T("HOME vs") : Loc.T("AWAY at")) + " " + C.Team(opp)?.FullName.ToUpperInvariant() + "  (" + Record(Franchise.IndexOf(opp)) + ")",
                      Theme.Cream, 32f, 60f, TextAlignmentOptions.Center, true);
                 // Phase 35: play it, or coach it from the sideline.
+                ScoutingReport(f); // I114
                 UiControls.ChoiceRow(_content, "GAME DAY", new[] { "PLAY", "COACH" }, f.coach ? 1 : 0, i => { f.coach = i == 1; Save(); });
                 Big(f.coach ? "COACH GAME" : "PLAY GAME", () =>
                 {
@@ -363,6 +366,7 @@ namespace CallerRetroBall.UI
             var roster = Franchise.Roster(f, f.you);
             Line(Loc.T("CAP ROOM") + " " + Franchise.Money(Franchise.CapRoom(f, f.you)) + "  ·  " + roster.Count + "/" + Franchise.MaxRoster + " " + Loc.T("players")
                  + (f.teams[f.you].deadMoney > 0 ? "  ·  " + Loc.T("dead money") + " " + Franchise.Money(f.teams[f.you].deadMoney) : ""), Theme.Muted, 26f, 44f);
+            PayrollProjection(f); // I117
             CreateEntry(f);
             for (int i = 0; i < roster.Count; i++)
             {
@@ -475,6 +479,7 @@ namespace CallerRetroBall.UI
                 Heading(Loc.T("WEEK") + " " + (week + 1) + " " + Loc.T("RESULTS"));
                 foreach (var g in last) Line(Abbr(g.awayId) + " " + g.awayScore + " @ " + Abbr(g.homeId) + " " + g.homeScore, Theme.Cream);
             }
+            TeamNumbers(f);  // I119, I120
             LeagueExtras(f); // I82, I92, I93
             RecordBook(f);   // I104
         }
@@ -603,7 +608,9 @@ namespace CallerRetroBall.UI
             for (int i = f.moves.Count - 1; i >= 0 && i >= f.moves.Count - 12; i--)
                 Line(Loc.T("YEAR") + " " + f.moves[i].year + "  " + f.moves[i].text, Theme.Muted, 24f, 40f);
 
-            UiKit.Button(_content, "NEW FRANCHISE", () => UiControls.Dialog("START OVER?",
+            TrophiesAndTimeline(f); // I112, I113, I123, I124
+            SlotsOnHistory(f);      // I111
+            UiKit.Button(_content, "END THIS FRANCHISE", () => UiControls.Dialog("START OVER?",
                 "This ends your franchise and its history for good.",
                 ("START OVER", ButtonStyle.Primary, () =>
                 {

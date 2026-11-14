@@ -63,6 +63,15 @@ namespace CallerRetroBall.Logic
         public List<FrBanner> banners = new List<FrBanner>();
         public List<int> asked = new List<int>();
         public int whatsNew;
+
+        // ---- I111–I125 (FranchiseExtras)
+        /// <summary>I112 trophies earned and paid (bits), I113 title streak and best streak.</summary>
+        public int trophies, trophiesClaimed, titleStreak, bestTitleStreak;
+        /// <summary>I120 all-time record against each club (by team index).</summary>
+        public List<int> h2hWins = new List<int>(), h2hLosses = new List<int>();
+        /// <summary>I116 the year training camp was used; I124 one line per finished season.</summary>
+        public int campYear;
+        public List<string> timeline = new List<string>();
     }
 
     /// <summary>
@@ -142,6 +151,9 @@ namespace CallerRetroBall.Logic
             }
             return matched > 0;
         }
+
+        /// <summary>Seasons kept on a player card (keeps long franchises small enough for iCloud sync).</summary>
+        public const int MaxHistory = 12;
 
         public static void ResetSeason(FrPlayer p)
         {
@@ -276,7 +288,7 @@ namespace CallerRetroBall.Logic
             {
                 if (p.prospect || p.gp == 0) continue;
                 p.history.Add(new FrSeasonLine { year = f.year, team = p.team, gp = p.gp, pts = p.pts, reb = p.reb, ast = p.ast, ovr = p.Overall });
-                if (p.history.Count > 20) p.history.RemoveAt(0);
+                if (p.history.Count > MaxHistory) p.history.RemoveAt(0);
             }
 
             // I90: the GM legacy score.

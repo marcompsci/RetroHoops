@@ -589,3 +589,40 @@ The league now moves on its own, and your job has stakes. Logic: `Logic/Progress
   - `ImprovementsI71Tests.I80` now takes a job if it gets fired. That's new behaviour, not a bug.
 
 **Checks:** full logic suite 1,197 of 1,197. UnityCheck has 0 errors, the strict text audit is clean, and the App Store audit passes 63 of 63. **Not seen on a phone yet.**
+
+### Improvements I111–I125: Franchise tools and rewards (14 Nov 2026)
+
+Logic: `Logic/Progression/FranchiseExtras.cs`. UI: `UI/FranchiseScreen.Extras.cs`, plus hooks in `Franchise.cs`, `CareerSaveData`, and both save codecs.
+
+- **I111 SAVE SLOTS:** up to three franchises.
+  - HISTORY ▸ START ANOTHER FRANCHISE parks the current one; SWITCH swaps back.
+  - The start screen lists your other franchises with PLAY and DELETE (DELETE asks first).
+  - "END THIS FRANCHISE" (the old NEW FRANCHISE) still ends the active one.
+- **I112 TROPHIES:** twelve per franchise, each paid once in SP when you claim it in HISTORY (100–600 SP). New trophies make the headlines.
+  - FIRST WIN, PLAYOFF BOUND, CHAMPIONS, BACK-TO-BACK, THREE-PEAT, WINNING SEASON
+  - MVP FACTORY, FULL HOUSE, RAFTERS, STATE OF THE ART, LEGEND GM, FIVE-YEAR PLAN
+- **I113 DYNASTY TRACKER:** your title streak and best run. Back-to-back and three-peat headlines.
+- **I114 SCOUTING REPORT** (game day): your odds to win, using the sim model with home court; their danger man; who's out; and your all-time record against them.
+- **I115 GAME RECAPS:** WIN/LOSS and the score against the club go in the headlines after each of your games.
+- **I116 TRAINING CAMP:** once per preseason, from a young player's card (25 and under): +2 to his two weakest ratings.
+- **I117 NEXT SEASON'S PAYROLL** on ROSTER: what's committed for next season (extensions at their new price) and the room left.
+- **I118 AUTO OFF-SEASON:** one button runs the rest of the off-season (log shown afterwards):
+  - drafts the best prospect you can see (from the scouted range)
+  - re-signs players worth keeping who fit under the cap
+  - fills the roster with interested free agents
+  - trims any extras and starts the season
+- **I119 TEAM STATS** (LEAGUE): points scored and allowed per game, with your league rank in each.
+- **I120 HEAD-TO-HEAD:** your all-time record against every club.
+- **I121 ASSISTANT GM** (HOME, up to three tips): the huddle, being over the cap, unhappy players, who to extend, affordable upgrades, naming a captain, training camp.
+- **I122 AWARD RACES** during the season: the top three for MVP, Rookie of the Year and Defensive Player.
+- **I123 SHARE YOUR SEASON:** a plain-text summary (club, year, record, titles, GM rank, franchise player, trophies) through the share sheet.
+- **I124 TIMELINE** (HISTORY): one line per season (record, finish, your awards, the champion).
+- **I125 SAVES, SPANISH, TESTS:**
+  - All new fields save, including parked franchises.
+  - 72 new Spanish lines.
+  - `ImprovementsI111Tests` (14 tests).
+  - Long franchises are trimmed so they stay syncable: player cards keep 12 seasons, and the transactions log keeps its last 150 lines.
+
+**Save size:** a 25-season franchise is about 230K characters. Three such franchises are about 720K, under the 900K iCloud guard. Bigger than that and `CloudSave` skips the iCloud upload (the local save is unaffected). That limit isn't shown to the player yet.
+
+**Checks:** full logic suite 1,211 of 1,211. UnityCheck has 0 errors, the strict text audit passes, and the App Store audit is 63 of 63. **Not seen on a phone yet.**
