@@ -37,6 +37,22 @@ namespace CallerRetroBall.UI
             // I149: this week's spotlight (a fixed rotation: every pack comes back at the same price, no timer).
             var spot = Shop.Spotlight(Shop.WeekNumber(DateTime.Now));
             UiKit.Size(UiKit.Label(column, Loc.T("THIS WEEK'S SPOTLIGHT") + ":  " + Loc.T(spot.Name), 30f, Theme.Cyan, TextAlignmentOptions.Center, true), 50f);
+            ShopNews.MarkSeen(career); // I174
+            App.SaveCareer();
+
+            // I166 LOYALTY COURTS: free picks for playing days in a row.
+            int picks = Loyalty.Available(career), toNext = Loyalty.DaysToNext(career);
+            if (picks > 0)
+                UiKit.Size(UiKit.Label(column, Loc.T("LOYALTY COURT") + ":  " + picks + " " + Loc.T(picks == 1 ? "free court to pick. Tap CLAIM FREE under any court." : "free courts to pick. Tap CLAIM FREE under any court."),
+                                       28f, Theme.Gold, TextAlignmentOptions.Center, true), 70f);
+            else if (toNext > 0)
+                UiKit.Size(UiKit.Label(column, Loc.T("LOYALTY COURT") + ":  " + Loc.T("play") + " " + toNext + " " + Loc.T(toNext == 1 ? "more day in a row for a free court of your choice." : "more days in a row for a free court of your choice."),
+                                       24f, Theme.Muted, TextAlignmentOptions.Center), 60f);
+            // I167 WEEKEND COURT: the Daily Challenge's free shop court.
+            string weekend = WeekendCourt.CourtFor(DailyChallenges.DayNumber(DateTime.Now));
+            if (weekend != null)
+                UiKit.Size(UiKit.Label(column, Loc.T("WEEKEND COURT") + ":  " + App.Catalog.Court(weekend).displayName.ToUpperInvariant() + "  ·  " + Loc.T("free in today's DAILY CHALLENGE"),
+                                       24f, Theme.Cyan, TextAlignmentOptions.Center, true), 56f);
 
             var status = UiKit.Label(column, "", 28f, Theme.Muted, TextAlignmentOptions.Center);
             UiKit.Size(status, 60f);
@@ -53,6 +69,12 @@ namespace CallerRetroBall.UI
             UiKit.Size(UiKit.Label(column, Loc.T("Retro Hoops is made by one person. A tip helps keep the updates coming. Your first one puts the Studio Supporter banner in your locker."),
                                    26f, Theme.Cream), 100f);
             foreach (var p in Shop.Products) if (p.Kind == ShopKind.Tip) ShopCard(column, p, status, back);
+
+            // I169 MY PURCHASES.
+            var mine = PurchaseHistory.Lines(career, ProStore.Owned);
+            Section(column, "MY PURCHASES");
+            UiKit.Size(UiKit.Label(column, mine.Count == 0 ? Loc.T("Nothing yet.") : string.Join("\n", mine), 26f, Theme.Cream),
+                       Mathf.Max(50f, 40f * mine.Count));
 
             var links = UiKit.Row(column, 16f, "Links");
             UiKit.Size(links, 90f);
@@ -83,6 +105,12 @@ namespace CallerRetroBall.UI
             }
             else if (p.Kind == ShopKind.GearPack)
             {
+                // I168: the pack on your own player, then its colours.
+                var stage = UiKit.Panel(column, new Color32(0x14, 0x14, 0x22, 255), name: "GearStage");
+                UiKit.Size(stage, 240f);
+                var pic = UiKit.Picture(stage.transform, GearSheet(p), "Wearing");
+                UiKit.Place(pic.rectTransform, new Vector2(0.5f, 0.5f), new Vector2(16f * 9f, 24f * 9f));
+                KitPreview.Attach(pic).SetSheet(pic.texture);
                 var row = UiKit.Row(column, 10f, "Gear");
                 UiKit.Size(row, 90f);
                 foreach (var id in p.Items)
@@ -141,7 +169,18 @@ namespace CallerRetroBall.UI
             name.fontSizeMax = 20f;
             UiKit.Size(name, 34f);
             int day = CityNpcScheduler.DayNumber(DateTime.Now);
-            if (owned)
+            owned = owned || Shop.CourtOpen(App.Career, courtId); // a LOYALTY COURT counts
+            if (!owned && Loyalty.Available(App.Career) > 0)
+            {
+                UiKit.Size(UiKit.Button(cell, "CLAIM FREE", () =>
+                {
+                    if (!Loyalty.Claim(App.Career, courtId)) return;
+                    App.SaveCareer();
+                    Haptics.Success();
+                    ShowShop(back);
+                }, ButtonStyle.Primary, 60f, 22f), 60f);
+            }
+            else if (owned)
             {
                 UiKit.Size(UiKit.Button(cell, "PLAY", () => StartShopCourt(courtId), ButtonStyle.Ghost, 60f, 22f), 60f);
             }
@@ -158,6 +197,19 @@ namespace CallerRetroBall.UI
             {
                 UiKit.Size(UiKit.Label(cell, Loc.T("TRIED TODAY"), 18f, Theme.Muted, TextAlignmentOptions.Center), 60f);
             }
+        }
+
+        private static readonly Dictionary<string, Texture2D> GearSheets = new Dictionary<string, Texture2D>();
+
+        /// <summary>I168: your player's sprite sheet wearing a gear pack (made once per pack, then cached).</summary>
+        private static Texture2D GearSheet(ShopProduct pack)
+        {
+            if (GearSheets.TryGetValue(pack.Id, out var t) && t != null) return t;
+            var me = PlayerCreator.BasePlayer(App.Career, App.Catalog);
+            var sheet = CharacterSpriteGenerator.GenerateSheet(me.appearance, Shop.PreviewLook(pack, App.Catalog));
+            t = TextureFactory.ToTexture(sheet, "ui.shop.gear." + pack.Id);
+            GearSheets[pack.Id] = t;
+            return t;
         }
 
         /// <summary>I148: a Quick Call on a shop court with your team.</summary>

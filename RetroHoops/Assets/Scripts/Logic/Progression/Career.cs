@@ -131,6 +131,10 @@ namespace CallerRetroBall.Logic
                 t.greens += line.greenReleases;
                 t.alleyOops += line.alleyOops + line.alleyOopPasses;
                 t.heatUps += line.heatUps;
+                t.posters += line.posters;
+                t.rimHangs += line.rimHangs;
+                t.stealAttempts += line.stealAttempts;
+                Habits.AddGame(t, line); // I162 + I163
                 if (data.shotChart == null) data.shotChart = new ShotChartData();
                 var before = ShotCharts.Copy(data.shotChart);
                 ShotZones.Merge(data.shotChart, line.chart);

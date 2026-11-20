@@ -64,6 +64,32 @@ namespace CallerRetroBall.Logic
         public const string TipMedium = Prefix + "tip.medium";
         public const string TipLarge = Prefix + "tip.large";
 
+        /// <summary>
+        /// I168: what a gear pack looks like on your player: its first jersey (with its second colour as trim), its shoes,
+        /// and its gear piece.
+        /// </summary>
+        public static KitLook PreviewLook(ShopProduct pack, ContentCatalog c)
+        {
+            CosmeticDef jersey = null, shoes = null, gear = null;
+            if (pack != null && c != null)
+                foreach (var id in pack.Items)
+                {
+                    var item = c.Find(c.Cosmetics, id);
+                    if (item == null) continue;
+                    if (item.slot == CosmeticSlot.JerseyPalette && jersey == null) jersey = item;
+                    else if (item.slot == CosmeticSlot.Shoes && shoes == null) shoes = item;
+                    else if (item.slot == CosmeticSlot.Gear && gear == null) gear = item;
+                }
+            var look = KitLook.Classic(jersey?.colorA ?? RgbColor.White, jersey?.colorB ?? RgbColor.Black, jersey?.colorB ?? RgbColor.Black,
+                                       shoes?.colorA, TeamPattern.Solid, null);
+            if (gear != null)
+            {
+                look.Gear = GearPartsOf(gear.id);
+                look.GearColor = gear.colorA;
+            }
+            return look;
+        }
+
         /// <summary>The cosmetic a first tip puts in your locker (a thank-you; not sold on its own).</summary>
         public const string SupporterBanner = "cosmetic.banner.supporter";
         public const string ShopCourtPrefix = "court.shop.";
@@ -246,6 +272,7 @@ namespace CallerRetroBall.Logic
         public static bool CourtOpen(CareerSaveData d, string courtId)
         {
             if (!IsShopCourt(courtId)) return true;
+            if (d?.shopEarned != null && d.shopEarned.Contains(courtId)) return true; // I166: a LOYALTY COURT
             var pack = PackOf(courtId);
             return pack != null && Owns(d, pack.Id);
         }

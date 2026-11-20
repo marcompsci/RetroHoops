@@ -39,6 +39,7 @@ namespace CallerRetroBall.Logic
                 ["owned"] = d.proOwned, ["granted"] = d.proGranted,
                 // I141-I150: the SHOP (cached App Store answer, tips, free tries).
                 ["shop"] = Strings(d.shopOwned ?? new List<string>()), ["tips"] = d.shopTips, ["tries"] = Strings(d.shopTries ?? new List<string>()),
+                ["earned"] = Strings(d.shopEarned ?? new List<string>()), ["seen"] = d.shopSeenVersion,
             };
 
         private static void DecodePro(CareerSaveData d, Dictionary<string, object> o)
@@ -50,6 +51,9 @@ namespace CallerRetroBall.Logic
             d.shopTips = Math.Max(0, Int(o, "tips", 0));
             d.shopTries = StrList(o, "tries");
             while (d.shopTries.Count > 40) d.shopTries.RemoveAt(0);
+            d.shopEarned = StrList(o, "earned").FindAll(id => Shop.IsShopCourt(id) && Shop.PackOf(id) != null);
+            if (d.shopEarned.Count > Loyalty.Milestones.Length) d.shopEarned.RemoveRange(Loyalty.Milestones.Length, d.shopEarned.Count - Loyalty.Milestones.Length);
+            d.shopSeenVersion = Math.Max(0, Int(o, "seen", 0));
         }
 
         // 12 Oct 2026: BETA FEEDBACK profile.

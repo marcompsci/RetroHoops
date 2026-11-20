@@ -758,3 +758,41 @@ Logic lives in `Logic/Progression/Shop.cs`. The App Store bridge is `Core/ShopSt
 - `RetroShop.swift` hasn't been compiled. There is no Swift compiler in the cloud workspace, so the first Xcode build will be its first compile.
 - No purchase has been made, not even in the sandbox.
 - The 13 products don't exist in App Store Connect yet. Until they do, the SHOP shows fallback prices and BUY reports that the App Store didn't return the item.
+
+### Improvements I156–I175: posters, pickpockets, coaching notes, loyalty and weekend courts (20 Nov 2026)
+
+- **I156 POSTERIZED:** a made dunk with a defender within 1.4 m (or a jumping defender a little further away) is a poster. It counts in the box score and the career totals.
+- **I157 POSTER MOMENT:** a 0.18 s freeze on the slam, a bigger shake and the crowd. If it's your dunk, it becomes the game's best highlight, with the replay and photo offer.
+- **I158 HANG HAPTICS:** a light buzz each time your dunker swings back the other way on the rim.
+- **I159 RIM HANGS:** made dunks are counted per game and over the career.
+- **I160 STEAL ATTEMPTS:** every reach is counted. The post-game shows your steals out of your attempts (for example 2/5 STEALS), plus your posters and rim hangs.
+- **I161 PICKPOCKET:** two or more steals in a row without a miss triggers a callout ("PICKPOCKET! 2 IN A ROW") and a buzz.
+- **I162 DEFENCE NOTE:** after a run of reaches from too far away, the post-game tells you to get within arm's length and watch the STEAL ring.
+- **I163 SHOOTING NOTE:** early and late jumpers are tracked over recent games. Once you've taken at least 10 jumpers and 40% of them came out early (or late), the post-game says so.
+  - Older games fade, so the note goes away once the habit is fixed.
+- **I164 PAUSE MENU CONTROLS** (portrait only): CONTROL LAYOUT, BUTTON OPACITY and HAPTICS, applied straight away.
+- **I165 STORE RESYNC:** when the game comes back to the front, it asks the App Store again (Pro and the SHOP). Ask to Buy approvals, purchases on other devices and refunds land without a restart.
+- **I166 LOYALTY COURTS:** a best login streak of 7 days earns one free pick of any SHOP court, and 30 days earns another. Each pick is yours for good, with no purchase. Use CLAIM FREE under the court.
+- **I167 WEEKEND COURT:** on Saturdays and Sundays the Daily Challenge is played on a designed SHOP court. The courts rotate, so six weekends cover all twelve, and everyone plays them free.
+- **I168 TRY-ON:** each gear pack in the SHOP shows your own player wearing it, on the Kit Studio's animated preview.
+- **I169 MY PURCHASES:** a list in the SHOP of Pro, the packs you've bought, your loyalty courts and your tips.
+- **I170 ACHIEVEMENTS:** four new Game Center achievements at 5 points each:
+  - Posterized
+  - Hang Time (25 rim hangs)
+  - Pickpocket (25 steals)
+  - Regular (7 days in a row)
+  - To stay within Game Center's 1,000-point limit, Every Rival drops from 100 points to 80.
+  - `docs/GAME_CENTER.md` is updated.
+- **I171 COMMENTARY:** new lines for posters (naming the defender) and for pickpockets.
+- **I172 LANDSCAPE BUTTONS:** in landscape the buttons are drawn at 90% so more of the court shows. The touch areas still never overlap.
+- **I173 STEAL READY FLASH:** the STEAL ring flashes once at the moment you can reach again.
+- **I174 SHOP NEWS:** the main menu's SHOP button reads "SHOP · NEW" until you've opened the shop since its last update.
+- **I175 SAVES, SPANISH, TESTS:**
+  - New totals and shop fields save. Loaded loyalty courts are checked: only real shop courts, and no more than the picks there are.
+  - 23 new Spanish lines.
+  - `ImprovementsI156Tests` has 18 tests.
+  - One older test was updated: the full-career achievement test sets the new totals.
+
+**Checks:** logic suite 1,265 of 1,265 pass. UnityCheck has 0 errors, the strict text audit is clean, and the App Store audit passes 73 of 73.
+
+**Not seen on a phone yet.**

@@ -98,7 +98,8 @@ namespace CallerRetroBall.Logic
                 Target = target,
                 HomeTeamId = home.id,
                 OpponentId = opp.id,
-                CourtId = home.homeCourtId,
+                // I167 WEEKEND COURT: Saturdays and Sundays are played on a designed SHOP court, free for everyone.
+                CourtId = WeekendCourt.CourtFor(day) ?? home.homeCourtId,
                 DifficultyId = difficulty,
             };
         }
@@ -198,6 +199,11 @@ namespace CallerRetroBall.Logic
         public const string FranchiseTitle = "retroball.ach.franchise_title";
         public const string DunkChamp = "retroball.ach.dunk_contest";
         public const string ThreeChamp = "retroball.ach.three_contest";
+        // I170 (20 Nov 2026).
+        public const string Posterizer = "retroball.ach.posterizer";
+        public const string HangTime = "retroball.ach.hang_time";
+        public const string Pickpocket = "retroball.ach.pickpocket";
+        public const string Regular = "retroball.ach.loyal_week";
 
         public const string BoardWins = "retroball.lb.career_wins";
         public const string BoardGreens = "retroball.lb.career_greens";
@@ -235,7 +241,7 @@ namespace CallerRetroBall.Logic
               d => d.secrets != null && Secrets.All.TrueForAll(x => d.secrets.codesFound.Contains(x.Id))),
             A(KingFive, "Hold the Court", "Win 5 straight in King of the Court.", 50, d => d.king != null && d.king.best >= 5),
             A(CallerCup, "Cup Run", "Win the Caller Cup.", 60, d => d.cup != null && d.cup.titles >= 1),
-            A(AllRivals, "Every Rival", "Beat Neon Static, the Sundown Syndicate, the Midnight Tide, the Paper Cranes and the Cassette Club.", 100, RivalEngine.BeatEveryRival),
+            A(AllRivals, "Every Rival", "Beat Neon Static, the Sundown Syndicate, the Midnight Tide, the Paper Cranes and the Cassette Club.", 80, RivalEngine.BeatEveryRival),
             A(Shootout, "Sharpshooter", "Win a Shootout.", 20, d => d.practice.shootoutWins >= 1),
             A(Horse, "Spell It Out", "Win a game of H-O-R-S-E against the CPU.", 20, d => d.practice.horseWins >= 1),
             A(AroundWorld, "World Tour", "Finish Around the World.", 20, d => d.practice.aroundWorldTime > 0f),
@@ -245,6 +251,10 @@ namespace CallerRetroBall.Logic
             A(FranchiseTitle, "Front Office", "Win a title in Franchise.", 50, d => d.franchise != null && d.franchise.titles >= 1),
             A(DunkChamp, "Above the Rim", "Win the Dunk Contest.", 30, d => d.allStar != null && d.allStar.dunkTitles >= 1),
             A(ThreeChamp, "Money Ball", "Win the 3-Point Contest.", 30, d => d.allStar != null && d.allStar.threeTitles >= 1),
+            A(Posterizer, "Posterized", "Dunk right on top of a defender.", 5, d => d.totals.posters >= 1),
+            A(HangTime, "Hang Time", "Hang on the rim after 25 made dunks.", 5, d => d.totals.rimHangs >= 25),
+            A(Pickpocket, "Pickpocket", "Make 25 steals.", 5, d => d.totals.steals >= 25),
+            A(Regular, "Regular", "Play 7 days in a row.", 5, d => d.loginBest >= 7),
         };
 
         public static readonly List<LeaderboardInfo> Boards = new List<LeaderboardInfo>

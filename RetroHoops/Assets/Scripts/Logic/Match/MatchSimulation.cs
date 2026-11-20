@@ -364,6 +364,10 @@ namespace CallerRetroBall.Logic
         BreakerScored = 47,
         /// <summary>A SHOWSTOPPER was wasted (missed, or the ball was lost).</summary>
         BreakerEnded = 48,
+        /// <summary>I156 (20 Nov 2026): a made dunk right on top of a defender (PlayerIndex = dunker, Value = the defender).</summary>
+        Posterized = 49,
+        /// <summary>I161: a second (or more) steal in a row by one defender without a miss (Value = how many in a row).</summary>
+        Pickpocket = 50,
     }
 
     public struct MatchEvent
@@ -1066,6 +1070,8 @@ namespace CallerRetroBall.Logic
             }
             var ctx = ShotContextFor(shooter, type, meter);
             LastReleaseMeter = meter;
+            // I156: a dunk with a defender right there is a poster if it goes down.
+            _posterVictim = type == ShotType.Dunk ? PosterVictim(shooter) : -1;
             var eval = ShotModel.Evaluate(ctx, TuningFor(shooter));
             bool makes = eval.GuaranteedMake || _rng.NextFloat() < eval.MakeChance;
             var zone = court.ZoneOf(p.Position);
@@ -1073,7 +1079,15 @@ namespace CallerRetroBall.Logic
 
             var line = Stats[shooter];
             // Greens count by the standard window only, so a forgiving meter never pads the GREENS record or board.
-            if (ShotModel.Grade(meter, p.Def.attributes.shooting, Setup.Shot) == TimingGrade.Green) line.greenReleases++;
+            var standardGrade = ShotModel.Grade(meter, p.Def.attributes.shooting, Setup.Shot);
+            if (standardGrade == TimingGrade.Green) line.greenReleases++;
+            // I163: early and late jumpers, for the release coach.
+            if (type == ShotType.MidRange || type == ShotType.Arc)
+            {
+                line.jumpers++;
+                if (standardGrade == TimingGrade.TooEarly || standardGrade == TimingGrade.SlightlyEarly) line.earlyReleases++;
+                else if (standardGrade == TimingGrade.TooLate || standardGrade == TimingGrade.SlightlyLate) line.lateReleases++;
+            }
             line.fieldGoalsAttempted++;
             if (zone == ShotZone.BeyondArc) line.arcAttempted++;
             line.chart.spots[(int)ShotZones.SpotOf(p.Position, court)].attempted++;
@@ -1131,7 +1145,17 @@ namespace CallerRetroBall.Logic
 
                 Events.Add(new MatchEvent(MatchEventType.ShotMade, shooter, p.Team, Ball.ShotPoints));
                 // A made dunk: the dunker hangs (and swings) on the rim for a moment before dropping, and can't move meanwhile.
-                if (Ball.ShotType == ShotType.Dunk) p.StunnedUntil = Math.Max(p.StunnedUntil, Time + Setup.Flow.rimHangSeconds);
+                if (Ball.ShotType == ShotType.Dunk)
+                {
+                    p.StunnedUntil = Math.Max(p.StunnedUntil, Time + Setup.Flow.rimHangSeconds);
+                    line.rimHangs++; // I159
+                    if (_posterVictim >= 0 && _posterVictim < Players.Length && Players[_posterVictim].Team != p.Team)
+                    {
+                        line.posters++;
+                        Events.Add(new MatchEvent(MatchEventType.Posterized, shooter, p.Team, _posterVictim));
+                    }
+                }
+                _posterVictim = -1;
                 if (Setup.Rules.bustRule && Score[p.Team] > Setup.Rules.targetScore)
                 {
                     Score[p.Team] = Setup.Rules.bustScore;

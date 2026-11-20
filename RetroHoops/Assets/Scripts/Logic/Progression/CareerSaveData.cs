@@ -166,6 +166,13 @@ namespace CallerRetroBall.Logic
         public int heatUps;
         /// <summary>Local 2 Player games finished (no rewards; counted for a badge and an achievement).</summary>
         public int versusGames;
+        /// <summary>I156: poster dunks. I159: made dunks (each one hangs on the rim). I160: every reach for the ball.</summary>
+        public int posters, rimHangs, stealAttempts;
+        /// <summary>
+        /// I162 + I163: recent habits (each game's numbers added after the old ones fade to 70%): early and late jumpers out of
+        /// the jumpers taken, and reaches that fell short.
+        /// </summary>
+        public int recentEarly, recentLate, recentJumpers, recentShortReaches;
     }
 
     [Serializable]
@@ -331,6 +338,10 @@ namespace CallerRetroBall.Logic
         public int shopTips;
         /// <summary>I148: free tries used on shop courts ("courtId@day", the last 40).</summary>
         public List<string> shopTries = new List<string>();
+        /// <summary>I166: shop courts picked with LOYALTY COURT picks (yours for good, no purchase).</summary>
+        public List<string> shopEarned = new List<string>();
+        /// <summary>I174: the SHOP news version last looked at (see ShopNews).</summary>
+        public int shopSeenVersion;
         /// <summary>12 Oct 2026: the TestFlight tester's profile (see <see cref="BetaFeedback"/>).</summary>
         public BetaProfileData beta = new BetaProfileData();
         /// <summary>14 Oct 2026: the in-game phone (MUSIC playlist, agent texts, FEED).</summary>

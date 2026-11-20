@@ -46,6 +46,10 @@ namespace CallerRetroBall.Logic
                     ["steals"] = d.totals.steals, ["blocks"] = d.totals.blocks, ["fgm"] = d.totals.fieldGoalsMade,
                     ["fga"] = d.totals.fieldGoalsAttempted, ["greens"] = d.totals.greens, ["championships"] = d.totals.championships,
                     ["oops"] = d.totals.alleyOops, ["heatUps"] = d.totals.heatUps, ["versus"] = d.totals.versusGames,
+                    // I156-I163.
+                    ["posters"] = d.totals.posters, ["hangs"] = d.totals.rimHangs, ["stealTries"] = d.totals.stealAttempts,
+                    ["recEarly"] = d.totals.recentEarly, ["recLate"] = d.totals.recentLate, ["recJumpers"] = d.totals.recentJumpers,
+                    ["recShort"] = d.totals.recentShortReaches,
                 },
                 ["practice"] = new Dictionary<string, object>
                 {
@@ -520,6 +524,10 @@ namespace CallerRetroBall.Logic
                     fieldGoalsAttempted = Int(t, "fga", 0), greens = Int(t, "greens", 0), championships = Int(t, "championships", 0),
                     alleyOops = Math.Max(0, Int(t, "oops", 0)), heatUps = Math.Max(0, Int(t, "heatUps", 0)),
                     versusGames = Math.Max(0, Int(t, "versus", 0)),
+                    posters = Math.Max(0, Int(t, "posters", 0)), rimHangs = Math.Max(0, Int(t, "hangs", 0)),
+                    stealAttempts = Math.Max(0, Int(t, "stealTries", 0)),
+                    recentEarly = Math.Max(0, Int(t, "recEarly", 0)), recentLate = Math.Max(0, Int(t, "recLate", 0)),
+                    recentJumpers = Math.Max(0, Int(t, "recJumpers", 0)), recentShortReaches = Math.Max(0, Int(t, "recShort", 0)),
                 };
                 var pr = Obj(o, "practice");
                 d.practice = new PracticeBests

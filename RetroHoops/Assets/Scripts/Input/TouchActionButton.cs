@@ -92,6 +92,8 @@ namespace CallerRetroBall.Controls
         {
             if (_cooldown == null) return;
             float f = Mathf.Clamp01(remaining01);
+            // I173: the moment a cooldown runs out, the ring flashes once: you can reach again.
+            if (_cooldown.fillAmount > 0f && f <= 0f) _pressedAt = Time.unscaledTime;
             if (!Mathf.Approximately(_cooldown.fillAmount, f)) _cooldown.fillAmount = f;
         }
 

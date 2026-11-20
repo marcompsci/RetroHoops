@@ -85,7 +85,7 @@ namespace CallerRetroBall.Controls
             controls._leftHanded = leftHanded;
             controls._seat = seat;
             // Half a screen each in tabletop play: slightly smaller buttons so both sets fit.
-            controls._scale = (largeButtons ? 1.25f : 1f) * (seat == Seat.Full ? 1f : 0.82f);
+            controls._scale = (largeButtons ? 1.25f : 1f) * (seat == Seat.Full ? ControlLayout.ScaleFor(Screen.width > Screen.height) : 0.82f);
             // I131: your saved changes build on the arc you picked (SPREAD unless you kept a CLASSIC layout).
             controls._slots = seat == Seat.Full
                 ? ControlLayout.Parse(layout, Core.App.Career?.settings?.controlPreset ?? ControlLayout.Spread)
@@ -175,6 +175,19 @@ namespace CallerRetroBall.Controls
             Dunk.Pressed += () => Press(_defense ? ActionButton.Defense : ActionButton.Dunk);
             Layup.Pressed += () => Press(ActionButton.Layup);
             Call.Pressed += () => Press(ActionButton.Call);
+        }
+
+        /// <summary>
+        /// I164: re-reads the saved layout and opacity (the pause menu changed them). Full-screen seats only; the tabletop
+        /// seats keep their fixed arc.
+        /// </summary>
+        public void ReloadSettings()
+        {
+            var st = Core.App.Career?.settings;
+            if (st == null) return;
+            var group = _canvas != null ? _canvas.GetComponent<CanvasGroup>() : null;
+            if (group != null) group.alpha = ControlFeel.OpacityFor(st);
+            if (_seat == Seat.Full) ApplyLayout(ControlLayout.Parse(st.controlLayout, st.controlPreset));
         }
 
         /// <summary>Places every button from a layout (the editor calls this while you drag).</summary>

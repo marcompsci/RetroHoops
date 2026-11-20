@@ -281,6 +281,8 @@ namespace CallerRetroBall.Tests
             d.customTeam.created = true;
             d.franchise.titles = 1;
             d.allStar.dunkTitles = d.allStar.threeTitles = 1;
+            // I170 (20 Nov 2026).
+            d.totals.posters = 1; d.totals.rimHangs = 25; d.totals.steals = 25; d.loginBest = 7;
             var earned = Achievements.Earned(d);
             foreach (var id in Achievements.AllAchievements) Assert.Contains(id, earned);
         }

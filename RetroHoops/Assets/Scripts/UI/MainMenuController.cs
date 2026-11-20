@@ -119,7 +119,7 @@ namespace CallerRetroBall.UI
             UiKit.Button(column, "PRACTICE LAB", ShowPractice, ButtonStyle.Secondary, 120f, 52f);
             UiKit.Button(column, "LOCKER ROOM", () => SceneFlow.GoTo(SceneNames.LockerRoom), ButtonStyle.Secondary, 120f, 52f);
             // I147: the SHOP (courts, gear, Court Designer Plus, the tip jar).
-            UiKit.Button(column, "SHOP", () => ShowShop(CloseOverlay), ButtonStyle.Secondary, 110f, 48f);
+            UiKit.Button(column, ShopNews.HasNew(App.Career) ? Loc.T("SHOP") + "  ·  " + Loc.T("NEW") : "SHOP", () => ShowShop(CloseOverlay), ButtonStyle.Secondary, 110f, 48f);
             // 14 Oct 2026: SETTINGS and your player's PHONE (music, texts, feed) side by side.
             var lowRow = UiKit.Row(column, 20f, "SettingsPhone");
             UiKit.Size(lowRow, 104f);

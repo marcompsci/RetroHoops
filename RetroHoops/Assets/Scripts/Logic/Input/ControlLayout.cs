@@ -71,6 +71,14 @@ namespace CallerRetroBall.Logic
         /// <summary>Size limits are measured against the SPREAD sizes (CLASSIC's all sit inside them).</summary>
         public static float DefaultSize(ControlButton b) => Default()[(int)b].Size;
 
+        /// <summary>
+        /// I172 (20 Nov 2026): in landscape (Full Court, or every game with LANDSCAPE: ALL GAMES) the buttons are drawn at
+        /// 90% so more of the wide court shows; the gaps shrink with them, so touch areas still never overlap.
+        /// </summary>
+        public const float LandscapeScale = 0.9f;
+
+        public static float ScaleFor(bool landscape) => landscape ? LandscapeScale : 1f;
+
         /// <summary>Space between two rings' edges (canvas units; negative = they overlap).</summary>
         public static float Gap(ControlSlot a, ControlSlot b)
         {

@@ -68,7 +68,7 @@ Achievements report 100% when earned. Points total **1,000** (Game Center allows
 | `retroball.ach.all_codes` | Code Breaker | Find every secret code. | 80 |
 | `retroball.ach.king_five` | Hold the Court | Win 5 straight in King of the Court. | 50 |
 | `retroball.ach.caller_cup` | Cup Run | Win the Caller Cup. | 60 |
-| `retroball.ach.all_rivals` | Every Rival | Beat Neon Static, the Sundown Syndicate, the Midnight Tide, the Paper Cranes and the Cassette Club. | 100 |
+| `retroball.ach.all_rivals` | Every Rival | Beat Neon Static, the Sundown Syndicate, the Midnight Tide, the Paper Cranes and the Cassette Club. | 80 |
 | `retroball.ach.shootout` | Sharpshooter | Win a Shootout. | 20 |
 | `retroball.ach.horse` | Spell It Out | Win a game of H-O-R-S-E against the CPU. | 20 |
 | `retroball.ach.around_world` | World Tour | Finish Around the World. | 20 |
@@ -78,6 +78,12 @@ Achievements report 100% when earned. Points total **1,000** (Game Center allows
 | `retroball.ach.franchise_title` | Front Office | Win a title in Franchise. | 50 |
 | `retroball.ach.dunk_contest` | Above the Rim | Win the Dunk Contest. | 30 |
 | `retroball.ach.three_contest` | Money Ball | Win the 3-Point Contest. | 30 |
+| `retroball.ach.posterizer` | Posterized | Dunk right on top of a defender. | 5 |
+| `retroball.ach.hang_time` | Hang Time | Hang on the rim after 25 made dunks. | 5 |
+| `retroball.ach.pickpocket` | Pickpocket | Make 25 steals. | 5 |
+| `retroball.ach.loyal_week` | Regular | Play 7 days in a row. | 5 |
+
+*20 Nov 2026 (I170): the four new achievements are worth 5 points each, and Every Rival went from 100 to 80, so the total stays at Game Center's 1,000-point limit. If Every Rival is already live in App Store Connect with 100 points, lower it there too before adding the new four.*
 
 Each achievement needs a title, a pre-earned and an earned description, its points, and a 512×512 or 1024×1024 image. Mark none of them hidden.
 

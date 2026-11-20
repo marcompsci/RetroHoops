@@ -28,6 +28,16 @@ namespace CallerRetroBall.Logic
         public int ankleBreakers;
         /// <summary>THE STREETS: tricks done with the TRICK button.</summary>
         public int tricks;
+        /// <summary>I156: made dunks right on top of a defender.</summary>
+        public int posters;
+        /// <summary>I159: made dunks (each one hangs on the rim).</summary>
+        public int rimHangs;
+        /// <summary>I160: every reach for the ball (made or not).</summary>
+        public int stealAttempts;
+        /// <summary>I163: jumpers let go early / late (standard window).</summary>
+        public int earlyReleases, lateReleases, jumpers;
+        /// <summary>I162: reaches for the ball from too far away.</summary>
+        public int shortReaches;
         /// <summary>Phase 35: where every shot came from (made / attempted per spot).</summary>
         public ShotChartData chart = new ShotChartData();
 

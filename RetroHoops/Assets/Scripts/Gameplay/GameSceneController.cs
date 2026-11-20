@@ -496,6 +496,7 @@ namespace CallerRetroBall.Gameplay
             _hud.ContinueRequested += Continue;
             _hud.PauseRequested += () => SetPaused(true);
             _hud.ResumeRequested += () => SetPaused(false);
+            _hud.ControlsChanged += () => { _controls?.ReloadSettings(); _controls2?.ReloadSettings(); }; // I164
             _hud.QuitRequested += Quit;
             StartCity();
             _hud.PhotoRequested += () =>
@@ -1938,6 +1939,13 @@ namespace CallerRetroBall.Gameplay
                         Sfx(SfxId.Squeak, 0.6f);
                         StealFeedback(e);
                         break;
+                    case MatchEventType.Posterized:
+                        OnPoster(e, human);
+                        break;
+                    case MatchEventType.Pickpocket:
+                        _hud.Toast(e.Team == human || Versus ? "PICKPOCKET!  " + e.Value + " " + Loc.T("IN A ROW") : "PICKED AGAIN", 1.1f);
+                        if (e.Team == human) Haptics.Success();
+                        break;
                     case MatchEventType.Steal:
                         if (!_reduceMotion) _bursts.Spawn(CourtSpace.ToWorldSnapped(_match.Players[e.PlayerIndex].Position, 1f), new Color32(0x4C, 0xC9, 0xF0, 255), 8, 2.5f, 0.4f);
                         _hud.Toast(e.Team == human ? "STEAL!" : "STRIPPED", 1.1f);
@@ -2106,6 +2114,9 @@ namespace CallerRetroBall.Gameplay
             }
             // The rim is pulled down while someone hangs on it (2 pixels at the slam, then 1).
             if (_reduceMotion) dunk.SwingPx = 0;
+            // I158: a light buzz each time your dunker swings back the other way on the rim.
+            if (dunking && dunk.OnRim && Mine(_leaper)) { if (Dunks.SwingTurned(ref _swingSide, dunk.SwingPx)) Haptics.Light(); }
+            else _swingSide = 0;
             SyncRimDip(dunking ? RimDipFor(dunk, now) : 0, dunking && !_reduceMotion ? RimShakeFor(dunk, now) : 0);
             SyncNet(now);
             for (int i = 0; i < _playerViews.Length; i++)
@@ -2335,6 +2346,7 @@ namespace CallerRetroBall.Gameplay
         }
 
         private int _rimShaken;
+        private int _swingSide;
 
         private void SyncRimDip(int dipPx, int shakePx)
         {
@@ -3491,6 +3503,31 @@ namespace CallerRetroBall.Gameplay
         }
 
         private int _oopFinisher = -1;
+
+        /// <summary>
+        /// I157: a POSTERIZED dunk: the call, a short freeze on the slam, a bigger shake, the crowd, and the best highlight
+        /// of the game if it's yours.
+        /// </summary>
+        private void OnPoster(MatchEvent e, int human)
+        {
+            bool ours = e.Team == human || Versus;
+            _hud.Toast(ours ? Loc.T("POSTERIZED!") : Loc.T("POSTERIZED. OUCH."), 1.3f);
+            Sfx(SfxId.CrowdOooh, 1f);
+            if (!_reduceMotion)
+            {
+                _hitStopUntil = Mathf.Max(_hitStopUntil, Time.unscaledTime + PosterFreeze);
+                _cameraRig.Shake(0.28f);
+            }
+            if (ours) Haptics.Heavy();
+            if (_practice != null || _horse != null || _tutorial != null || Demo || !_match.IsHumanControlled(e.PlayerIndex)) return;
+            _recorder.OfferBestPlay("POSTERIZED!", 140);
+            OfferPhoto("POSTERIZED!", 140);
+            _lastHighlight = _recorder.Snapshot(3.5f, "POSTERIZED!", 140);
+            if (_link == null) _hud.OfferReplay(3f);
+        }
+
+        /// <summary>I157: how long the game freezes on a poster slam (real seconds).</summary>
+        private const float PosterFreeze = 0.18f;
 
         // ------------------------------------------------------------------ 14 Oct 2026: quick chat
 

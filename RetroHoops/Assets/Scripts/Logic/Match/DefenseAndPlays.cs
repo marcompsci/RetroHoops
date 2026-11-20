@@ -116,6 +116,7 @@ namespace CallerRetroBall.Logic
             _guarding = new int[Players.Length];
             _stealQueue = new float[Players.Length];
             _stealOutcome = new StealOutcome[Players.Length];
+            _stealRun = new int[Players.Length];
             ResetMatchups();
             foreach (var p in Players) p.Stamina = p.Team == Setup.HumanTeam ? Math.Max(0f, Math.Min(1f, Setup.HumanTeamStartingStamina)) : 1f;
         }
@@ -139,6 +140,32 @@ namespace CallerRetroBall.Logic
         public const float TooFarFactor = 1.6f;
 
         private float[] _stealQueue;
+        /// <summary>I161: steals in a row without a miss, per player.</summary>
+        private int[] _stealRun;
+        public const int PickpocketRun = 2;
+
+        // ------------------------------------------------------------------ I156: posters
+
+        /// <summary>How close a defender has to be to a dunker to get posterized (metres).</summary>
+        public const float PosterRange = 1.4f;
+        private int _posterVictim = -1;
+
+        /// <summary>The nearest opponent within <see cref="PosterRange"/> of the dunker (a jumping defender counts from further), or -1.</summary>
+        public int PosterVictim(int dunker)
+        {
+            var p = Players[dunker];
+            int best = -1;
+            float bestD = float.MaxValue;
+            for (int i = 0; i < Players.Length; i++)
+            {
+                var o = Players[i];
+                if (o.Team == p.Team || IsBenched(i)) continue;
+                float d = Vec2.Distance(o.Position, p.Position);
+                float range = IsJumping(i) ? PosterRange * 1.35f : PosterRange;
+                if (d <= range && d < bestD) { bestD = d; best = i; }
+            }
+            return best;
+        }
         private StealOutcome[] _stealOutcome;
 
         /// <summary>How the player's last steal press went (for the button hint and callouts).</summary>
@@ -209,10 +236,13 @@ namespace CallerRetroBall.Logic
             float dist = Vec2.Distance(d.Position, Ball.Position);
             float reach = StealReach(defender);
             Events.Add(new MatchEvent(MatchEventType.StealAttempt, defender, d.Team));
+            Stats[defender].stealAttempts++; // I160
             if (dist > reach)
             {
                 d.StunnedUntil = Time + t.failedStealRecovery * 0.5f; // whiff at air
+                if (_stealRun != null) _stealRun[defender] = 0;
                 if (_stealOutcome != null) _stealOutcome[defender] = dist > reach * TooFarFactor ? StealOutcome.TooFar : StealOutcome.Short;
+                Stats[defender].shortReaches++;
                 return false;
             }
 
@@ -227,6 +257,9 @@ namespace CallerRetroBall.Logic
             if (_rng.NextFloat() < chance)
             {
                 Stats[defender].steals++;
+                // I161: steals in a row without a miss.
+                if (_stealRun != null && ++_stealRun[defender] >= PickpocketRun)
+                    Events.Add(new MatchEvent(MatchEventType.Pickpocket, defender, d.Team, _stealRun[defender]));
                 Stats[handler.Index].turnovers++;
                 CancelCharge();
                 Events.Add(new MatchEvent(MatchEventType.Steal, defender, d.Team));
@@ -237,6 +270,7 @@ namespace CallerRetroBall.Logic
 
             d.StunnedUntil = Time + t.failedStealRecovery;
             if (_stealOutcome != null) _stealOutcome[defender] = StealOutcome.Missed;
+            if (_stealRun != null) _stealRun[defender] = 0;
             return false;
         }
 

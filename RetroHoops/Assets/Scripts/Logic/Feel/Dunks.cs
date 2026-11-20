@@ -116,6 +116,19 @@ namespace CallerRetroBall.Logic
         /// <summary>I130: a missed dunk rattles the rim: a pixel down and a sideways shake, no hang.</summary>
         public static int MissRattlePx(float secondsSinceSlam) => secondsSinceSlam >= 0f && secondsSinceSlam < 0.16f ? GrabShakePx(secondsSinceSlam) : 0;
 
+        /// <summary>
+        /// I158: true when the swing on the rim turns (the body passes from one side to the other): the moment for a
+        /// light buzz under your thumb. <paramref name="lastSide"/> is the last non-zero side seen (updated here).
+        /// </summary>
+        public static bool SwingTurned(ref int lastSide, int swingPx)
+        {
+            int side = Math.Sign(swingPx);
+            if (side == 0) return false;
+            bool turned = lastSide != 0 && side != lastSide;
+            lastSide = side;
+            return turned;
+        }
+
         /// <summary>Camera shake when it goes down.</summary>
         public static float Shake(DunkStyle s) => s == DunkStyle.TwoHand ? 0.12f : 0.2f;
 

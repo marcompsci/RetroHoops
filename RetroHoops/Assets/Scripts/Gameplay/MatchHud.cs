@@ -25,6 +25,8 @@ namespace CallerRetroBall.Gameplay
         /// <summary>Make a GIF of the play of the game and share / save it.</summary>
         public event Action ShareRequested;
         public event Action PhotoRequested;
+        /// <summary>I164: a control setting changed on the pause menu (layout, opacity, haptics).</summary>
+        public event Action ControlsChanged;
         /// <summary>14 Oct 2026: PHONE on the pause menu (music, texts, feed).</summary>
         public event Action PhoneRequested;
         /// <summary>16 Oct 2026: LEAVE COURT (walk off into Baller City). Shown only when the match controller turns it on.</summary>
@@ -193,6 +195,31 @@ namespace CallerRetroBall.Gameplay
             UiKit.Button(column, "RESUME", () => ResumeRequested?.Invoke(), ButtonStyle.Primary, 150f);
             UiKit.Button(column, "PHOTO MODE", () => PhotoRequested?.Invoke(), ButtonStyle.Secondary, 130f, 48f);
             UiKit.Button(column, "PHONE", () => PhoneRequested?.Invoke(), ButtonStyle.Secondary, 130f, 48f);
+            // I164: the control settings players change most, without leaving the game.
+            // Portrait only: the landscape pause menu has no room for three more rows.
+            var st = Core.App.Career?.settings;
+            if (st != null && Screen.height > Screen.width)
+            {
+                UiControls.ChoiceRow(column, "CONTROL LAYOUT", ControlLayout.PresetNames, ControlLayout.ClampPreset(st.controlPreset), i =>
+                {
+                    st.controlPreset = ControlLayout.ClampPreset(i);
+                    st.controlLayout = "";
+                    Core.App.SaveCareer();
+                    ControlsChanged?.Invoke();
+                });
+                UiControls.ChoiceRow(column, "BUTTON OPACITY", ControlFeel.OpacityNames, ControlFeel.ClampOpacity(st.controlsOpacity), i =>
+                {
+                    st.controlsOpacity = ControlFeel.ClampOpacity(i);
+                    Core.App.SaveCareer();
+                    ControlsChanged?.Invoke();
+                });
+                UiControls.ToggleRow(column, "HAPTICS", st.haptics, v =>
+                {
+                    st.haptics = v;
+                    Core.App.SaveCareer();
+                    if (v) Core.Haptics.Light();
+                });
+            }
             _pauseColumn = column;
             _pauseQuit = UiKit.Button(column, "QUIT TO MENU", () => QuitRequested?.Invoke(), ButtonStyle.Ghost, 130f, 48f);
             _pausePanel.SetActive(false);
@@ -477,6 +504,22 @@ namespace CallerRetroBall.Gameplay
             if (pog != null)
                 UiKit.Size(UiKit.Label(_finalColumn, "PLAYER OF THE GAME  <color=#FFD166>" + pog.name.ToUpperInvariant() + "</color>  " +
                                        pog.stats.points + " PTS", 34f, Theme.Cream, TextAlignmentOptions.Center, true), 56f);
+
+            // I160 + I156 + I162/I163: your reaches, posters and hangs, and a coach's note when a habit shows.
+            var mine = s.HumanLine?.stats;
+            if (mine != null)
+            {
+                var bits = new System.Collections.Generic.List<string>();
+                string stl = Logic.Habits.StealLine(mine);
+                if (stl.Length > 0) bits.Add(stl);
+                if (mine.posters > 0) bits.Add(mine.posters + " " + Logic.Loc.T(mine.posters == 1 ? "POSTER" : "POSTERS"));
+                if (mine.rimHangs > 0) bits.Add(mine.rimHangs + " " + Logic.Loc.T("RIM HANGS"));
+                if (bits.Count > 0)
+                    UiKit.Size(UiKit.Label(_finalColumn, Logic.Loc.T("YOU") + ":  " + string.Join("  ·  ", bits), 28f, Theme.Cyan, TextAlignmentOptions.Center, true), 46f);
+                if (Core.App.Career != null)
+                    foreach (var noteLine in Logic.Habits.Notes(Core.App.Career.totals))
+                        UiKit.Size(UiKit.Label(_finalColumn, Logic.Loc.T(noteLine), 24f, Theme.Gold, TextAlignmentOptions.Center), 70f);
+            }
 
             TeamComparison(s);
             ShotChart(s);

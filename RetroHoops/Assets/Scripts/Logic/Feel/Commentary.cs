@@ -81,6 +81,18 @@ namespace CallerRetroBall.Logic
                             Offer(3, Pick("gp", "GAME POINT COMING UP!", "ONE MORE BUCKET AND IT'S OVER!"));
                         }
                         break;
+                    case MatchEventType.Posterized:
+                    {
+                        // I171: the booth on a poster dunk and a pickpocket run.
+                        string victim = e.Value >= 0 && e.Value < m.Players.Length && names != null ? Cap(names(e.Value)) : "HIM";
+                        Offer(5, Pick("poster", "POSTERIZED! " + who + " JUST DUNKED ALL OVER " + victim + "!",
+                                      "PUT THAT ONE ON THE WALL! " + who + " RIGHT ON TOP OF " + victim + "!",
+                                      "OH NO, " + victim + "! " + who + " HAS NO MERCY!"));
+                        break;
+                    }
+                    case MatchEventType.Pickpocket:
+                        Offer(4, Pick("pickpocket", who + " PICKS ANOTHER POCKET!", "CHECK YOUR WALLET! " + who + " AGAIN!", who + " HAS QUICK HANDS TONIGHT!"));
+                        break;
                     case MatchEventType.AlleyOop:
                         Offer(4, Pick("oop", "ALLEY-OOP! " + who + " FROM THE SKY!", "LOB CITY! " + who + " FINISHES!", "OH THE OOP! " + who + "!"));
                         break;

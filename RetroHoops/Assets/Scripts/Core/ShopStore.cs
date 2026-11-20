@@ -40,6 +40,7 @@ namespace CallerRetroBall.Core
         {
             if (_started) return;
             _started = true;
+            StoreResync.Ensure(); // I165
 #if UNITY_IOS && !UNITY_EDITOR
             RetroShop_Start(string.Join(",", Shop.ProductIds()));
 #endif
