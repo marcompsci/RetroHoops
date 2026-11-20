@@ -829,3 +829,29 @@ Logic lives in `Logic/Progression/Shop.cs`. The App Store bridge is `Core/ShopSt
 **Checks:** logic suite 1,277 of 1,277 pass. UnityCheck has 0 errors, the strict text audit is clean, and the App Store audit passes 73 of 73.
 
 **Not seen on a phone yet.**
+
+### Improvements I196–I215: momentum, runs, records, milestones and glowing rings (21 Nov 2026)
+
+- **I196 MOMENTUM:** a thin strip along the bottom of the score bar. It fills from the middle toward the side that's on a run. Each bucket pushes it, and half of the push fades after 20 seconds of game time.
+- **I197 HOT SPOT:** CHECK BALL also shows your best spot from the career shot chart (at least 8 shots there), with the percentage.
+- **I198 Game records:** single-game bests for posters, chase-down blocks, clutch buckets and the longest GREEN run. They're saved and announced like the other records.
+- **I199 Career milestones:** round numbers passed in the game just played (10/25/50… games, 100/250… points, steals, blocks, greens, posters, chase-downs, clutch buckets) show on the post-game.
+- **I200 Login run:** the PLAY menu shows today's day in a row and tomorrow's reward.
+- **I201 ICONS ONLY:** a setting that hides the button words, leaving the icons. Buttons without an icon keep their word.
+- **I202 MOMENTUM BAR:** a setting to hide the strip. It also applies from the pause menu.
+- **I203 Big-play freeze:** chase-down blocks (0.12 s) and clutch buckets (0.14 s) get a hit-stop. It's off with Reduce Motion.
+- **I204 Runs:** at 6 unanswered points, and every 4 after that, the crowd swells and the toast calls it ("8-0 RUN", or THEY'RE ON A RUN).
+- **I205 LAST GAME and RUN IT BACK:** the PLAY menu shows the last game's result. RUN IT BACK replays the last Quick Call opponent in one tap.
+- **I206 Win streak:** shown on the PLAY menu from 2 wins, with YOUR BEST! or the best so far.
+- **I207 FULL SET:** the Locker's style tab says so when you wear a whole gear pack.
+- **I208 Shop progress:** shows courts x/12 and gear x/20 under COLLECTION.
+- **I209 and I210 Glowing rings:**
+  - STEAL pulses gold when the ball handler is in reach and your reach is ready.
+  - BLOCK (SHOOT on defence) pulses when an opponent is loading a shot within block range.
+- **I211 Save guard:** a test covers a save with every new field maxed, keeps it well under 512 KB, and checks that a negative value never decodes.
+- **I212 Pause line:** the pause menu shows your line so far.
+- **I213 Vs your average:** after a counted game, the post-game shows your points against your average from earlier games (once 3 earlier games exist).
+- **I214 What's New:** the card is refreshed (tour.whats_new_196).
+- **I215 Wrap-up:** Spanish for every new line. `ImprovementsI196Tests` has 15 tests.
+  - Gate: 1,291 logic tests pass, UnityCheck shows 0 errors, App Store audit 73/73, strict text audit clean.
+  - Not tested on a device yet.

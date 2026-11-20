@@ -87,5 +87,8 @@ namespace CallerRetroBall.Logic
                 default: return "";
             }
         }
+
+        /// <summary>I209 + I210: how far toward gold a glowing ring is (0.35..0.75, about 2.5 pulses a second).</summary>
+        public static float GlowPulse(float t) => 0.55f + 0.2f * (float)Math.Sin(t * 16f);
     }
 }

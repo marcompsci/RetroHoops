@@ -420,6 +420,15 @@ namespace CallerRetroBall.Gameplay
             _controls.Layup.UnavailableHint = "NO BALL";
             _controls.Call.UnavailableHint = "OFFENSE";
             _hud = MatchHud.Create(setup.TeamA, setup.TeamB);
+            _hud.ShowMomentum(App.Career?.settings.momentumBar ?? true); // I202
+            _hud.RunCalled += (team, call) =>
+            {
+                // I204: the crowd swells on a run (yours gets the cheer and the call; theirs the groan).
+                if (_practice != null || _horse != null || _tutorial != null || Demo) return;
+                bool ours = team == _match.Setup.HumanTeam || Versus;
+                Sfx(ours ? SfxId.CrowdCheer : SfxId.CrowdGroan, ours ? 0.9f : 0.5f);
+                _hud.Toast(ours ? call : Loc.T("THEY'RE ON A RUN") + "  ·  " + call, 1.1f);
+            };
             _hud.PlayChosen += play => _pendingCall = play;
             if (_match.StyleOn)
             {
@@ -497,7 +506,7 @@ namespace CallerRetroBall.Gameplay
             _hud.ContinueRequested += Continue;
             _hud.PauseRequested += () => SetPaused(true);
             _hud.ResumeRequested += () => SetPaused(false);
-            _hud.ControlsChanged += () => { _controls?.ReloadSettings(); _controls2?.ReloadSettings(); }; // I164
+            _hud.ControlsChanged += () => { _controls?.ReloadSettings(); _controls2?.ReloadSettings(); _hud.ShowMomentum(App.Career?.settings.momentumBar ?? true); }; // I164
             _hud.QuitRequested += Quit;
             StartCity();
             _hud.PhotoRequested += () =>
@@ -535,7 +544,14 @@ namespace CallerRetroBall.Gameplay
                      : _duel != null ? _duel.Intro
                      : _practice != null && _practice.Kind == DrillKind.Shootout ? "BEAT " + _practice.CpuName + ": " + _practice.CpuScore
                      : _practice != null ? DrillTitle(_practice.Kind)
-                     : (_request.Mode == GameMode.Practice ? "PRACTICE LAB" : "CHECK BALL"), 1.8f);
+                     : (_request.Mode == GameMode.Practice ? "PRACTICE LAB" : CheckBallLine()), 1.8f);
+        }
+
+        /// <summary>I197: CHECK BALL, plus your HOT SPOT from the career shot chart once you have one.</summary>
+        private string CheckBallLine()
+        {
+            string hot = _link == null ? HotSpot.Line(App.Career?.shotChart) : null;
+            return hot == null ? "CHECK BALL" : Loc.T("CHECK BALL") + "\n" + hot;
         }
 
         private void BuildWorld(CourtDef court, MatchSetup setup)
@@ -3138,6 +3154,15 @@ namespace CallerRetroBall.Gameplay
                     note = string.IsNullOrEmpty(note) ? line : note + "\n" + line;
                     Sfx(SfxId.Fanfare, 0.8f);
                 }
+                var marks = App.Career.lastMilestones; // I199
+                if (rewarded && marks != null && marks.Count > 0)
+                {
+                    string line = Loc.T("CAREER MILESTONE") + ": " + string.Join(", ", marks);
+                    note = string.IsNullOrEmpty(note) ? line : note + "\n" + line;
+                    Sfx(SfxId.Fanfare, 0.7f);
+                }
+                string vsAvg = rewarded && VsAverage.Counts(summary.mode) ? VsAverage.Line(App.Career.totals, summary.HumanLine?.stats) : null; // I213
+                if (vsAvg != null) note = string.IsNullOrEmpty(note) ? vsAvg : note + "\n" + vsAvg;
                 // 14 Oct 2026: the phone's FEED posts about the game (titles get the CHAMPIONS post).
                 if (rewarded)
                     PostToFeed(summary, summary.HumanWon && (title == "CHAMPIONS" || title == "CLASSIC CHAMPS" || title == "SUNBURST CHAMPIONS" || summary.isFinal));
@@ -4133,6 +4158,10 @@ namespace CallerRetroBall.Gameplay
             _accumulator = 0f;
             _buffer.Clear();
             SetTouchVisible(!paused && !_padMode);
+            // I212: your line so far, on the pause menu.
+            if (paused && _match != null && _match.ControlledIndex >= 0 && !Versus)
+                _hud.SetPauseLine(Loc.T("YOUR GAME") + ":  " + MyLine.Text(_match.Stats[_match.ControlledIndex]));
+            else if (paused) _hud.SetPauseLine(null);
             _hud.ShowPause(paused);
             _coach?.SetVisible(!paused && !_finalShown);
             _theaterBar?.SetVisible(!paused && !_finalShown);

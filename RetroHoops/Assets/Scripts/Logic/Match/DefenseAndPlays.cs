@@ -214,6 +214,25 @@ namespace CallerRetroBall.Logic
             return Math.Max(0f, Math.Min(1f, wait / full));
         }
 
+        /// <summary>I209: true when a reach right now could take it (live ball, handler on the other team, close enough, ready).</summary>
+        public bool InStealReach(int player)
+        {
+            if (player < 0 || player >= Players.Length || Phase != MatchPhase.Live || !Ball.IsHeld || Ball.HolderIndex < 0) return false;
+            var d = Players[player];
+            if (Players[Ball.HolderIndex].Team == d.Team || Time < d.StealReadyAt || Time < d.StunnedUntil) return false;
+            return Vec2.Distance(d.Position, Ball.Position) <= StealReach(player);
+        }
+
+        /// <summary>I210: true when an opponent is loading a shot within block range of this player (jump now to contest it).</summary>
+        public bool InBlockRange(int player)
+        {
+            if (player < 0 || player >= Players.Length || Phase != MatchPhase.Live || ChargingIndex < 0) return false;
+            var shooter = Players[ChargingIndex];
+            var d = Players[player];
+            if (shooter.Team == d.Team || IsJumping(player)) return false;
+            return Vec2.Distance(d.Position, shooter.Position) <= Setup.Defense.blockRange;
+        }
+
         /// <summary>How far this defender can reach for the ball.</summary>
         public float StealReach(int player) => Setup.Defense.stealRange * (IsHumanControlled(player) ? HumanReach : 1f);
 

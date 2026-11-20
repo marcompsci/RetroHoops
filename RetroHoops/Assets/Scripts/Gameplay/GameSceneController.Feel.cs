@@ -34,6 +34,9 @@ namespace CallerRetroBall.Gameplay
             _controls.Defense.SetCooldown(defending ? _match.StealWait01(_match.ControlledIndex) : 0f);
             // I180: BLOCK (SHOOT on defence) shows its jump recovery the same way.
             _controls.Shoot.SetCooldown(defending ? _match.JumpWait01(_match.ControlledIndex) : 0f);
+            // I209 + I210: the ring glows gold when pressing now would reach.
+            _controls.Defense.Glow = defending && _match.InStealReach(_match.ControlledIndex);
+            _controls.Shoot.Glow = defending && _match.InBlockRange(_match.ControlledIndex);
             // I181: SWITCH with nobody to switch with says so.
             if (_match.SwitchRefusedAt > _lastSwitchRefused)
             {
@@ -47,6 +50,8 @@ namespace CallerRetroBall.Gameplay
                 bool p2Defending = _match.OffenseTeam != _match.Players[p2].Team;
                 _controls2.Defense.SetCooldown(p2Defending ? _match.StealWait01(p2) : 0f);
                 _controls2.Shoot.SetCooldown(p2Defending ? _match.JumpWait01(p2) : 0f);
+                _controls2.Defense.Glow = p2Defending && _match.InStealReach(p2);
+                _controls2.Shoot.Glow = p2Defending && _match.InBlockRange(p2);
             }
         }
 

@@ -108,6 +108,7 @@ namespace CallerRetroBall.Controls
                 UiKit.Place(tag.rectTransform, new Vector2(0.5f, 0.06f), new Vector2(160f, 60f));
                 tag.raycastTarget = false;
             }
+            controls.ApplyIconsOnly(Core.App.Career?.settings?.iconsOnly ?? false); // I201
             return controls;
         }
 
@@ -188,6 +189,13 @@ namespace CallerRetroBall.Controls
             var group = _canvas != null ? _canvas.GetComponent<CanvasGroup>() : null;
             if (group != null) group.alpha = ControlFeel.OpacityFor(st);
             if (_seat == Seat.Full) ApplyLayout(ControlLayout.Parse(st.controlLayout, st.controlPreset));
+            ApplyIconsOnly(st.iconsOnly);
+        }
+
+        /// <summary>I201: Settings ► ICONS ONLY hides the button words so more of the court shows through.</summary>
+        public void ApplyIconsOnly(bool on)
+        {
+            for (int i = 0; i <= (int)ControlButton.Call; i++) this[(ControlButton)i]?.SetLabelShown(!on);
         }
 
         /// <summary>Places every button from a layout (the editor calls this while you drag).</summary>

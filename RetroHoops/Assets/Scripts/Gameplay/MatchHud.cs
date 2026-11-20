@@ -128,6 +128,7 @@ namespace CallerRetroBall.Gameplay
             _clock = Text(rt, "2:00", 56f, new Vector2(0.55f, 0.66f));
             _shotClock = Text(rt, "14", 36f, new Vector2(0.55f, 0.24f));
             _shotClock.color = Theme.Gold;
+            BuildMomentum(rt); // I196
 
             // I8 MY LINE: your live box score under the score bar.
             _myLine = UiKit.Label(safe, "", 24f, Theme.Cyan, TextAlignmentOptions.Center, true, "MyLine");
@@ -192,6 +193,10 @@ namespace CallerRetroBall.Gameplay
             UiKit.Band(column, 0.12f, 0.88f, 160f);
             column.GetComponent<UnityEngine.UI.VerticalLayoutGroup>().childAlignment = TextAnchor.MiddleCenter;
             UiKit.Size(UiKit.ShadowLabel(column, "PAUSED", 90f, Theme.Cream, Theme.Pink, 8f).transform.parent.GetComponent<RectTransform>(), 140f);
+            // I212: your line so far.
+            _pauseLine = UiKit.Label(column, "", 30f, Theme.Cyan, TextAlignmentOptions.Center, true, "PauseLine");
+            UiKit.Size(_pauseLine.rectTransform, 44f);
+            _pauseLine.gameObject.SetActive(false);
             UiKit.Button(column, "RESUME", () => ResumeRequested?.Invoke(), ButtonStyle.Primary, 150f);
             UiKit.Button(column, "PHOTO MODE", () => PhotoRequested?.Invoke(), ButtonStyle.Secondary, 130f, 48f);
             UiKit.Button(column, "PHONE", () => PhoneRequested?.Invoke(), ButtonStyle.Secondary, 130f, 48f);
@@ -712,6 +717,16 @@ namespace CallerRetroBall.Gameplay
 
         public void ShowPause(bool visible) => _pausePanel.SetActive(visible);
 
+        private TextMeshProUGUI _pauseLine;
+
+        /// <summary>I212: the line shown above RESUME (null hides it).</summary>
+        public void SetPauseLine(string text)
+        {
+            if (_pauseLine == null) return;
+            _pauseLine.gameObject.SetActive(!string.IsNullOrEmpty(text));
+            _pauseLine.text = text ?? "";
+        }
+
         /// <summary>Hides the whole HUD (photo mode) without changing what's open.</summary>
         public void SetHudVisible(bool visible)
         {
@@ -846,8 +861,71 @@ namespace CallerRetroBall.Gameplay
             _myLine.text = text;
         }
 
+        // ------------------------------------------------------------------ I196 MOMENTUM
+
+        private readonly Momentum _momentum = new Momentum();
+        private UnityEngine.UI.Image _momA, _momB;
+        private float _momShown;
+
+        /// <summary>A thin strip along the bottom of the score bar: it fills from the middle toward the side that's on a run.</summary>
+        private void BuildMomentum(RectTransform bar)
+        {
+            var track = UiKit.Panel(bar, new Color(0f, 0f, 0f, 0.35f), null, false, "Momentum");
+            var trt = track.rectTransform;
+            trt.anchorMin = new Vector2(0.18f, 0f);
+            trt.anchorMax = new Vector2(0.92f, 0f);
+            trt.pivot = new Vector2(0.5f, 0f);
+            trt.sizeDelta = new Vector2(0f, 6f);
+            trt.anchoredPosition = new Vector2(0f, 8f);
+            track.raycastTarget = false;
+            _momA = MomentumFill(trt, Theme.Cyan, 1f);  // grows left from the middle (team A's side)
+            _momB = MomentumFill(trt, Theme.Pink, 0f);  // grows right (team B's side)
+        }
+
+        private static UnityEngine.UI.Image MomentumFill(RectTransform track, Color color, float pivotX)
+        {
+            var img = UiKit.Panel(track, color, null, false, "Fill");
+            var r = img.rectTransform;
+            r.anchorMin = new Vector2(0.5f, 0f);
+            r.anchorMax = new Vector2(0.5f, 1f);
+            r.pivot = new Vector2(pivotX, 0.5f);
+            r.anchoredPosition = Vector2.zero;
+            r.sizeDelta = new Vector2(0f, 0f);
+            img.raycastTarget = false;
+            return img;
+        }
+
+        /// <summary>I202: Settings ► MOMENTUM BAR (and the pause menu's settings) show or hide the strip.</summary>
+        public void ShowMomentum(bool shown)
+        {
+            if (_momA != null) _momA.transform.parent.gameObject.SetActive(shown);
+        }
+
+        private void SyncMomentum(MatchSimulation m)
+        {
+            if (_momA == null || !_momA.transform.parent.gameObject.activeSelf) return;
+            float target = _momentum.Value(m.Time);
+            _momShown = ReduceMotion ? target : Mathf.MoveTowards(_momShown, target, Time.unscaledDeltaTime * 1.5f);
+            float half = ((RectTransform)_momA.rectTransform.parent).rect.width * 0.5f;
+            _momA.rectTransform.sizeDelta = new Vector2(Mathf.Max(0f, _momShown) * half, 0f);
+            _momB.rectTransform.sizeDelta = new Vector2(Mathf.Max(0f, -_momShown) * half, 0f);
+        }
+
+        private readonly RunTracker _run = new RunTracker();
+        /// <summary>I204: a team's unanswered run reached a call (team, "8-0 RUN").</summary>
+        public event Action<int, string> RunCalled;
+
+        private void Scored(int team, int points, float time)
+        {
+            _momentum.Add(team, points, time);
+            if (_run.Add(team, points)) RunCalled?.Invoke(team, _run.Call);
+        }
+
         public void Sync(MatchSimulation m)
         {
+            if (_lastScoreA >= 0 && m.Score[0] > _lastScoreA) Scored(0, m.Score[0] - _lastScoreA, m.Time);
+            if (_lastScoreB >= 0 && m.Score[1] > _lastScoreB) Scored(1, m.Score[1] - _lastScoreB, m.Time);
+            SyncMomentum(m);
             if (m.Score[0] != _lastScoreA)
             {
                 if (_lastScoreA >= 0) _punchA = Time.unscaledTime;

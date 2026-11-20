@@ -567,6 +567,16 @@ namespace CallerRetroBall.UI
             if (weekendCourt != null && App.Catalog.Court(weekendCourt) != null)
                 UiKit.Size(UiKit.Label(column, Loc.T("WEEKEND COURT") + ":  " + App.Catalog.Court(weekendCourt).displayName.ToUpperInvariant() + "  ·  " + Loc.T("free in today's DAILY CHALLENGE"),
                                        24f, Theme.Cyan, TextAlignmentOptions.Center, true), 46f);
+            // I200 + I205 + I206: your login run, your last game and your win streak.
+            foreach (var extra in new[] { LoginStrip.Line(career), LastGame.Line(career, App.Catalog), LastGame.StreakLine(career) })
+            {
+                if (extra == null) continue;
+                var l = UiKit.Label(column, extra, 24f, Theme.Cream, TextAlignmentOptions.Center, true);
+                l.enableAutoSizing = true;
+                l.fontSizeMin = 16f;
+                l.fontSizeMax = 24f;
+                UiKit.Size(l, 42f);
+            }
 
             Section(column, "STORY");
             var story = career.story ?? new StorySaveData();
@@ -595,6 +605,14 @@ namespace CallerRetroBall.UI
                     App.SaveCareer();
                     SceneFlow.GoTo(SceneNames.Game);
                 }, ButtonStyle.Primary);
+            // I205 RUN IT BACK: the same Quick Call matchup again, one tap.
+            var again = LastGame.RunItBack(career, App.Catalog);
+            if (again != null)
+                Mode(column, "RUN IT BACK", Loc.T("Same opponent as your last Quick Call") + ": " + App.Catalog.Team(again.AwayTeamId).FullName.ToUpperInvariant() + ".", () =>
+                {
+                    App.PendingMatch = again;
+                    SceneFlow.GoTo(SceneNames.Game);
+                }, ButtonStyle.Secondary);
             Mode(column, "QUICK CALL", "Pick a team and an opponent. One game. Score and it's still your ball.", ShowQuickCall, ButtonStyle.Primary);
             Mode(column, "FULL COURT", "5 on 5, both baskets, 2s and 3s. Four minutes.", ShowFullCourt, ButtonStyle.Secondary);
             Mode(column, "THE PARK", "Call out street legends, 1-on-1 to 4-on-4. Break ankles. Rep: " + Street.RepNames[Street.RepLevel(career.street.rep)], ShowPark, ButtonStyle.Secondary);

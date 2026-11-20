@@ -461,6 +461,10 @@ namespace CallerRetroBall.UI
             if (career.kits.designed)
                 UiKit.Size(UiKit.Label(_content, "Your KIT tab design is what your team wears. Jerseys and shoes you own here show up there as presets.",
                                        28f, Theme.Cyan), 80f);
+            // I207: wearing a whole gear pack.
+            var set = PackSets.FullSet(career);
+            if (set != null)
+                UiKit.Size(UiKit.Label(_content, Loc.T("FULL SET") + ":  " + Loc.T(set.Name).ToUpperInvariant(), 34f, Theme.Gold, TextAlignmentOptions.Center, true), 54f);
             for (int s = 0; s < slots.Length; s++)
             {
                 var items = c.Cosmetics.FindAll(x => x.slot == slots[s]);

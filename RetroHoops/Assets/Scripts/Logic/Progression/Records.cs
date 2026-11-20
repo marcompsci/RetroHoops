@@ -27,6 +27,10 @@ namespace CallerRetroBall.Logic
             Check(ref r.steals, line.steals, "STEALS", broken);
             Check(ref r.blocks, line.blocks, "BLOCKS", broken);
             Check(ref r.greens, line.greenReleases, "GREENS", broken);
+            Check(ref r.posters, line.posters, "POSTERS", broken); // I198
+            Check(ref r.chaseDowns, line.chaseDowns, "CHASE-DOWN BLOCKS", broken);
+            Check(ref r.clutchMakes, line.clutchMakes, "CLUTCH BUCKETS", broken);
+            Check(ref r.greenRun, line.bestGreenRun, "GREEN RUN", broken);
             if (s.HumanWon) Check(ref r.biggestWin, s.Margin, "BIGGEST WIN", broken);
 
             r.winStreak = s.HumanWon ? r.winStreak + 1 : 0;

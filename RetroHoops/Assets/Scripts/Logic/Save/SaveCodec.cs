@@ -443,6 +443,7 @@ namespace CallerRetroBall.Logic
             ["points"] = r.points, ["assists"] = r.assists, ["rebounds"] = r.rebounds, ["steals"] = r.steals,
             ["blocks"] = r.blocks, ["greens"] = r.greens, ["biggestWin"] = r.biggestWin,
             ["winStreak"] = r.winStreak, ["bestWinStreak"] = r.bestWinStreak,
+            ["posters"] = r.posters, ["chase"] = r.chaseDowns, ["clutch"] = r.clutchMakes, ["greenRun"] = r.greenRun,
         };
 
         private static object EncodeRise(RiseSaveData r)
@@ -680,6 +681,8 @@ namespace CallerRetroBall.Logic
                     points = Int(rc, "points", 0), assists = Int(rc, "assists", 0), rebounds = Int(rc, "rebounds", 0),
                     steals = Int(rc, "steals", 0), blocks = Int(rc, "blocks", 0), greens = Int(rc, "greens", 0),
                     biggestWin = Int(rc, "biggestWin", 0), winStreak = Int(rc, "winStreak", 0), bestWinStreak = Int(rc, "bestWinStreak", 0),
+                    posters = Math.Max(0, Int(rc, "posters", 0)), chaseDowns = Math.Max(0, Int(rc, "chase", 0)),
+                    clutchMakes = Math.Max(0, Int(rc, "clutch", 0)), greenRun = Math.Max(0, Int(rc, "greenRun", 0)),
                 };
                 foreach (var item in Arr(o, "history"))
                 {

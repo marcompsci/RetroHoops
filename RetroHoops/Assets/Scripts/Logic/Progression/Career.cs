@@ -104,6 +104,7 @@ namespace CallerRetroBall.Logic
 
             data.lastNewRecords = new List<string>();
             data.lastSpecialist = new List<string>();
+            data.lastMilestones = new List<string>();
             data.signalPoints += grant.signalPoints;
             data.fans += grant.fans;
             // Practice, tutorial, and local 2-player games don't count toward career stats.
@@ -115,6 +116,7 @@ namespace CallerRetroBall.Logic
             if (summary.mode != GameMode.Clutch) data.lastNewRecords = Records.Update(data, summary);
             data.gamesSinceUpgrade++;
             var t = data.totals;
+            var marksBefore = Milestones.Snapshot(t); // I199
             t.games++;
             if (summary.HumanWon) t.wins++;
             else t.losses++;
@@ -144,6 +146,7 @@ namespace CallerRetroBall.Logic
                 ShotZones.Merge(data.shotChart, line.chart);
                 data.lastSpecialist = Specialist.NewRanks(before, data.shotChart);
             }
+            data.lastMilestones = Milestones.Crossed(marksBefore, t); // I199
             return true;
         }
 

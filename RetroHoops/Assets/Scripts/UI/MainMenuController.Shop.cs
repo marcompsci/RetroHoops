@@ -29,6 +29,7 @@ namespace CallerRetroBall.UI
 
             Shop.Collection(career, out int have, out int total);
             UiKit.Size(UiKit.Label(column, Loc.T("COLLECTION") + "  " + have + " / " + total, 36f, Theme.Gold, TextAlignmentOptions.Center, true), 56f);
+            UiKit.Size(UiKit.Label(column, PackSets.Progress(career), 26f, Theme.Cream, TextAlignmentOptions.Center, true), 42f); // I208
             UiKit.Size(UiKit.Label(column, Loc.T("Everything here changes how the game looks, never your ratings. Nothing is random, and there are no ads."),
                                    26f, Theme.Muted, TextAlignmentOptions.Center), 70f);
             if (Shop.Supporter(career))

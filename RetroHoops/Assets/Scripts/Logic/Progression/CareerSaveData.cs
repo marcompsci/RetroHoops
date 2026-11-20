@@ -33,6 +33,10 @@ namespace CallerRetroBall.Logic
         public int controlPreset = ControlLayout.Spread;
         /// <summary>I179 FEEL THE GREEN: a light buzz when the shot meter enters the GREEN window (off by default).</summary>
         public bool greenBuzz;
+        /// <summary>I201 ICONS ONLY: the action buttons show their icon without the word.</summary>
+        public bool iconsOnly;
+        /// <summary>I202: the MOMENTUM strip on the score bar (on by default).</summary>
+        public bool momentumBar = true;
         /// <summary>Play every mode in landscape, not only Full Court (2 Player and the demo stay portrait).</summary>
         public bool landscapeAll;
         /// <summary>Mic Tally's text commentary during games.</summary>
@@ -111,6 +115,8 @@ namespace CallerRetroBall.Logic
         public int biggestWin;
         public int winStreak;
         public int bestWinStreak;
+        /// <summary>I198: single-game bests for posters, chase-down blocks, clutch buckets and the longest GREEN run.</summary>
+        public int posters, chaseDowns, clutchMakes, greenRun;
     }
 
     [Serializable]
@@ -389,6 +395,8 @@ namespace CallerRetroBall.Logic
         [NonSerialized] public List<string> lastNewRecords = new List<string>();
         /// <summary>Phase 36: SPOT SPECIALIST ranks the last game earned (for the post-game line; not saved).</summary>
         [NonSerialized] public List<string> lastSpecialist = new List<string>();
+        /// <summary>I199: career milestones the last game passed ("100 STEALS"; not saved).</summary>
+        [NonSerialized] public List<string> lastMilestones = new List<string>();
         /// <summary>Recent match ids already rewarded (guards against double grants).</summary>
         public List<string> appliedMatchIds = new List<string>();
 

@@ -59,6 +59,12 @@ namespace CallerRetroBall.Controls
         /// <summary>Kept for layouts that resize buttons; labels auto-size to the ring.</summary>
         public void SetFontScale(float scale) { }
 
+        /// <summary>I201 ICONS ONLY: hides the word under the icon (buttons without an icon keep their word).</summary>
+        public void SetLabelShown(bool shown)
+        {
+            if (_label != null) _label.enabled = shown || _icon == null;
+        }
+
         public void SetLabel(string text)
         {
             text = Logic.Loc.T(text);
@@ -83,6 +89,10 @@ namespace CallerRetroBall.Controls
             if (_flash != null) _flash.color = new Color(1f, 1f, 1f, 0f);
             if (_cooldown != null) _cooldown.fillAmount = 0f;
         }
+
+        /// <summary>I209 + I210: the ring glows (a gentle gold pulse) when pressing now would reach: STEAL in reach, BLOCK in range.</summary>
+        public bool Glow { get; set; }
+        private static readonly Color GlowColor = new Color32(0xFF, 0xD1, 0x66, 255);
 
         /// <summary>I135: a player or the ball is under this button (it fades so you can see the play).</summary>
         public bool Busy { get => _busy; set => _busy = value; }
@@ -143,6 +153,7 @@ namespace CallerRetroBall.Controls
         {
             var c = _baseColor;
             if (!Available) c = new Color(c.r * 0.55f, c.g * 0.55f, c.b * 0.55f, 0.75f);
+            else if (Glow) c = Color.Lerp(c, GlowColor, Logic.ControlFeel.GlowPulse(Time.unscaledTime)); // I209 + I210
             _image.color = c;
             if (_icon != null) _icon.color = Available ? Color.white : new Color(1f, 1f, 1f, 0.45f);
             if (_hint != null && _hint.text.Length > 0 && Time.unscaledTime > _hintUntil) _hint.text = "";

@@ -18,6 +18,9 @@ namespace CallerRetroBall.Logic
         public const float Showstopper = 0.14f;
         /// <summary>THE STREETS: the freeze on an ANKLE BREAKER (added by the game screen, not by <see cref="For"/>).</summary>
         public const float Ankles = 0.12f;
+        /// <summary>I203: a chase-down block and a clutch bucket hold like the big moments they are.</summary>
+        public const float ChaseDown = 0.12f;
+        public const float Clutch = 0.14f;
         public const float Max = 0.2f;
 
         /// <summary>Freeze length for an event (0 = none). Reduce Motion turns it off.</summary>
@@ -31,6 +34,8 @@ namespace CallerRetroBall.Logic
                 case MatchEventType.Block: return Block;
                 case MatchEventType.GameOver: return GameWinner;
                 case MatchEventType.BreakerScored: return Showstopper;
+                case MatchEventType.ChaseDown: return ChaseDown;
+                case MatchEventType.Clutch: return Clutch;
                 default: return 0f;
             }
         }
