@@ -86,7 +86,10 @@ namespace CallerRetroBall.Controls
             controls._seat = seat;
             // Half a screen each in tabletop play: slightly smaller buttons so both sets fit.
             controls._scale = (largeButtons ? 1.25f : 1f) * (seat == Seat.Full ? 1f : 0.82f);
-            controls._slots = ControlLayout.Parse(seat == Seat.Full ? layout : null);
+            // I131: your saved changes build on the arc you picked (SPREAD unless you kept a CLASSIC layout).
+            controls._slots = seat == Seat.Full
+                ? ControlLayout.Parse(layout, Core.App.Career?.settings?.controlPreset ?? ControlLayout.Spread)
+                : ControlLayout.Default();
             var safe = UiKit.SafeArea(canvas.transform);
             if (seat == Seat.Full)
             {
@@ -126,11 +129,12 @@ namespace CallerRetroBall.Controls
             zoneImage.raycastTarget = true;
 
             // Where the stick rests when nobody's touching it: a faint ring so you know where to put your thumb.
-            var rest = UiKit.Panel(zone, new Color(1f, 1f, 1f, 0.22f), Theme.DiscSprite(new Color(0f, 0f, 0f, 0.2f), Theme.Cream), false, "StickRest");
+            var rest = UiKit.Panel(zone, new Color(1f, 1f, 1f, 0.16f), Theme.DiscSprite(new Color(0f, 0f, 0f, 0.2f), Theme.Cream), false, "StickRest");
             _stickRest = rest.rectTransform;
             _stickRest.anchorMin = _stickRest.anchorMax = new Vector2(_leftHanded ? 1f : 0f, 0f);
             _stickRest.sizeDelta = new Vector2(300f, 300f);
-            _stickRest.anchoredPosition = new Vector2(_leftHanded ? -220f : 220f, 230f);
+            // I136: the resting ring sits further in from the corner, so the thumb has room all round it.
+            _stickRest.anchoredPosition = new Vector2(_leftHanded ? -250f : 250f, 290f);
             rest.raycastTarget = false;
 
             var baseRing = UiKit.Panel(zone, new Color(1f, 1f, 1f, 0.35f), Theme.DiscSprite(new Color(0f, 0f, 0f, 0.25f), Theme.Cream), false, "StickBase");
@@ -185,6 +189,35 @@ namespace CallerRetroBall.Controls
                 rt.sizeDelta = new Vector2(s.Size * _scale, s.Size * _scale);
                 rt.anchoredPosition = Corner(s.X * _scale, s.Y * _scale);
                 b.SetFontScale(s.Size * _scale / ControlLayout.DefaultSize(s.Button));
+                // I132: the touch area reaches into the gap around the ring (up to 20% bigger), never into a neighbour's.
+                float pad = ControlLayout.HitPad(slots, (int)s.Button) * _scale;
+                var img = b.GetComponent<Image>();
+                if (img != null) img.raycastPadding = new Vector4(-pad, -pad, -pad, -pad);
+            }
+        }
+
+        // ------------------------------------------------------------------ I135: see the play under the buttons
+
+        private readonly List<Vector2> _busyPoints = new List<Vector2>();
+
+        /// <summary>
+        /// Screen points (pixels) where the play is right now: the ball and the players. A button with one of them under
+        /// it fades to see-through until the play moves on or your thumb goes on it.
+        /// </summary>
+        public void SetPlayPoints(IReadOnlyList<Vector2> screenPoints)
+        {
+            _busyPoints.Clear();
+            if (screenPoints != null) _busyPoints.AddRange(screenPoints);
+            for (int i = 0; i < 5; i++)
+            {
+                var b = this[(ControlButton)i];
+                if (b == null) continue;
+                var rt = (RectTransform)b.transform;
+                bool busy = false;
+                if (b.gameObject.activeInHierarchy)
+                    foreach (var pt in _busyPoints)
+                        if (RectTransformUtility.RectangleContainsScreenPoint(rt, pt, null)) { busy = true; break; }
+                b.Busy = busy;
             }
         }
 
@@ -247,8 +280,29 @@ namespace CallerRetroBall.Controls
             UiKit.Place(hint.rectTransform, new Vector2(0.5f, 1f), new Vector2(260f, 40f));
             hint.rectTransform.anchoredPosition = new Vector2(0f, 24f);
 
+            // I133: a white flash over the ring on each press; I134: a dark sweep while the move recovers (STEAL).
+            var flash = UiKit.Panel(rt, new Color(1f, 1f, 1f, 0f), Face(Color.white, true), false, "Flash");
+            flash.preserveAspect = true;
+            flash.raycastTarget = false;
+            UiKit.Stretch(flash.rectTransform);
+            var cool = UiKit.Panel(rt, new Color(0f, 0f, 0f, 0.45f), Theme.DiscSprite(Color.black, Color.black), false, "Cooldown");
+            cool.raycastTarget = false;
+            cool.preserveAspect = true;
+            cool.type = Image.Type.Filled;
+            cool.fillMethod = Image.FillMethod.Radial360;
+            cool.fillOrigin = (int)Image.Origin360.Top;
+            cool.fillClockwise = false;
+            cool.fillAmount = 0f;
+            cool.rectTransform.anchorMin = new Vector2(0.06f, 0.06f);
+            cool.rectTransform.anchorMax = new Vector2(0.94f, 0.94f);
+            cool.rectTransform.offsetMin = cool.rectTransform.offsetMax = Vector2.zero;
+            // Under the icon and label, over the ring.
+            flash.rectTransform.SetSiblingIndex(0);
+            cool.rectTransform.SetSiblingIndex(1);
+
             var button = image.gameObject.AddComponent<TouchActionButton>();
             button.Init(image, label, hint);
+            button.SetOverlays(flash, cool);
             button.SetIcon(icon);
             button.SetSprites(Face(color, false), Face(color, true));
             return button;

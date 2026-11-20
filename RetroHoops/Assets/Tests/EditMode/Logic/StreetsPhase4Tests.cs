@@ -229,7 +229,9 @@ namespace CallerRetroBall.Tests
             // Other modes are unchanged.
             var plain = DunkPath.At(start, hoop, start, 0.02f, slam, 0.2f, lift, DunkPath.Approach);
             Assert.IsFalse(plain.Gather);
-            Assert.IsFalse(DunkPath.At(start, hoop, start, 0.99f, slam, 0.2f, lift, DunkPath.Approach).Landing);
+            // I129 (19 Nov 2026): a made dunk's hang now lands with a knee bend everywhere; a missed dunk (no hang) still doesn't.
+            Assert.IsTrue(DunkPath.At(start, hoop, start, 0.99f, slam, 0.2f, lift, DunkPath.Approach).Landing);
+            Assert.IsFalse(DunkPath.At(start, hoop, start, 0.99f, slam, 0f, lift, DunkPath.Approach).Landing);
         }
 
         [Test]

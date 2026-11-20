@@ -183,8 +183,10 @@ namespace CallerRetroBall.Gameplay
             _animTime += dt;
             var view = CharacterSpriteGenerator.ViewFor(CourtSpace.Facing(motion.facing), out bool flip);
             if (flair.FlipOverride) flip = !flip;
-            // The dunk frame (G2) is the one pose that holds in the air.
-            int posed = (shooting || jump01 > 0.05f) && flair.Frame != PoseFrame.Dunk ? -1 : CharacterSpriteGenerator.FrameFor(flair.Frame);
+            // The dunk frame (G2) holds in the air.
+            // I126: so do the rim-hang frames (hanging and the chin-up).
+            bool airPose = flair.Frame == PoseFrame.Dunk || flair.Frame == PoseFrame.Hang || flair.Frame == PoseFrame.HangPull;
+            int posed = (shooting || jump01 > 0.05f) && !airPose ? -1 : CharacterSpriteGenerator.FrameFor(flair.Frame);
             int frame = posed >= 0 ? posed
                 : shooting || jump01 > 0.05f || flair.ArmsUp ? CharacterSpriteGenerator.ShootFrame
                 : moving ? CharacterSpriteGenerator.IdleFrames + (int)(_animTime * RunFps) % CharacterSpriteGenerator.RunFrames

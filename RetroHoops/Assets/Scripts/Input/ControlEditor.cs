@@ -32,9 +32,13 @@ namespace CallerRetroBall.Controls
             return e;
         }
 
+        private int _preset;
+        private Button _presetButton;
+
         private void Build()
         {
             var s = App.Career.settings;
+            _preset = ControlLayout.ClampPreset(s.controlPreset);
             _back = UiKit.CreateScreenCanvas("ControlEditorBack", 44);
             _back.transform.SetParent(transform, false);
             var floor = UiKit.Panel(_back.transform, Theme.Asphalt, name: "Floor");
@@ -73,6 +77,8 @@ namespace CallerRetroBall.Controls
             UiKit.Button(row, "-", () => Resize(0.9f), ButtonStyle.Secondary, 90f, 48f);
             UiKit.Button(row, "+", () => Resize(1.1f), ButtonStyle.Secondary, 90f, 48f);
             UiKit.Button(row, "RESET", ResetLayout, ButtonStyle.Ghost, 90f, 32f);
+            // I137: start again from either arc.
+            _presetButton = UiKit.Button(row, ControlLayout.PresetNames[1 - _preset], SwapPreset, ButtonStyle.Ghost, 90f, 30f);
             _status = UiKit.Label(safe, "", 28f, Theme.Gold, TextAlignmentOptions.Center, true);
             UiKit.Band(_status.rectTransform, 0.67f, 0.72f, 48f);
 
@@ -114,9 +120,18 @@ namespace CallerRetroBall.Controls
 
         private void ResetLayout()
         {
-            _slots = ControlLayout.Default();
+            _slots = ControlLayout.Preset(_preset);
             _controls.ApplyLayout(_slots);
             Refresh();
+        }
+
+        /// <summary>I137: switches between the SPREAD and CLASSIC arcs (and resets to it).</summary>
+        private void SwapPreset()
+        {
+            _preset = 1 - _preset;
+            var label = _presetButton != null ? _presetButton.GetComponentInChildren<TextMeshProUGUI>() : null;
+            if (label != null) label.text = Loc.T(ControlLayout.PresetNames[1 - _preset]);
+            ResetLayout();
         }
 
         private void Refresh()
@@ -129,14 +144,17 @@ namespace CallerRetroBall.Controls
             _marker.rectTransform.offsetMin = new Vector2(-14f, -14f);
             _marker.rectTransform.offsetMax = new Vector2(14f, 14f);
             var overlap = ControlLayout.Overlapping(_slots);
+            var close = ControlLayout.TooClose(_slots);
             float pct = _slots[(int)_selected].Size / ControlLayout.DefaultSize(_selected) * 100f;
-            _status.text = _selected.ToString().ToUpperInvariant() + "  ·  SIZE " + Mathf.RoundToInt(pct) + "%"
-                           + (overlap.Count > 0 ? "\n<color=#F72585>OVERLAPPING: " + string.Join(", ", overlap).ToUpperInvariant() + "</color>" : "");
+            _status.text = Loc.T(ControlLayout.PresetNames[_preset]) + "  ·  " + _selected.ToString().ToUpperInvariant() + "  ·  " + Loc.T("SIZE") + " " + Mathf.RoundToInt(pct) + "%"
+                           + (overlap.Count > 0 ? "\n<color=#F72585>" + Loc.T("OVERLAPPING") + ": " + string.Join(", ", overlap).ToUpperInvariant() + "</color>"
+                              : close.Count > 0 ? "\n<color=#FFD166>" + Loc.T("TOO CLOSE") + ": " + string.Join(", ", close).ToUpperInvariant() + "</color>" : "");
         }
 
         private void Save()
         {
-            App.Career.settings.controlLayout = ControlLayout.Serialize(_slots);
+            App.Career.settings.controlPreset = _preset;
+            App.Career.settings.controlLayout = ControlLayout.Serialize(_slots, _preset);
             App.SaveCareer();
             Close();
         }

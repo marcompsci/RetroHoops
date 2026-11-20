@@ -107,5 +107,58 @@ namespace CallerRetroBall.Logic.PixelArt
             Fore(c, L - 3, armTop - 3, 2, 2, p);
             Hand(c, L - 4, armTop - 4, 2, 1, L - 4, p);
         }
+
+        /// <summary>
+        /// I126 + I128: hands on the rim. Straight: both arms up and a little wide, hands gripping at the same height as a
+        /// shot's raised hands (so <see cref="HandReachPx"/> still puts them on the rim). Chin-up: elbows out to the
+        /// sides, forearms up beside the head, hands <see cref="PullDropPx"/> lower.
+        /// </summary>
+        private static void DrawHangArms(PixelCanvas c, CharacterView view, bool pull, int torsoLeft, int torsoW, int armTop, int top, int cx, Palette p)
+        {
+            int L = torsoLeft, R = torsoLeft + torsoW;
+            int hands = pull ? top - PullDropPx : top;
+            if (view == CharacterView.Side)
+            {
+                if (pull)
+                {
+                    // Elbow out in front, forearm up to the rim.
+                    Shoulder(c, cx + 1, armTop - 1, 2, 2, p);
+                    Fore(c, cx + 3, armTop - 1, 1, 2, p);
+                    Fore(c, cx + 2, armTop + 1, 2, hands - armTop - 1, p);
+                    Hand(c, cx + 2, hands, 2, 1, cx + 3, p);
+                    return;
+                }
+                // The far arm a pixel behind, both straight up.
+                Fore(c, cx, armTop + 1, 1, hands - armTop - 1, p);
+                Shoulder(c, cx + 1, armTop - 1, 2, 2, p);
+                Fore(c, cx + 1, armTop + 1, 2, hands - armTop - 1, p);
+                Hand(c, cx + 1, hands, 2, 1, cx + 2, p);
+                c.Set(cx, hands, p.SkinShade);
+                return;
+            }
+            if (pull)
+            {
+                // Upper arms out flat, forearms straight up beside the head.
+                Shoulder(c, L - 2, armTop - 1, 2, 2, p);
+                Shoulder(c, R, armTop - 1, 2, 2, p);
+                Fore(c, L - 3, armTop - 1, 1, 2, p);
+                Fore(c, R + 2, armTop - 1, 1, 2, p);
+                Fore(c, L - 3, armTop + 1, 2, hands - armTop - 1, p);
+                Fore(c, R + 1, armTop + 1, 2, hands - armTop - 1, p);
+                Hand(c, L - 3, hands, 2, 1, L - 3, p);
+                Hand(c, R + 1, hands, 2, 1, R + 2, p);
+                return;
+            }
+            // Straight up and a little wide: shoulders, then the forearms step out one pixel near the top.
+            int bend = Math.Max(armTop + 2, hands - 3);
+            Shoulder(c, L - 1, armTop - 1, 2, 2, p);
+            Shoulder(c, R - 1, armTop - 1, 2, 2, p);
+            Fore(c, L - 1, armTop + 1, 2, bend - armTop - 1, p);
+            Fore(c, R - 1, armTop + 1, 2, bend - armTop - 1, p);
+            Fore(c, L - 2, bend, 2, hands - bend, p);
+            Fore(c, R, bend, 2, hands - bend, p);
+            Hand(c, L - 2, hands, 2, 1, L - 2, p);
+            Hand(c, R, hands, 2, 1, R + 1, p);
+        }
     }
 }

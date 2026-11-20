@@ -34,5 +34,58 @@ namespace CallerRetroBall.Logic
         /// chosen strength: LIGHT plays everything one step softer, STRONG one step firmer (never beyond light/heavy).
         /// </summary>
         public static int ImpactStyle(int baseStyle, int strength) => Math.Max(0, Math.Min(2, baseStyle + Clamp(strength) - 1));
+
+        // ------------------------------------------------------------------ I133: how a button feels under the thumb
+
+        /// <summary>A held button sinks to this size.</summary>
+        public const float PressedScale = 0.9f;
+        /// <summary>On release it springs past full size to this, then settles.</summary>
+        public const float ReboundScale = 1.07f;
+        public const float ReboundUp = 0.06f, ReboundSettle = 0.16f;
+
+        /// <summary>The button's scale: sunk while held, a quick springy rebound after you let go.</summary>
+        public static float PressScale(bool held, float secondsSinceRelease)
+        {
+            if (held) return PressedScale;
+            float t = secondsSinceRelease;
+            if (t < 0f || t >= ReboundSettle) return 1f;
+            if (t < ReboundUp) return PressedScale + (ReboundScale - PressedScale) * (t / ReboundUp);
+            return ReboundScale + (1f - ReboundScale) * ((t - ReboundUp) / (ReboundSettle - ReboundUp));
+        }
+
+        /// <summary>The white flash over a button right after it's pressed (alpha), gone in 0.15 s.</summary>
+        public static float PressFlash(float secondsSincePress) =>
+            secondsSincePress < 0f || secondsSincePress >= 0.15f ? 0f : 0.55f * (1f - secondsSincePress / 0.15f);
+
+        // ------------------------------------------------------------------ I135: see the play under the buttons
+
+        /// <summary>How see-through a button gets while a player or the ball is underneath it.</summary>
+        public const float BusyAlpha = 0.3f;
+
+        /// <summary>A button's own fade: clear while the play is under it, solid while your thumb is on it.</summary>
+        public static float FadeAlpha(bool busy, bool held) => held ? 1f : busy ? BusyAlpha : 1f;
+
+        /// <summary>Moves <paramref name="current"/> toward <paramref name="target"/> (a quick fade, ~0.12 s end to end).</summary>
+        public static float FadeStep(float current, float target, float dt)
+        {
+            float step = Math.Max(0f, dt) / 0.12f;
+            if (current < target) return Math.Min(target, current + step);
+            return Math.Max(target, current - step);
+        }
+
+        // ------------------------------------------------------------------ I134 / I138: the STEAL button talks back
+
+        /// <summary>The short hint over STEAL after a press (empty = nothing to say).</summary>
+        public static string StealHint(StealOutcome o)
+        {
+            switch (o)
+            {
+                case StealOutcome.TooFar: return "TOO FAR";
+                case StealOutcome.Short: return "GET CLOSER";
+                case StealOutcome.Waiting: return "READY...";
+                case StealOutcome.Missed: return "MISSED";
+                default: return "";
+            }
+        }
     }
 }

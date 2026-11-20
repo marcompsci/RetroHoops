@@ -67,12 +67,16 @@ namespace CallerRetroBall.Logic
         {
             s = s ?? new SettingsData();
             return new Dictionary<string, object> { ["stick"] = s.stickSize, ["dead"] = s.stickDeadZone, ["haptic"] = s.hapticStrength, ["smart"] = s.smartDifficulty,
-                ["opacity"] = s.controlsOpacity, ["fill"] = s.fillScreen };
+                ["opacity"] = s.controlsOpacity, ["fill"] = s.fillScreen, ["preset"] = s.controlPreset };
         }
 
         private static void DecodeFeel(SettingsData s, Dictionary<string, object> o)
         {
-            if (s == null || o == null) return;
+            if (s == null) return;
+            // I131: saves from before the SPREAD layout keep their own arrangement on the CLASSIC arc it was made on.
+            int migrated = string.IsNullOrEmpty(s.controlLayout) ? ControlLayout.Spread : ControlLayout.Classic;
+            if (o == null) { s.controlPreset = migrated; return; }
+            s.controlPreset = o.ContainsKey("preset") ? ControlLayout.ClampPreset(Int(o, "preset", 0)) : migrated;
             s.stickSize = ControlFeel.Clamp(Int(o, "stick", 1));
             s.stickDeadZone = ControlFeel.Clamp(Int(o, "dead", 1));
             s.hapticStrength = ControlFeel.Clamp(Int(o, "haptic", 1));

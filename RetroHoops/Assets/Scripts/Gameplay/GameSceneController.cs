@@ -218,6 +218,8 @@ namespace CallerRetroBall.Gameplay
         private ShotType _leapType;
         /// <summary>How the current dunk looks (Dunks.cs).</summary>
         private DunkStyle _dunkStyle;
+        /// <summary>I128: how this dunk hangs on the rim (swing, chin-up).</summary>
+        private HangMotion _hangMotion = HangMotion.Classic;
         private struct Fan
         {
             public SpriteRenderer Renderer;
@@ -1866,6 +1868,7 @@ namespace CallerRetroBall.Gameplay
                                 float hang = _match.Ball.ShotWillScore ? _match.Setup.Flow.rimHangSeconds : 0f;
                                 _leapDuration = flight + 0.45f + (Dunks.LiftScale(_dunkStyle) - 1f) * 0.4f + hang;
                                 if (showstopper) StartCinema(e.PlayerIndex);
+                                _hangMotion = _reduceMotion ? new HangMotion(0, 1f, false) : Dunks.Hang(_dunkStyle);
                                 _slamU = flight / _leapDuration;
                                 _hangU = hang / _leapDuration;
                                 _leapFrom = _match.Players[e.PlayerIndex].Position;
@@ -1933,6 +1936,7 @@ namespace CallerRetroBall.Gameplay
                         break;
                     case MatchEventType.StealAttempt:
                         Sfx(SfxId.Squeak, 0.6f);
+                        StealFeedback(e);
                         break;
                     case MatchEventType.Steal:
                         if (!_reduceMotion) _bursts.Spawn(CourtSpace.ToWorldSnapped(_match.Players[e.PlayerIndex].Position, 1f), new Color32(0x4C, 0xC9, 0xF0, 255), 8, 2.5f, 0.4f);
@@ -2038,7 +2042,17 @@ namespace CallerRetroBall.Gameplay
         /// <summary>THE STREETS: a puff of dust as the dunker leaves the floor, and again as he lands.</summary>
         private void StreetDunkDust(DunkFrame f)
         {
-            if (!_match.StyleOn || _reduceMotion) return;
+            if (_reduceMotion) return;
+            if (!_match.StyleOn)
+            {
+                // I129: every made-dunk hang lands with a knee bend, a small puff and a light buzz for your own player.
+                if (!f.Dropping) { _dustDown = false; return; }
+                if (_dustDown || !f.Landing) return;
+                _dustDown = true;
+                if (!Core.PowerMonitor.SavingPower) _bursts.Spawn(CourtSpace.ToWorldSnapped(f.Ground, 0.1f), new Color32(0xC9, 0xC4, 0xB8, 255), 6, 1.4f, 0.3f);
+                if (_leaper >= 0 && Mine(_leaper)) Haptics.Light();
+                return;
+            }
             if (f.Gather) { _dustUp = false; _dustDown = false; return; }
             var dust = new Color32(0xC9, 0xC4, 0xB8, 255);
             if (!_dustUp && f.LiftPx > 0 && !f.Dropping)
@@ -2087,12 +2101,12 @@ namespace CallerRetroBall.Gameplay
             {
                 float u = (now - _leapStart) / _leapDuration;
                 dunk = DunkPath.At(_leapFrom, _match.Setup.Court.Hoop, _match.Players[_leaper].Position, u, _slamU, _hangU, _liftAtRimPx,
-                                   _landscape ? DunkPath.ApproachSide : DunkPath.Approach, _match.StyleOn ? DunkPath.StreetGather : 0f);
+                                   _landscape ? DunkPath.ApproachSide : DunkPath.Approach, _match.StyleOn ? DunkPath.StreetGather : 0f, _hangMotion);
                 StreetDunkDust(dunk);
             }
             // The rim is pulled down while someone hangs on it (2 pixels at the slam, then 1).
             if (_reduceMotion) dunk.SwingPx = 0;
-            SyncRimDip(dunking && dunk.OnRim ? dunk.RimDipPx : 0);
+            SyncRimDip(dunking ? RimDipFor(dunk, now) : 0, dunking && !_reduceMotion ? RimShakeFor(dunk, now) : 0);
             SyncNet(now);
             for (int i = 0; i < _playerViews.Length; i++)
             {
@@ -2257,6 +2271,7 @@ namespace CallerRetroBall.Gameplay
             SyncHorse();
             UpdateCoachTips();
             UpdateControlLabels();
+            SyncButtonFeel();
         }
 
         private int _rimDipped;
@@ -2294,11 +2309,39 @@ namespace CallerRetroBall.Gameplay
             }
         }
 
-        private void SyncRimDip(int dipPx)
+        /// <summary>Seconds since the dunker's hands met the rim (negative before).</summary>
+        private float SinceSlam(float now) => now - (_leapStart + _slamU * _leapDuration);
+
+        /// <summary>
+        /// I127 + I129: the rim's dip: yanked down on the grab, low while he hangs, then it springs back past level and
+        /// settles when he lets go (a missed dunk just bangs it a pixel).
+        /// </summary>
+        private int RimDipFor(DunkFrame f, float now)
         {
-            if (dipPx == _rimDipped || _hoopT == null) return;
+            if (f.OnRim) return f.RimDipPx;
+            if (!f.Dropping || _reduceMotion) return 0;
+            if (_hangU <= 0f) return 0;
+            float hangEnd = Mathf.Min(0.95f, Mathf.Clamp(_slamU, 0.15f, 0.7f) + _hangU);
+            float sinceRelease = f.DropU * (1f - hangEnd) * _leapDuration;
+            return Dunks.ReleaseDipPx(sinceRelease);
+        }
+
+        /// <summary>I127 + I130: the hoop shakes sideways on the grab (and on a missed dunk's clank).</summary>
+        private int RimShakeFor(DunkFrame f, float now)
+        {
+            float t = SinceSlam(now);
+            if (_hangU <= 0f) return Dunks.MissRattlePx(t);
+            return f.OnRim ? Dunks.GrabShakePx(t) : 0;
+        }
+
+        private int _rimShaken;
+
+        private void SyncRimDip(int dipPx, int shakePx)
+        {
+            if ((dipPx == _rimDipped && shakePx == _rimShaken) || _hoopT == null) return;
             _rimDipped = dipPx;
-            var down = new Vector3(0f, -dipPx / CourtSpace.PixelsPerUnit, 0f);
+            _rimShaken = shakePx;
+            var down = new Vector3(shakePx / CourtSpace.PixelsPerUnit, -dipPx / CourtSpace.PixelsPerUnit, 0f);
             // The basket being attacked is the one nearest the simulation's hoop on screen.
             var target = CourtSpace.ToWorld(_match.Setup.Court.Hoop, CourtSpace.RimHeight);
             bool second = _hoop2T != null && (target - _hoop2Base).sqrMagnitude < (target - _hoopBase).sqrMagnitude;

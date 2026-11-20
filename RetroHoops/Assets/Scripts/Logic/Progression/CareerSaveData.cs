@@ -29,6 +29,8 @@ namespace CallerRetroBall.Logic
         public bool largeButtons;
         /// <summary>Settings ► CUSTOMIZE CONTROLS: button positions and sizes (<see cref="ControlLayout"/>); empty = default.</summary>
         public string controlLayout = "";
+        /// <summary>I131: which arc <see cref="controlLayout"/> builds on (ControlLayout.Spread or Classic).</summary>
+        public int controlPreset = ControlLayout.Spread;
         /// <summary>Play every mode in landscape, not only Full Court (2 Player and the demo stay portrait).</summary>
         public bool landscapeAll;
         /// <summary>Mic Tally's text commentary during games.</summary>

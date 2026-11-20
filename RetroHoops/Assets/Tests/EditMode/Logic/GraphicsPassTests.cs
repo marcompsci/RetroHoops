@@ -110,7 +110,8 @@ namespace CallerRetroBall.Tests
             Assert.AreEqual(11, CharacterSpriteGenerator.SlideFrame);
             Assert.AreEqual(12, CharacterSpriteGenerator.DunkFrame);
             Assert.AreEqual(13, CharacterSpriteGenerator.PassFrame);
-            Assert.AreEqual(14, CharacterSpriteGenerator.FramesPerView);
+            // I126 (19 Nov 2026) appended the two rim-hang frames after these.
+            Assert.AreEqual(16, CharacterSpriteGenerator.FramesPerView);
             Assert.AreEqual(CharacterSpriteGenerator.DefenseFrame, CharacterSpriteGenerator.FrameFor(PoseFrame.Defense));
             Assert.AreEqual(CharacterSpriteGenerator.SlideFrame, CharacterSpriteGenerator.FrameFor(PoseFrame.Slide));
             Assert.AreEqual(CharacterSpriteGenerator.DunkFrame, CharacterSpriteGenerator.FrameFor(PoseFrame.Dunk));

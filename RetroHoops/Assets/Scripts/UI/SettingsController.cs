@@ -109,6 +109,14 @@ namespace CallerRetroBall.UI
             UiKit.Size(UiKit.Label(column, "Captions show the announcer's calls on screen. They're also on when Closed Captions is on in iOS Settings. VoiceOver reads the menus.", 28f, Theme.Muted), 90f);
             UiControls.ToggleRow(column, "LEFT-HANDED", s.leftHanded, v => { s.leftHanded = v; Save(); });
             UiControls.ToggleRow(column, "LARGE BUTTONS", s.largeButtons, v => { s.largeButtons = v; Save(); });
+            // I137: SPREAD (the default since 19 Nov 2026) or the old CLASSIC arc. Picking one starts it fresh.
+            UiControls.ChoiceRow(column, "CONTROL LAYOUT", ControlLayout.PresetNames, ControlLayout.ClampPreset(s.controlPreset), i =>
+            {
+                s.controlPreset = ControlLayout.ClampPreset(i);
+                s.controlLayout = "";
+                Save();
+            });
+            UiKit.Size(UiKit.Label(column, "SPREAD gives each button more room so your thumb finds the right one. CLASSIC is the older, tighter arc. Picking one clears CUSTOMIZE CONTROLS.", 28f, Theme.Muted), 90f);
             // Phase 39: how the stick and haptics feel.
             UiControls.ChoiceRow(column, "STICK SIZE", ControlFeel.SizeNames, s.stickSize, i => { s.stickSize = i; Save(); });
             UiControls.ChoiceRow(column, "BUTTON OPACITY", ControlFeel.OpacityNames, s.controlsOpacity, i => { s.controlsOpacity = i; Save(); });

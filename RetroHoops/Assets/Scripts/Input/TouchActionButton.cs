@@ -65,11 +65,51 @@ namespace CallerRetroBall.Controls
             if (_label != null && _label.text != text) _label.text = text;
         }
 
+        // ------------------------------------------------------------------ I133-I135 (19 Nov 2026)
+
+        private Image _flash, _cooldown;
+        private CanvasGroup _group;
+        private float _pressedAt = -10f, _releasedAt = -10f;
+        private bool _busy;
+        private float _alpha = 1f;
+
+        /// <summary>The white flash drawn over the ring right after a press, and the dark sweep of a cooldown.</summary>
+        public void SetOverlays(Image flash, Image cooldown)
+        {
+            _flash = flash;
+            _cooldown = cooldown;
+            _group = GetComponent<CanvasGroup>();
+            if (_group == null) _group = gameObject.AddComponent<CanvasGroup>();
+            if (_flash != null) _flash.color = new Color(1f, 1f, 1f, 0f);
+            if (_cooldown != null) _cooldown.fillAmount = 0f;
+        }
+
+        /// <summary>I135: a player or the ball is under this button (it fades so you can see the play).</summary>
+        public bool Busy { get => _busy; set => _busy = value; }
+
+        /// <summary>I134: 0 = ready, 1 = just used (a dark sweep around the ring that empties as it recovers).</summary>
+        public void SetCooldown(float remaining01)
+        {
+            if (_cooldown == null) return;
+            float f = Mathf.Clamp01(remaining01);
+            if (!Mathf.Approximately(_cooldown.fillAmount, f)) _cooldown.fillAmount = f;
+        }
+
+        /// <summary>Shows a short hint above the button (I134: TOO FAR, GET CLOSER...).</summary>
+        public void ShowHint(string text, float seconds = 0.8f)
+        {
+            if (_hint == null || string.IsNullOrEmpty(text)) return;
+            _hint.text = Logic.Loc.T(text);
+            _hintUntil = Time.unscaledTime + seconds;
+        }
+
         public void OnPointerDown(PointerEventData e)
         {
             if (IsHeld) return;
             _pointerId = e.pointerId;
-            transform.localScale = Vector3.one * 0.95f;
+            _pressedAt = Time.unscaledTime;
+            // I133: a quick, light tick under the thumb on every press (Settings ► HAPTICS turns it off).
+            Core.Haptics.Light();
             if (_downSprite != null) _image.sprite = _downSprite;
             if (!Available)
             {
@@ -89,7 +129,8 @@ namespace CallerRetroBall.Controls
         {
             bool wasHeld = IsHeld;
             _pointerId = int.MinValue;
-            transform.localScale = Vector3.one;
+            if (wasHeld) _releasedAt = Time.unscaledTime;
+            else transform.localScale = Vector3.one;
             if (_upSprite != null && _image != null) _image.sprite = _upSprite;
             if (wasHeld) Released?.Invoke();
         }
@@ -103,6 +144,21 @@ namespace CallerRetroBall.Controls
             _image.color = c;
             if (_icon != null) _icon.color = Available ? Color.white : new Color(1f, 1f, 1f, 0.45f);
             if (_hint != null && _hint.text.Length > 0 && Time.unscaledTime > _hintUntil) _hint.text = "";
+            float now = Time.unscaledTime;
+            // I133: sink while held, spring back past full size on release, and a white flash on the press.
+            float k = Logic.ControlFeel.PressScale(IsHeld, now - _releasedAt);
+            if (Mathf.Abs(transform.localScale.x - k) > 0.001f) transform.localScale = new Vector3(k, k, 1f);
+            if (_flash != null)
+            {
+                float a = Logic.ControlFeel.PressFlash(now - _pressedAt);
+                if (Mathf.Abs(_flash.color.a - a) > 0.004f) _flash.color = new Color(1f, 1f, 1f, a);
+            }
+            // I135: see-through while the play is underneath, solid again under your thumb.
+            if (_group != null)
+            {
+                _alpha = Logic.ControlFeel.FadeStep(_alpha, Logic.ControlFeel.FadeAlpha(_busy, IsHeld), Time.unscaledDeltaTime);
+                if (Mathf.Abs(_group.alpha - _alpha) > 0.003f) _group.alpha = _alpha;
+            }
         }
     }
 }

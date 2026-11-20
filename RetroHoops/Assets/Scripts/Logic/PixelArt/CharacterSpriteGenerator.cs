@@ -39,7 +39,9 @@ namespace CallerRetroBall.Logic.PixelArt
         public const int PoseFrames = 3;
         /// <summary>16 Oct 2026 graphics phase G2: defensive stance, defensive slide, one-hand dunk reach, chest pass.</summary>
         public const int ActionFrames = 4;
-        public const int FramesPerView = IdleFrames + RunFrames + ShootFrames + PoseFrames + ActionFrames;
+        /// <summary>I126 (19 Nov 2026): hanging on the rim (arms straight up, legs dangling) and the chin-up on it (arms bent).</summary>
+        public const int HangFrames = 2;
+        public const int FramesPerView = IdleFrames + RunFrames + ShootFrames + PoseFrames + ActionFrames + HangFrames;
         /// <summary>Arms-up jump-shot pose.</summary>
         public const int ShootFrame = IdleFrames + RunFrames;
         public const int CrossoverFrame = ShootFrame + 1;
@@ -53,6 +55,12 @@ namespace CallerRetroBall.Logic.PixelArt
         public const int DunkFrame = ShootFrame + 6;
         /// <summary>G2: a two-hand chest pass (arms pushed out in front).</summary>
         public const int PassFrame = ShootFrame + 7;
+        /// <summary>I126: both hands gripping the rim, arms straight up, body stretched and legs hanging together.</summary>
+        public const int HangFrame = ShootFrame + 8;
+        /// <summary>I128: the chin-up on the rim: elbows out, hands <see cref="PullDropPx"/> lower than a straight-arm reach.</summary>
+        public const int HangPullFrame = ShootFrame + 9;
+        /// <summary>How much lower the hands are in the chin-up frame than in the straight-arm frames.</summary>
+        public const int PullDropPx = 2;
 
         /// <summary>The sheet column for a special pose (-1 for none).</summary>
         public static int FrameFor(PoseFrame pose)
@@ -66,6 +74,8 @@ namespace CallerRetroBall.Logic.PixelArt
                 case PoseFrame.Slide: return SlideFrame;
                 case PoseFrame.Dunk: return DunkFrame;
                 case PoseFrame.Pass: return PassFrame;
+                case PoseFrame.Hang: return HangFrame;
+                case PoseFrame.HangPull: return HangPullFrame;
                 default: return -1;
             }
         }
@@ -79,7 +89,7 @@ namespace CallerRetroBall.Logic.PixelArt
             if (frame == CrossoverFrame) return -1;
             if (frame == StepBackFrame || frame == ChestThumpFrame || frame == PassFrame) return 0;
             if (frame == DefenseFrame || frame == SlideFrame) return -1;
-            if (frame == DunkFrame) return 1;
+            if (frame == DunkFrame || frame == HangFrame || frame == HangPullFrame) return 1;
             if (IsRunFrame(frame)) return (frame - IdleFrames) % 2 == 1 ? 1 : 0;
             return frame == 1 ? -1 : 0;
         }
@@ -228,7 +238,8 @@ namespace CallerRetroBall.Logic.PixelArt
             bool shooting = frame == ShootFrame;
             bool crossover = frame == CrossoverFrame, stepBack = frame == StepBackFrame, thump = frame == ChestThumpFrame;
             bool defense = frame == DefenseFrame, slide = frame == SlideFrame, dunk = frame == DunkFrame, pass = frame == PassFrame;
-            bool action = defense || slide || dunk || pass;
+            bool hang = frame == HangFrame, pull = frame == HangPullFrame, hanging = hang || pull;
+            bool action = defense || slide || dunk || pass || hanging;
             bool posed = crossover || stepBack || thump || action;
             bool running = IsRunFrame(frame);
             int runPhase = running ? frame - IdleFrames : 0;
@@ -251,7 +262,22 @@ namespace CallerRetroBall.Logic.PixelArt
             int headTop = headBottom + 4;        // 5 rows
 
             // ---- legs & shoes
-            if (view == CharacterView.Side)
+            if (hanging)
+            {
+                // I126: legs hanging straight down and together (the chin-up tucks the knees a little).
+                int tuck = pull ? 1 : 0;
+                if (view == CharacterView.Side)
+                {
+                    DrawLeg(c, cx - 1, 0, legTop, p, liftRows: tuck);
+                    DrawLeg(c, cx - 2, 0, legTop, p, liftRows: tuck + 1, shade: true);
+                }
+                else
+                {
+                    DrawLeg(c, cx - 2, 0, legTop, p, tuck);
+                    DrawLeg(c, cx, 0, legTop, p, tuck);
+                }
+            }
+            else if (view == CharacterView.Side)
             {
                 // Crossover: a long lunge; step-back: the back foot planted far behind, the front one lifting.
                 int stride = crossover ? 3 : stepBack ? -3 : defense ? 2 : slide ? 1 : dunk ? 1 : pass ? 2 : !running ? 0 : (runPhase == 0 ? 2 : (runPhase == 2 ? -2 : 0));
@@ -341,7 +367,7 @@ namespace CallerRetroBall.Logic.PixelArt
             }
             else if (action)
             {
-                if (!dunk) DrawActionArms(c, view, defense, slide, pass, torsoLeft, torsoW, armTop, cx, p);
+                if (!dunk && !hanging) DrawActionArms(c, view, defense, slide, pass, torsoLeft, torsoW, armTop, cx, p);
             }
             else if (posed)
             {
@@ -413,6 +439,7 @@ namespace CallerRetroBall.Logic.PixelArt
             }
 
             if (dunk) DrawDunkArms(c, view, torsoLeft, torsoW, armTop, Math.Min(FrameHeight - 1, headTop + 2), cx, p);
+            if (hanging) DrawHangArms(c, view, pull, torsoLeft, torsoW, armTop, Math.Min(FrameHeight - 1, headTop + 2), cx, p);
 
             if (shooting)
             {

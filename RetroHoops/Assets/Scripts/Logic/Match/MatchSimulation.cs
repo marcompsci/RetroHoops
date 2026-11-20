@@ -20,8 +20,11 @@ namespace CallerRetroBall.Logic
         public float shotFlightBase = 0.5f;
         public float shotFlightPerMeter = 0.06f;
         public float dunkFlightSeconds = 0.22f;
-        /// <summary>After a made dunk the dunker hangs (and swings) on the rim this long before dropping (can't move).</summary>
-        public float rimHangSeconds = 0.7f;
+        /// <summary>
+        /// After a made dunk the dunker hangs (and swings) on the rim this long before dropping (can't move).
+        /// I127 (19 Nov 2026, Omari: "I want the players to actually hang from the rim"): 1.0 s, was 0.7.
+        /// </summary>
+        public float rimHangSeconds = 1.0f;
         public float shotArcBase = 1.2f;
         public float shotArcPerMeter = 0.13f;
         public float missSpeedMin = 2.2f;

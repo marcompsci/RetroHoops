@@ -2,6 +2,9 @@ using System;
 
 namespace CallerRetroBall.Logic
 {
+    /// <summary>I134: how a STEAL press went.</summary>
+    public enum StealOutcome { None = 0, Stole = 1, Missed = 2, Short = 3, TooFar = 4, Waiting = 5 }
+
     /// <summary>Defense, rebounding, stamina, and screen tuning.</summary>
     [Serializable]
     public class DefenseTuning
@@ -111,6 +114,8 @@ namespace CallerRetroBall.Logic
         private void InitDefense()
         {
             _guarding = new int[Players.Length];
+            _stealQueue = new float[Players.Length];
+            _stealOutcome = new StealOutcome[Players.Length];
             ResetMatchups();
             foreach (var p in Players) p.Stamina = p.Team == Setup.HumanTeam ? Math.Max(0f, Math.Min(1f, Setup.HumanTeamStartingStamina)) : 1f;
         }
@@ -124,9 +129,69 @@ namespace CallerRetroBall.Logic
 
         // ------------------------------------------------------------------ human defense
 
+        // ------------------------------------------------------------------ I134: a steal button that feels right
+
+        /// <summary>A human defender reaches this much further than the AI (thumbs are slower than code).</summary>
+        public const float HumanReach = 1.2f;
+        /// <summary>A STEAL press this close to the end of the cooldown (or a stumble) is held and used the moment you can reach.</summary>
+        public const float StealQueueSeconds = 0.3f;
+        /// <summary>Beyond this many reaches away the hint says TOO FAR.</summary>
+        public const float TooFarFactor = 1.6f;
+
+        private float[] _stealQueue;
+        private StealOutcome[] _stealOutcome;
+
+        /// <summary>How the player's last steal press went (for the button hint and callouts).</summary>
+        public StealOutcome LastStealOutcome(int player) =>
+            _stealOutcome != null && player >= 0 && player < _stealOutcome.Length ? _stealOutcome[player] : StealOutcome.None;
+
+        /// <summary>A STEAL press is being held until this player can reach.</summary>
+        public bool StealQueued(int player) => _stealQueue != null && player >= 0 && player < _stealQueue.Length && _stealQueue[player] > Time;
+
+        /// <summary>0 = ready to reach, 1 = just reached (the STEAL button's cooldown ring).</summary>
+        public float StealWait01(int player)
+        {
+            if (player < 0 || player >= Players.Length) return 0f;
+            var d = Players[player];
+            float wait = Math.Max(d.StealReadyAt, d.StunnedUntil) - Time;
+            float full = Math.Max(0.01f, Setup.Defense.stealCooldown);
+            return Math.Max(0f, Math.Min(1f, wait / full));
+        }
+
+        /// <summary>How far this defender can reach for the ball.</summary>
+        public float StealReach(int player) => Setup.Defense.stealRange * (IsHumanControlled(player) ? HumanReach : 1f);
+
+        private void PressSteal(int me)
+        {
+            var d = Players[me];
+            float wait = Math.Max(d.StealReadyAt, d.StunnedUntil) - Time;
+            if (Phase == MatchPhase.Live && Ball.IsHeld && wait > 0f)
+            {
+                // Pressed a moment early: keep it and reach as soon as he can (a long wait isn't queued, so mashing doesn't help).
+                if (wait <= StealQueueSeconds)
+                {
+                    _stealQueue[me] = Time + wait + 0.05f;
+                    _stealOutcome[me] = StealOutcome.Waiting;
+                }
+                return;
+            }
+            TrySteal(me);
+        }
+
+        private void RunStealQueue(int me)
+        {
+            if (_stealQueue == null || _stealQueue[me] <= 0f) return;
+            if (Time > _stealQueue[me] || Phase != MatchPhase.Live || !Ball.IsHeld) { _stealQueue[me] = 0f; return; }
+            var d = Players[me];
+            if (Time < d.StealReadyAt || Time < d.StunnedUntil) return;
+            _stealQueue[me] = 0f;
+            TrySteal(me);
+        }
+
         private void HandleHumanDefense(int me, PlayerInput input)
         {
-            if (input.DefensePressed) TrySteal(me);
+            if (input.DefensePressed) PressSteal(me);
+            else RunStealQueue(me);
             if (input.ShootPressed) Jump(me);
             if (input.PassPressed) SwitchOntoBall(me);
         }
@@ -142,14 +207,16 @@ namespace CallerRetroBall.Logic
             d.StealReadyAt = Time + t.stealCooldown;
 
             float dist = Vec2.Distance(d.Position, Ball.Position);
+            float reach = StealReach(defender);
             Events.Add(new MatchEvent(MatchEventType.StealAttempt, defender, d.Team));
-            if (dist > t.stealRange)
+            if (dist > reach)
             {
                 d.StunnedUntil = Time + t.failedStealRecovery * 0.5f; // whiff at air
+                if (_stealOutcome != null) _stealOutcome[defender] = dist > reach * TooFarFactor ? StealOutcome.TooFar : StealOutcome.Short;
                 return false;
             }
 
-            float closeness = 1f - dist / t.stealRange;
+            float closeness = 1f - dist / reach;
             float chance = (t.stealBase + t.stealFromDefense * RatingScale.Normalized(d.Def.attributes.defense)
                             - t.stealVsHandling * RatingScale.Normalized(handler.Def.attributes.playmaking))
                            * (0.5f + 0.5f * closeness);
@@ -163,11 +230,13 @@ namespace CallerRetroBall.Logic
                 Stats[handler.Index].turnovers++;
                 CancelCharge();
                 Events.Add(new MatchEvent(MatchEventType.Steal, defender, d.Team));
+                if (_stealOutcome != null) _stealOutcome[defender] = StealOutcome.Stole;
                 GiveBall(defender, announce: false, fromCheck: false);
                 return true;
             }
 
             d.StunnedUntil = Time + t.failedStealRecovery;
+            if (_stealOutcome != null) _stealOutcome[defender] = StealOutcome.Missed;
             return false;
         }
 

@@ -543,7 +543,7 @@ namespace CallerRetroBall.Logic
                     gameCenter = Bool(st, "gameCenter", false),
                     leftHanded = Bool(st, "leftHanded", false),
                     largeButtons = Bool(st, "largeButtons", false),
-                    controlLayout = ControlLayout.Serialize(ControlLayout.Parse(Str(st, "controlLayout", ""))),
+                    controlLayout = ControlLayout.Clean(Str(st, "controlLayout", "")),
                     landscapeAll = Bool(st, "landscapeAll", false),
                     commentary = Bool(st, "commentary", true),
                     playByPlayVoice = Bool(st, "pbpVoice", true),

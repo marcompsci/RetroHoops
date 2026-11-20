@@ -36,16 +36,82 @@ namespace CallerRetroBall.Logic
         /// <summary>Furthest a button may sit from the corner (canvas units), so it can't be lost off screen.</summary>
         public const float MaxReachX = 1040f, MaxReachY = 1000f;
 
-        public static ControlSlot[] Default() => new[]
-        {
-            new ControlSlot(ControlButton.Shoot, -190f, 215f, 250f),
-            new ControlSlot(ControlButton.Pass, -455f, 140f, 190f),
-            new ControlSlot(ControlButton.Dunk, -160f, 480f, 175f),
-            new ControlSlot(ControlButton.Layup, -405f, 375f, 150f),
-            new ControlSlot(ControlButton.Call, -640f, 285f, 120f),
-        };
+        /// <summary>
+        /// I131 (19 Nov 2026, Omari: "spread the controls out a bit more for easier thumb pressing"): SPREAD is the new
+        /// default. The same arc, with roughly 100 units between rings instead of 50-70, and a bigger STEAL/DUNK button.
+        /// CLASSIC is the old, tighter arc.
+        /// </summary>
+        public const int Spread = 0, Classic = 1;
+        public static readonly string[] PresetNames = { "SPREAD", "CLASSIC" };
+        public static int ClampPreset(int p) => p == Classic ? Classic : Spread;
 
+        public static ControlSlot[] Default() => Preset(Spread);
+
+        public static ControlSlot[] Preset(int preset)
+        {
+            if (ClampPreset(preset) == Classic)
+                return new[]
+                {
+                    new ControlSlot(ControlButton.Shoot, -190f, 215f, 250f),
+                    new ControlSlot(ControlButton.Pass, -455f, 140f, 190f),
+                    new ControlSlot(ControlButton.Dunk, -160f, 480f, 175f),
+                    new ControlSlot(ControlButton.Layup, -405f, 375f, 150f),
+                    new ControlSlot(ControlButton.Call, -640f, 285f, 120f),
+                };
+            return new[]
+            {
+                new ControlSlot(ControlButton.Shoot, -185f, 235f, 260f),
+                new ControlSlot(ControlButton.Pass, -500f, 150f, 200f),
+                new ControlSlot(ControlButton.Dunk, -170f, 565f, 210f),
+                new ControlSlot(ControlButton.Layup, -455f, 445f, 165f),
+                new ControlSlot(ControlButton.Call, -700f, 600f, 130f),
+            };
+        }
+
+        /// <summary>Size limits are measured against the SPREAD sizes (CLASSIC's all sit inside them).</summary>
         public static float DefaultSize(ControlButton b) => Default()[(int)b].Size;
+
+        /// <summary>Space between two rings' edges (canvas units; negative = they overlap).</summary>
+        public static float Gap(ControlSlot a, ControlSlot b)
+        {
+            float dx = a.X - b.X, dy = a.Y - b.Y;
+            return (float)Math.Sqrt(dx * dx + dy * dy) - (a.Size + b.Size) * 0.5f;
+        }
+
+        /// <summary>Rings closer than this are flagged TOO CLOSE in the editor (easy to hit the wrong one).</summary>
+        public const float MinComfortGap = 40f;
+        /// <summary>Most a touch area grows past the drawn ring, as a share of the ring's size.</summary>
+        public const float MaxHitGrow = 0.2f;
+
+        /// <summary>
+        /// I132: how far (canvas units) a button's touch area reaches past its drawn ring: up to 20% of its size, but
+        /// never more than half the gap to its nearest neighbour, so two touch areas never overlap.
+        /// </summary>
+        public static float HitPad(ControlSlot[] slots, int index)
+        {
+            var me = slots[index];
+            float pad = me.Size * MaxHitGrow * 0.5f;
+            for (int i = 0; i < slots.Length; i++)
+            {
+                if (i == index) continue;
+                float g = Gap(me, slots[i]);
+                pad = Math.Min(pad, g * 0.5f - 2f);
+            }
+            return Math.Max(0f, pad);
+        }
+
+        public static List<ControlButton> TooClose(ControlSlot[] slots)
+        {
+            var list = new List<ControlButton>();
+            for (int i = 0; i < slots.Length; i++)
+                for (int j = i + 1; j < slots.Length; j++)
+                    if (Gap(slots[i], slots[j]) < MinComfortGap)
+                    {
+                        if (!list.Contains(slots[i].Button)) list.Add(slots[i].Button);
+                        if (!list.Contains(slots[j].Button)) list.Add(slots[j].Button);
+                    }
+            return list;
+        }
 
         /// <summary>Keeps a slot on screen and within the size limits.</summary>
         public static ControlSlot Clamp(ControlSlot s)
@@ -59,10 +125,13 @@ namespace CallerRetroBall.Logic
         }
 
         /// <summary>"button:x,y,size;..." (invariant culture). Only buttons that differ from the default are written.</summary>
-        public static string Serialize(ControlSlot[] slots)
+        public static string Serialize(ControlSlot[] slots) => Serialize(slots, Spread);
+
+        /// <summary>As above, against <paramref name="preset"/>'s positions (only buttons moved from it are written).</summary>
+        public static string Serialize(ControlSlot[] slots, int preset)
         {
             if (slots == null) return "";
-            var d = Default();
+            var d = Preset(preset);
             var sb = new StringBuilder();
             foreach (var raw in slots)
             {
@@ -79,9 +148,12 @@ namespace CallerRetroBall.Logic
         }
 
         /// <summary>The default layout with any saved changes applied. Bad entries are ignored.</summary>
-        public static ControlSlot[] Parse(string saved)
+        public static ControlSlot[] Parse(string saved) => Parse(saved, Spread);
+
+        /// <summary><paramref name="preset"/>'s layout with any saved changes applied.</summary>
+        public static ControlSlot[] Parse(string saved, int preset)
         {
-            var slots = Default();
+            var slots = Preset(preset);
             if (string.IsNullOrEmpty(saved)) return slots;
             foreach (var part in saved.Split(';'))
             {
@@ -98,6 +170,42 @@ namespace CallerRetroBall.Logic
                 slots[id] = Clamp(new ControlSlot((ControlButton)id, x, y, size));
             }
             return slots;
+        }
+
+        /// <summary>A saved string with bad entries dropped and values clamped (whatever preset it was made against).</summary>
+        public static string Clean(string saved)
+        {
+            if (string.IsNullOrEmpty(saved)) return "";
+            var seen = new bool[Default().Length];
+            var sb = new StringBuilder();
+            foreach (var part in saved.Split(';'))
+            {
+                var one = Parse(part, Spread);
+                int colon = part.IndexOf(':');
+                if (colon <= 0 || !int.TryParse(part.Substring(0, colon), NumberStyles.Integer, CultureInfo.InvariantCulture, out int id)) continue;
+                if (id < 0 || id >= one.Length || seen[id]) continue;
+                // Parse ignores a bad entry (the button keeps its default), so only keep entries that actually parsed.
+                if (!EntryParses(part)) continue;
+                seen[id] = true;
+                var c = one[id];
+                if (sb.Length > 0) sb.Append(';');
+                sb.Append(id).Append(':')
+                  .Append(Math.Round(c.X).ToString(CultureInfo.InvariantCulture)).Append(',')
+                  .Append(Math.Round(c.Y).ToString(CultureInfo.InvariantCulture)).Append(',')
+                  .Append(Math.Round(c.Size).ToString(CultureInfo.InvariantCulture));
+            }
+            return sb.ToString();
+        }
+
+        private static bool EntryParses(string part)
+        {
+            int colon = part.IndexOf(':');
+            if (colon <= 0) return false;
+            var nums = part.Substring(colon + 1).Split(',');
+            if (nums.Length != 3) return false;
+            foreach (var n in nums)
+                if (!float.TryParse(n, NumberStyles.Float, CultureInfo.InvariantCulture, out float v) || float.IsNaN(v)) return false;
+            return true;
         }
 
         /// <summary>True when two buttons overlap by more than a sliver (the editor warns about it).</summary>

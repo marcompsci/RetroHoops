@@ -626,3 +626,63 @@ Logic: `Logic/Progression/FranchiseExtras.cs`. UI: `UI/FranchiseScreen.Extras.cs
 **Save size:** a 25-season franchise is about 230K characters. Three such franchises are about 720K, under the 900K iCloud guard. Bigger than that and `CloudSave` skips the iCloud upload (the local save is unaffected). That limit isn't shown to the player yet.
 
 **Checks:** full logic suite 1,211 of 1,211. UnityCheck has 0 errors, the strict text audit passes, and the App Store audit is 63 of 63. **Not seen on a phone yet.**
+
+### Improvements I126–I140: hanging on the rim, and controls that feel better (19 Nov 2026)
+
+Omari: "I want the players to actually hang from the rim when they dunk, make the stealing button and all the other buttons feel better to press by spreading the controls out a bit more for easier thumb pressing and visibility to see the whole screen."
+
+**The rim hang** (logic: `Logic/Feel/Dunks.cs`; art: `CharacterSpriteGenerator.Actions.cs`; view: `GameSceneController`, `PlayerView`)
+
+- **I126 HANG FRAMES:** two new sprite frames.
+  - The hang: both hands gripping the rim, arms straight up and a little wide, legs dangling together.
+  - The chin-up: elbows out, hands two pixels lower.
+  - The hands sit exactly where a raised hand does, so the existing hand-on-rim maths still holds.
+  - Before this, a hanging dunker used the standing arms-up shot frame.
+- **I127 REAL HANG TIME:** a made dunk now hangs 1.0 s (was 0.7 s), and the simulation holds the dunker that long. The grab shakes the whole hoop sideways (1 px, about 0.27 s) on top of the 2 px yank.
+- **I128 HANG STYLES** (by dunk package):
+  - Two-hand, 360, Cradle and Skyline: swing, settle, then a chin-up on the rim.
+  - Tomahawk and Windmill: swing wider (3 px).
+  - Reverse: hangs quietly, facing away.
+  - The hands stay on the rim through all of it, chin-up included.
+- **I129 LET GO AND LAND:** when he drops, the rim springs back past level, dips and settles. Every made-dunk hang now ends in a landing with a knee bend, a puff of dust and a light buzz for your own player; before this only THE STREETS had one.
+- **I130 MISSED DUNKS RATTLE:** a missed dunk shakes the rim briefly and he doesn't hang.
+
+**The controls** (logic: `Logic/Input/ControlLayout.cs`, `ControlFeel.cs`, `DefenseAndPlays.cs`; UI: `Input/TouchControls.cs`, `TouchActionButton.cs`, `ControlEditor.cs`, `Gameplay/GameSceneController.Feel.cs`)
+
+- **I131 SPREAD LAYOUT** (new default):
+  - The same thumb arc, with at least 85 units between rings (CLASSIC had 50–70).
+  - STEAL/DUNK is bigger (210, was 175).
+  - CALL moves above LAYUP, clear of the stick.
+  - Players who saved a custom layout keep it, on the CLASSIC arc it was made on.
+- **I132 BIGGER TOUCH AREAS:** each button's touch area reaches into the gap around it, up to 20% past the ring, but never into a neighbour's.
+- **I133 PRESS FEEL:**
+  - A button sinks while held and springs back past full size on release.
+  - A white flash on each press.
+  - A light haptic tick, which follows Settings ▸ HAPTICS and HAPTICS STRENGTH.
+- **I134 A STEAL BUTTON THAT FEELS RIGHT:**
+  - A press up to 0.3 s before your reach recovers is held and used the moment you can reach. Longer waits aren't queued, so mashing doesn't help.
+  - A dark sweep on STEAL shows the recovery.
+  - Human defenders reach 20% further than the AI.
+- **I135 SEE THE PLAY:** a button with a player or the ball underneath fades to 30% until the play moves on, and goes solid again under your thumb. This is off with Reduce Motion.
+- **I136 STICK ROOM:** the stick's resting ring sits further in from the corner and is fainter.
+- **I137 LAYOUT PICKER:**
+  - Settings ▸ CONTROL LAYOUT: SPREAD or CLASSIC. Picking one clears any custom layout.
+  - CUSTOMIZE CONTROLS can switch arcs, and flags buttons that are TOO CLOSE as well as OVERLAPPING.
+- **I138 STEAL HINTS:** after a reach that didn't work, a word over STEAL says why: TOO FAR, GET CLOSER or MISSED.
+- **I139 WHAT'S NEW:** a new card, shown once to players who already had a career before this update.
+- **I140 SAVES, SPANISH, TESTS:**
+  - The layout choice saves with the other control settings, and old saves are migrated as described in I131.
+  - 9 new Spanish lines.
+  - `ImprovementsI126Tests` has 21 tests.
+  - Three older tests were updated for the intended changes:
+    - frames per view is now 16 (two tests);
+    - a made dunk outside THE STREETS now lands.
+
+**Checks:**
+- Full logic suite: 1,232 of 1,232 pass.
+- UnityCheck: 0 errors.
+- Strict text audit: clean.
+- App Store audit: 63 of 63.
+- The balance probe was re-run (AI vs AI): the I50 range tests pass, with 1.3–2.2 steals per game.
+
+**Not seen on a phone yet:** the hang art, the new layout, the fades and the press feel have only been checked by tests and by rendering the frames and the layout offline.

@@ -63,8 +63,58 @@ namespace CallerRetroBall.Logic
                 FlipOverride = s == DunkStyle.Reverse,
                 OffsetX = f.OnRim ? f.SwingPx : 0,
             };
+            // I126: the real hanging frames: arms straight up gripping the rim, legs dangling (or the chin-up, I128).
+            if (f.OnRim) p.Frame = f.Pull ? PoseFrame.HangPull : PoseFrame.Hang;
+            else if (f.Dropping && f.DropU < 0.2f) p.Frame = PoseFrame.Hang;
             return p;
         }
+
+        /// <summary>
+        /// I128: how each dunk hangs. Two-hand finishes do a chin-up on the rim; one-hand power slams swing harder; a
+        /// reverse dunker hangs quietly facing away; the SKYLINE does everything.
+        /// </summary>
+        public static HangMotion Hang(DunkStyle s)
+        {
+            switch (s)
+            {
+                case DunkStyle.Tomahawk: return new HangMotion(3, 1.5f, false);
+                case DunkStyle.Windmill: return new HangMotion(3, 2f, false);
+                case DunkStyle.Reverse: return new HangMotion(1, 1f, false);
+                case DunkStyle.ThreeSixty: return new HangMotion(2, 1.5f, true);
+                case DunkStyle.Cradle: return new HangMotion(2, 1f, true);
+                case DunkStyle.Skyline: return new HangMotion(3, 2f, true);
+                default: return new HangMotion(2, 1.5f, true);
+            }
+        }
+
+        /// <summary>
+        /// I127: the hoop shakes sideways when the dunker grabs it (art pixels, + = right), dying out over
+        /// <see cref="ShakeSeconds"/>: 1, -1, 1, -1, 0...
+        /// </summary>
+        public static int GrabShakePx(float secondsSinceGrab)
+        {
+            if (secondsSinceGrab < 0f || secondsSinceGrab >= ShakeSeconds) return 0;
+            int step = (int)(secondsSinceGrab / 0.045f);
+            return step % 2 == 0 ? 1 : -1;
+        }
+
+        public const float ShakeSeconds = 0.27f;
+
+        /// <summary>
+        /// I129: the rim springing back after he lets go (art pixels down; -1 = a pixel above its rest): it flips up past
+        /// level, dips again, and settles.
+        /// </summary>
+        public static int ReleaseDipPx(float secondsSinceRelease)
+        {
+            if (secondsSinceRelease < 0f) return 1;
+            if (secondsSinceRelease < 0.06f) return -1;
+            if (secondsSinceRelease < 0.12f) return 1;
+            if (secondsSinceRelease < 0.18f) return -1;
+            return 0;
+        }
+
+        /// <summary>I130: a missed dunk rattles the rim: a pixel down and a sideways shake, no hang.</summary>
+        public static int MissRattlePx(float secondsSinceSlam) => secondsSinceSlam >= 0f && secondsSinceSlam < 0.16f ? GrabShakePx(secondsSinceSlam) : 0;
 
         /// <summary>Camera shake when it goes down.</summary>
         public static float Shake(DunkStyle s) => s == DunkStyle.TwoHand ? 0.12f : 0.2f;
@@ -143,8 +193,28 @@ namespace CallerRetroBall.Logic
         public float DropU;
         /// <summary>THE STREETS: the gather before take-off (a plant, the ball brought low, then up he goes).</summary>
         public bool Gather;
-        /// <summary>THE STREETS: the last moment of the drop (knees bend on the landing).</summary>
+        /// <summary>The last moment of the drop (knees bend on the landing): THE STREETS, and every made-dunk hang since I129.</summary>
         public bool Landing;
+        /// <summary>I128: the chin-up on the rim (draw <see cref="PoseFrame.HangPull"/>; the hands stay on the rim).</summary>
+        public bool Pull;
+    }
+
+    /// <summary>I128: one dunk's hang on the rim: how far and how many times he swings, and whether he does a chin-up.</summary>
+    public struct HangMotion
+    {
+        public int Amplitude;
+        public float Cycles;
+        public bool PullUp;
+
+        public HangMotion(int amplitude, float cycles, bool pullUp)
+        {
+            Amplitude = amplitude;
+            Cycles = cycles;
+            PullUp = pullUp;
+        }
+
+        /// <summary>The hang used before I128 (and by the old overloads).</summary>
+        public static HangMotion Classic => new HangMotion(DunkPath.SwingAmplitudePx, DunkPath.SwingCycles, false);
     }
 
     /// <summary>
@@ -207,7 +277,18 @@ namespace CallerRetroBall.Logic
         /// rim (a real jump's arc, quick off the floor and slow at the top) while carrying his momentum in, and the
         /// end of the drop is a landing.
         /// </summary>
-        public static DunkFrame At(Vec2 start, Vec2 hoop, Vec2 end, float u, float slamU, float hangU, int liftAtRimPx, float approach, float gather)
+        public static DunkFrame At(Vec2 start, Vec2 hoop, Vec2 end, float u, float slamU, float hangU, int liftAtRimPx, float approach, float gather) =>
+            At(start, hoop, end, u, slamU, hangU, liftAtRimPx, approach, gather, HangMotion.Classic);
+
+        /// <summary>Share of the hang (after the grab) where a chin-up dunker is pulled up.</summary>
+        public const float PullFrom = 0.5f, PullTo = 0.82f;
+
+        /// <summary>
+        /// I128: as above with <paramref name="hang"/> = how this dunk hangs (swing size and count, chin-up). A chin-up
+        /// lifts the body by <see cref="CharacterSpriteGenerator.PullDropPx"/> while the bent-arm frame keeps the hands on
+        /// the rim; the swing dies away first, so he pulls up from a still hang.
+        /// </summary>
+        public static DunkFrame At(Vec2 start, Vec2 hoop, Vec2 end, float u, float slamU, float hangU, int liftAtRimPx, float approach, float gather, HangMotion hang)
         {
             var meet = MeetPoint(start, hoop, approach);
             bool swings = hangU > 0f;
@@ -260,10 +341,22 @@ namespace CallerRetroBall.Logic
                 if (swings && !grab)
                 {
                     float sh = (h - GrabShare) / (1f - GrabShare);
-                    double theta = Math.Sin(sh * SwingCycles * 2.0 * Math.PI) * (1.0 - 0.7 * sh);
-                    f.SwingPx = (int)Math.Round(theta * SwingAmplitudePx);
-                    // On a pendulum the body rises at the ends of each swing.
-                    if (theta * theta > 0.45) f.LiftPx += 1;
+                    if (hang.PullUp && sh >= PullFrom && sh < PullTo)
+                    {
+                        // The chin-up: still, the body up, the bent arms keep the hands on the rim.
+                        f.Pull = true;
+                        f.LiftPx += PixelArt.CharacterSpriteGenerator.PullDropPx;
+                    }
+                    else
+                    {
+                        // A chin-up dunker swings in the first half only (and settles before pulling up).
+                        float span = hang.PullUp ? PullFrom : 1f;
+                        float ss = hang.PullUp && sh >= PullTo ? 1f : Math.Min(1f, sh / span);
+                        double theta = Math.Sin(ss * hang.Cycles * 2.0 * Math.PI) * (1.0 - 0.7 * ss);
+                        f.SwingPx = (int)Math.Round(theta * Math.Max(0, hang.Amplitude));
+                        // On a pendulum the body rises at the ends of each swing.
+                        if (theta * theta > 0.45) f.LiftPx += 1;
+                    }
                 }
             }
             else
@@ -275,7 +368,8 @@ namespace CallerRetroBall.Logic
                 f.LiftPx = (int)Math.Round(from * (1f - q * q));
                 f.Dropping = true;
                 f.DropU = q;
-                f.Landing = gather > 0f && q >= 1f - LandingShare;
+                // I129: every made-dunk hang (and THE STREETS' dunks) lands with a knee bend.
+                f.Landing = (gather > 0f || swings) && q >= 1f - LandingShare;
             }
             if (f.LiftPx < 0) f.LiftPx = 0;
             return f;
