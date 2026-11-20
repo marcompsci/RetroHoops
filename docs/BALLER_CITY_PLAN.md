@@ -852,6 +852,6 @@ Logic lives in `Logic/Progression/Shop.cs`. The App Store bridge is `Core/ShopSt
 - **I212 Pause line:** the pause menu shows your line so far.
 - **I213 Vs your average:** after a counted game, the post-game shows your points against your average from earlier games (once 3 earlier games exist).
 - **I214 What's New:** the card is refreshed (tour.whats_new_196).
-- **I215 Wrap-up:** Spanish for every new line. `ImprovementsI196Tests` has 15 tests.
+- **I215 Wrap-up:** Spanish for every new line. `ImprovementsI196Tests` has 14 tests.
   - Gate: 1,291 logic tests pass, UnityCheck shows 0 errors, App Store audit 73/73, strict text audit clean.
   - Not tested on a device yet.
