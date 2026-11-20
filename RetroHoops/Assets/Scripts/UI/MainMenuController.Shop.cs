@@ -56,6 +56,15 @@ namespace CallerRetroBall.UI
 
             var status = UiKit.Label(column, "", 28f, Theme.Muted, TextAlignmentOptions.Center);
             UiKit.Size(status, 60f);
+            // I194: the App Store didn't send prices (offline, or the products aren't set up yet): say so plainly.
+            if (!ShopStore.PricesLoaded)
+                status.text = Loc.T("Couldn't reach the App Store for prices. The usual prices are shown; buying needs a connection.");
+            // I193: the court and gear pictures are dropped if iOS runs low on memory.
+            if (!_lowMemoryHooked)
+            {
+                _lowMemoryHooked = true;
+                Application.lowMemory += ClearShopPictures;
+            }
 
             Section(column, "COURT PACKS");
             foreach (var p in Shop.Products) if (p.Kind == ShopKind.CourtPack) ShopCard(column, p, status, back);
@@ -124,6 +133,18 @@ namespace CallerRetroBall.UI
                 }
             }
 
+            if (owned && p.Kind == ShopKind.GearPack)
+            {
+                // I192 WEAR IT: put the whole pack on at once.
+                UiKit.Button(column, "WEAR IT", () =>
+                {
+                    if (PackWear.Wear(App.Career, App.Catalog, p.Id) > 0)
+                    {
+                        App.SaveCareer();
+                        status.text = Loc.T("Wearing") + " " + Loc.T(p.Name) + ".";
+                    }
+                }, ButtonStyle.Secondary, 80f, 30f);
+            }
             if (owned)
             {
                 UiKit.Size(UiKit.Label(column, Loc.T("OWNED") + (p.Kind == ShopKind.GearPack ? "  ·  " + Loc.T("in your LOCKER ROOM") : p.Kind == ShopKind.Designer ? "  ·  " + Loc.T("LOCKER ROOM ► COURT") : p.Kind == ShopKind.CourtPack ? "  ·  " + Loc.T("pick them in QUICK CALL") : ""),
@@ -183,6 +204,21 @@ namespace CallerRetroBall.UI
             else if (owned)
             {
                 UiKit.Size(UiKit.Button(cell, "PLAY", () => StartShopCourt(courtId), ButtonStyle.Ghost, 60f, 22f), 60f);
+                // I191: make it your team's home court.
+                var career = App.Career;
+                if (career.customTeam != null && career.customTeam.created)
+                {
+                    if (ShopHome.IsHome(career, courtId))
+                        UiKit.Size(UiKit.Label(cell, Loc.T("YOUR HOME COURT"), 18f, Theme.Gold, TextAlignmentOptions.Center, true), 40f);
+                    else
+                        UiKit.Size(UiKit.Button(cell, "MAKE HOME", () =>
+                        {
+                            if (!ShopHome.Set(App.Career, courtId)) return;
+                            CustomTeams.Apply(App.Catalog, App.Career.customTeam);
+                            App.SaveCareer();
+                            ShowShop(back);
+                        }, ButtonStyle.Ghost, 50f, 20f), 50f);
+                }
             }
             else if (Shop.CanTry(App.Career, courtId, day))
             {
@@ -200,6 +236,16 @@ namespace CallerRetroBall.UI
         }
 
         private static readonly Dictionary<string, Texture2D> GearSheets = new Dictionary<string, Texture2D>();
+        private static bool _lowMemoryHooked;
+
+        /// <summary>I193: frees the cached court and gear pictures (they're drawn again next time the SHOP opens).</summary>
+        private static void ClearShopPictures()
+        {
+            foreach (var t in ShopThumbs.Values) if (t != null) Destroy(t);
+            foreach (var t in GearSheets.Values) if (t != null) Destroy(t);
+            ShopThumbs.Clear();
+            GearSheets.Clear();
+        }
 
         /// <summary>I168: your player's sprite sheet wearing a gear pack (made once per pack, then cached).</summary>
         private static Texture2D GearSheet(ShopProduct pack)
@@ -210,6 +256,14 @@ namespace CallerRetroBall.UI
             t = TextureFactory.ToTexture(sheet, "ui.shop.gear." + pack.Id);
             GearSheets[pack.Id] = t;
             return t;
+        }
+
+        /// <summary>I185: CAREER STATS, every number the career keeps.</summary>
+        private void ShowCareerStats()
+        {
+            var column = OpenOverlay("CAREER STATS", out var footer);
+            foreach (var row in CareerStats.Rows(App.Career)) UiControls.Stat(column, row.label, row.value);
+            UiKit.Button(footer, "BACK", ShowPlayMenu, ButtonStyle.Ghost, 130f, 44f);
         }
 
         /// <summary>I148: a Quick Call on a shop court with your team.</summary>

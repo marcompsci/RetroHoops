@@ -537,6 +537,29 @@ namespace CallerRetroBall.Gameplay
             if (!string.IsNullOrEmpty(note))
                 UiKit.Size(UiKit.Label(_finalColumn, note, 36f, Theme.Gold, TextAlignmentOptions.Center, true), 110f);
 
+            // I184: the play of the game, by name.
+            if (!string.IsNullOrEmpty(KeyPlay))
+                UiKit.Size(UiKit.Label(_finalColumn, Logic.Loc.T("PLAY OF THE GAME") + ":  " + Logic.Loc.T(KeyPlay), 30f, Theme.Gold, TextAlignmentOptions.Center, true), 50f);
+            // I182: three walkovers (or three heavy losses) in a row: offer the next difficulty.
+            if (Nudge != null)
+            {
+                var nudge = Nudge;
+                bool harder = Core.App.Career != null && Core.App.Career.totals.blowoutWins >= DifficultyNudge.Run;
+                UiKit.Size(UiKit.Label(_finalColumn, Logic.Loc.T(harder ? "Three easy wins in a row. Ready for more?" : "Three tough ones in a row. Want an easier game?"),
+                                       26f, Theme.Cyan, TextAlignmentOptions.Center), 50f);
+                UiKit.Button(_finalColumn, Logic.Loc.T("NEXT GAME ON") + " " + nudge.displayName.ToUpperInvariant(), () =>
+                {
+                    var career = Core.App.Career;
+                    if (career == null) return;
+                    career.settings.difficultyId = nudge.id;
+                    DifficultyNudge.Reset(career.totals);
+                    Core.App.SaveCareer();
+                    Toast(Logic.Loc.T("DIFFICULTY") + ": " + nudge.displayName.ToUpperInvariant(), 1.2f);
+                }, ButtonStyle.Secondary, 100f, 34f);
+            }
+            // I183: SHARE RESULT (plain text through the share sheet).
+            UiKit.Button(_finalColumn, "SHARE RESULT", () => ShareResult(s), ButtonStyle.Ghost, 100f, 34f);
+
             if (PlayOfTheGameRequested != null && HasPlayOfTheGame)
             {
                 UiKit.Button(_finalColumn, "PLAY OF THE GAME", () => PlayOfTheGameRequested?.Invoke(), ButtonStyle.Secondary, 110f, 40f);
@@ -554,6 +577,21 @@ namespace CallerRetroBall.Gameplay
             LeaveCourtButton();
             UiKit.Button(_finalColumn, "HOME", () => QuitRequested?.Invoke(), ButtonStyle.Ghost, 110f, 44f);
             Open();
+        }
+
+        private void ShareResult(MatchSummary s)
+        {
+            try
+            {
+                string text = GameShare.Text(s, CourtName, KeyPlay);
+                string path = System.IO.Path.Combine(Application.temporaryCachePath, "retro-hoops-result.txt");
+                System.IO.File.WriteAllText(path, text);
+                Core.Share.File(path, text);
+            }
+            catch (Exception e)
+            {
+                Debug.LogWarning("[PostGame] Couldn't share: " + e.Message);
+            }
         }
 
         /// <summary>TEAM STATS: each row shows both teams' numbers with a two-colour bar split by who did more.</summary>
@@ -648,6 +686,12 @@ namespace CallerRetroBall.Gameplay
 
         /// <summary>Set by the match controller when there's a highlight to show on the post-game card.</summary>
         public bool HasPlayOfTheGame { get; set; }
+        /// <summary>I184: the label of the play of the game (POSTERIZED!, ICE COLD!...), shown on the post-game.</summary>
+        public string KeyPlay { get; set; }
+        /// <summary>I183: where it was played, for SHARE RESULT.</summary>
+        public string CourtName { get; set; }
+        /// <summary>I182: the difficulty the post-game suggests (null = none).</summary>
+        public DifficultyDef Nudge { get; set; }
         /// <summary>I2 FAIR PLAY: expected vs real makes for both sides (null = hide).</summary>
         public string FairPlayLine { get; set; }
         /// <summary>I10: your letter grade and why (null = hide).</summary>

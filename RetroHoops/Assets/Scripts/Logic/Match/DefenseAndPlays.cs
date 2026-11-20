@@ -144,6 +144,35 @@ namespace CallerRetroBall.Logic
         private int[] _stealRun;
         public const int PickpocketRun = 2;
 
+        /// <summary>I177: seconds left on the game clock that make a tying or go-ahead bucket CLUTCH.</summary>
+        public const float ClutchSeconds = 5f;
+        /// <summary>I178: GREEN releases in a row that light up LOCKED IN.</summary>
+        public const int GreenStreakRun = 3;
+        private int[] _greenRun;
+
+        /// <summary>I176: how much further from the rim than the shooter a blocker must be to have chased him down (metres).</summary>
+        public const float ChaseDownMargin = 0.3f;
+
+        /// <summary>I176: a block from behind: the blocker was further from the rim than the shooter.</summary>
+        public bool IsChaseDown(int shooter, int blocker)
+        {
+            var hoop = Setup.Court.Hoop;
+            return Vec2.Distance(Players[blocker].Position, hoop) > Vec2.Distance(Players[shooter].Position, hoop) + ChaseDownMargin;
+        }
+
+        /// <summary>I180: 0 = ready to jump, 1 = just jumped (the BLOCK button's ring on defence).</summary>
+        public float JumpWait01(int player)
+        {
+            if (player < 0 || player >= Players.Length) return 0f;
+            var t = Setup.Defense;
+            float full = Math.Max(0.01f, t.jumpSeconds + t.jumpCooldown);
+            float wait = Math.Max(Players[player].JumpStart + full, Players[player].StunnedUntil) - Time;
+            return Math.Max(0f, Math.Min(1f, wait / full));
+        }
+
+        /// <summary>I181: the last time a SWITCH press found nobody to switch with (for the button's hint).</summary>
+        public float SwitchRefusedAt { get; private set; } = -99f;
+
         // ------------------------------------------------------------------ I156: posters
 
         /// <summary>How close a defender has to be to a dunker to get posterized (metres).</summary>
@@ -220,7 +249,7 @@ namespace CallerRetroBall.Logic
             if (input.DefensePressed) PressSteal(me);
             else RunStealQueue(me);
             if (input.ShootPressed) Jump(me);
-            if (input.PassPressed) SwitchOntoBall(me);
+            if (input.PassPressed && !SwitchOntoBall(me)) SwitchRefusedAt = Time;
         }
 
         /// <summary>Reach for the ball. Needs to be close; a miss leaves you briefly beaten.</summary>
@@ -395,6 +424,11 @@ namespace CallerRetroBall.Logic
             _reboundable = true;
             _lastShotWasMiss = true;
             Events.Add(new MatchEvent(MatchEventType.Block, blocker, b.Team));
+            if (IsChaseDown(shooter, blocker))
+            {
+                Stats[blocker].chaseDowns++;
+                Events.Add(new MatchEvent(MatchEventType.ChaseDown, blocker, b.Team, shooter));
+            }
             Events.Add(new MatchEvent(MatchEventType.BallLoose, -1, -1));
         }
 

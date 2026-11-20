@@ -31,6 +31,8 @@ namespace CallerRetroBall.Logic
         public string controlLayout = "";
         /// <summary>I131: which arc <see cref="controlLayout"/> builds on (ControlLayout.Spread or Classic).</summary>
         public int controlPreset = ControlLayout.Spread;
+        /// <summary>I179 FEEL THE GREEN: a light buzz when the shot meter enters the GREEN window (off by default).</summary>
+        public bool greenBuzz;
         /// <summary>Play every mode in landscape, not only Full Court (2 Player and the demo stay portrait).</summary>
         public bool landscapeAll;
         /// <summary>Mic Tally's text commentary during games.</summary>
@@ -173,6 +175,10 @@ namespace CallerRetroBall.Logic
         /// the jumpers taken, and reaches that fell short.
         /// </summary>
         public int recentEarly, recentLate, recentJumpers, recentShortReaches;
+        /// <summary>I176 chase-down blocks, I177 clutch buckets, I178 the longest GREEN run ever.</summary>
+        public int chaseDowns, clutchMakes, bestGreenRun;
+        /// <summary>I182: Quick Call games in a row won (or lost) by 8 or more, for the difficulty nudge.</summary>
+        public int blowoutWins, blowoutLosses;
     }
 
     [Serializable]

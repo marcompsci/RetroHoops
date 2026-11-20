@@ -368,6 +368,12 @@ namespace CallerRetroBall.Logic
         Posterized = 49,
         /// <summary>I161: a second (or more) steal in a row by one defender without a miss (Value = how many in a row).</summary>
         Pickpocket = 50,
+        /// <summary>I176 (20 Nov 2026): a block from behind, the blocker chasing the shooter down (PlayerIndex = blocker, Value = shooter).</summary>
+        ChaseDown = 51,
+        /// <summary>I177: a bucket in the last seconds with the shooter's team level or behind (Value = points).</summary>
+        Clutch = 52,
+        /// <summary>I178: GREEN releases in a row by one shooter (Value = how many, from 3).</summary>
+        GreenStreak = 53,
     }
 
     public struct MatchEvent
@@ -1081,6 +1087,17 @@ namespace CallerRetroBall.Logic
             // Greens count by the standard window only, so a forgiving meter never pads the GREENS record or board.
             var standardGrade = ShotModel.Grade(meter, p.Def.attributes.shooting, Setup.Shot);
             if (standardGrade == TimingGrade.Green) line.greenReleases++;
+            // I178: greens in a row (jumpers only; a finish neither adds nor breaks the run).
+            if (type == ShotType.MidRange || type == ShotType.Arc)
+            {
+                if (_greenRun == null || _greenRun.Length != Players.Length) _greenRun = new int[Players.Length];
+                _greenRun[shooter] = standardGrade == TimingGrade.Green ? _greenRun[shooter] + 1 : 0;
+                if (_greenRun[shooter] >= GreenStreakRun)
+                {
+                    line.bestGreenRun = Math.Max(line.bestGreenRun, _greenRun[shooter]);
+                    Events.Add(new MatchEvent(MatchEventType.GreenStreak, shooter, p.Team, _greenRun[shooter]));
+                }
+            }
             // I163: early and late jumpers, for the release coach.
             if (type == ShotType.MidRange || type == ShotType.Arc)
             {
@@ -1128,7 +1145,15 @@ namespace CallerRetroBall.Logic
 
             if (Ball.ShotWillScore)
             {
+                // I177: in the last seconds of a clock game, a bucket that ties it or puts the shooter's team in front.
+                int deficit = Score[1 - p.Team] - Score[p.Team];
+                bool clutch = Setup.Rules.useGameClock && GameClock <= ClutchSeconds && deficit >= 0 && deficit <= Ball.ShotPoints;
                 Score[p.Team] += Ball.ShotPoints;
+                if (clutch)
+                {
+                    line.clutchMakes++;
+                    Events.Add(new MatchEvent(MatchEventType.Clutch, shooter, p.Team, Ball.ShotPoints));
+                }
                 line.points += Ball.ShotPoints;
                 line.fieldGoalsMade++;
                 if (Ball.ShotPoints >= Setup.Rules.beyondArcPoints) line.arcMade++;

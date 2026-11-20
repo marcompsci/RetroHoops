@@ -50,6 +50,8 @@ namespace CallerRetroBall.Logic
                     ["posters"] = d.totals.posters, ["hangs"] = d.totals.rimHangs, ["stealTries"] = d.totals.stealAttempts,
                     ["recEarly"] = d.totals.recentEarly, ["recLate"] = d.totals.recentLate, ["recJumpers"] = d.totals.recentJumpers,
                     ["recShort"] = d.totals.recentShortReaches,
+                    ["chase"] = d.totals.chaseDowns, ["clutch"] = d.totals.clutchMakes, ["greenRun"] = d.totals.bestGreenRun,
+                    ["blowW"] = d.totals.blowoutWins, ["blowL"] = d.totals.blowoutLosses,
                 },
                 ["practice"] = new Dictionary<string, object>
                 {
@@ -528,6 +530,9 @@ namespace CallerRetroBall.Logic
                     stealAttempts = Math.Max(0, Int(t, "stealTries", 0)),
                     recentEarly = Math.Max(0, Int(t, "recEarly", 0)), recentLate = Math.Max(0, Int(t, "recLate", 0)),
                     recentJumpers = Math.Max(0, Int(t, "recJumpers", 0)), recentShortReaches = Math.Max(0, Int(t, "recShort", 0)),
+                    chaseDowns = Math.Max(0, Int(t, "chase", 0)), clutchMakes = Math.Max(0, Int(t, "clutch", 0)),
+                    bestGreenRun = Math.Max(0, Int(t, "greenRun", 0)),
+                    blowoutWins = Math.Max(0, Int(t, "blowW", 0)), blowoutLosses = Math.Max(0, Int(t, "blowL", 0)),
                 };
                 var pr = Obj(o, "practice");
                 d.practice = new PracticeBests

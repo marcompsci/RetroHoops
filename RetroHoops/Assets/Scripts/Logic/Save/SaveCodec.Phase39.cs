@@ -80,7 +80,7 @@ namespace CallerRetroBall.Logic
         {
             s = s ?? new SettingsData();
             return new Dictionary<string, object> { ["stick"] = s.stickSize, ["dead"] = s.stickDeadZone, ["haptic"] = s.hapticStrength, ["smart"] = s.smartDifficulty,
-                ["opacity"] = s.controlsOpacity, ["fill"] = s.fillScreen, ["preset"] = s.controlPreset };
+                ["opacity"] = s.controlsOpacity, ["fill"] = s.fillScreen, ["preset"] = s.controlPreset, ["greenBuzz"] = s.greenBuzz };
         }
 
         private static void DecodeFeel(SettingsData s, Dictionary<string, object> o)
@@ -90,6 +90,7 @@ namespace CallerRetroBall.Logic
             int migrated = string.IsNullOrEmpty(s.controlLayout) ? ControlLayout.Spread : ControlLayout.Classic;
             if (o == null) { s.controlPreset = migrated; return; }
             s.controlPreset = o.ContainsKey("preset") ? ControlLayout.ClampPreset(Int(o, "preset", 0)) : migrated;
+            s.greenBuzz = Bool(o, "greenBuzz", false);
             s.stickSize = ControlFeel.Clamp(Int(o, "stick", 1));
             s.stickDeadZone = ControlFeel.Clamp(Int(o, "dead", 1));
             s.hapticStrength = ControlFeel.Clamp(Int(o, "haptic", 1));

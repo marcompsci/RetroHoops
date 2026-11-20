@@ -16,9 +16,9 @@ namespace CallerRetroBall.Logic
     /// </summary>
     public static class Tours
     {
-        /// <summary>I139 (19 Nov 2026): a new id so players who saw the last card see this one once.</summary>
-        public static readonly TourCard WhatsNew = new TourCard("tour.whats_new_126", "NEW IN RETRO HOOPS",
-            "Dunkers really hang on the rim now: they grab it, swing, do a chin-up and drop. The buttons are spread out with bigger touch areas, fade when the play is under them, and STEAL shows when you can reach again. Want the old arc? Settings ► CONTROL LAYOUT ► CLASSIC.");
+        /// <summary>I188 (20 Nov 2026): a new id so players who saw the last card see this one once.</summary>
+        public static readonly TourCard WhatsNew = new TourCard("tour.whats_new_176", "NEW IN RETRO HOOPS",
+            "Dunk on someone for a POSTER, chase down blocks from behind, hit ICE COLD buckets late and lock in GREEN streaks. The SHOP has designed courts and gear, LOYALTY COURTS reward days in a row, and weekends play the Daily on a shop court. Check PLAY ► CAREER STATS.");
         public static readonly TourCard TwoPhones = new TourCard("tour.two_phones", "TWO PHONES",
             "Each player on their own iPhone, side by side. One phone hosts and picks both teams; the other joins. No internet needed, just Wi-Fi or Bluetooth on.");
         public static readonly TourCard Live = new TourCard("tour.live", "RETRO HOOPS LIVE",

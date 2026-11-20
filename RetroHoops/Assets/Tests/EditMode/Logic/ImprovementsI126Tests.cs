@@ -420,7 +420,7 @@ namespace CallerRetroBall.Tests
             foreach (var w in new[] { "SPREAD", "CLASSIC", "CONTROL LAYOUT", "TOO CLOSE", "OVERLAPPING", "SIZE", "READY...", "MISSED", Tours.WhatsNew.Body,
                                       "SPREAD gives each button more room so your thumb finds the right one. CLASSIC is the older, tighter arc. Picking one clears CUSTOMIZE CONTROLS." })
                 Assert.IsTrue(Loc.Has(w), w);
-            Assert.AreEqual("tour.whats_new_126", Tours.WhatsNew.Id);
+            Assert.IsTrue(Tours.WhatsNew.Id.StartsWith("tour.whats_new_", System.StringComparison.Ordinal), "a later card (I188) replaced I139's");
         }
     }
 }

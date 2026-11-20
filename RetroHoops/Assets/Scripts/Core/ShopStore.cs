@@ -70,6 +70,20 @@ namespace CallerRetroBall.Core
             return p != null ? p.PriceFallback : "";
         }
 
+        /// <summary>I194: true once the App Store has sent at least one price (false offline, or before the products exist).</summary>
+        public static bool PricesLoaded
+        {
+            get
+            {
+#if UNITY_IOS && !UNITY_EDITOR
+                foreach (var id in Shop.ProductIds()) if (!string.IsNullOrEmpty(RetroShop_Price(id))) return true;
+                return false;
+#else
+                return true;
+#endif
+            }
+        }
+
         public static ShopBuyState BuyState
         {
             get

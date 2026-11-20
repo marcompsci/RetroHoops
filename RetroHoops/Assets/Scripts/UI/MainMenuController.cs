@@ -475,8 +475,11 @@ namespace CallerRetroBall.UI
                 if ((court.circuit == CourtCircuit.Blacktop || court.circuit == CourtCircuit.Holiday) && WorldAtlas.CourtStamped(App.Career, court.id)) courts.Add(court.id);
             foreach (var id in new[] { DefaultContent.SecretCourtId, DefaultContent.BossCourtId })
                 if (Secrets.IsUnlocked(App.Career.secrets, id)) courts.Add(id);
+            // I186 SURPRISE ME: one of the courts above, picked at tip-off.
+            const string surprise = "?surprise";
+            if (courts.Count > 2) courts.Add(surprise);
             {
-                var courtNames = courts.ConvertAll(id => id == null ? "HOME" : WorldAtlas.CourtLabel(id, c.Court(id).displayName)).ToArray();
+                var courtNames = courts.ConvertAll(id => id == null ? "HOME" : id == surprise ? Loc.T("SURPRISE ME") : WorldAtlas.CourtLabel(id, c.Court(id).displayName)).ToArray();
                 UiControls.ChoiceRow(column, "COURT", courtNames, 0, i => courtChoice = i);
             }
 
@@ -506,7 +509,9 @@ namespace CallerRetroBall.UI
                     Mode = GameMode.QuickCall,
                     HomeTeamId = home.id,
                     AwayTeamId = away.id,
-                    CourtId = courts[courtChoice] ?? home.homeCourtId,
+                    CourtId = courts[courtChoice] == surprise
+                        ? SurpriseCourt.Pick(courts.FindAll(x => x != surprise), (uint)System.Environment.TickCount) ?? home.homeCourtId
+                        : courts[courtChoice] ?? home.homeCourtId,
                     DifficultyId = difficulties[diffIndex].id,
                     RulesOverride = HouseRules.Apply(houseBase, house),
                 };
@@ -551,6 +556,18 @@ namespace CallerRetroBall.UI
                 }
             }
 
+            // I189 + I190: the free court you're working toward, and this weekend's court.
+            int loyalNext = Loyalty.DaysToNext(career), loyalPicks = Loyalty.Available(career);
+            if (loyalPicks > 0)
+                UiKit.Size(UiKit.Label(column, Loc.T("LOYALTY COURT") + ":  " + Loc.T("you have a free court to pick in the SHOP!"), 28f, Theme.Gold, TextAlignmentOptions.Center, true), 46f);
+            else if (loyalNext > 0)
+                UiKit.Size(UiKit.Label(column, Loc.T("LOYALTY COURT") + ":  " + loyalNext + " " + Loc.T(loyalNext == 1 ? "more day in a row for a free court of your choice." : "more days in a row for a free court of your choice."),
+                                       24f, Theme.Muted, TextAlignmentOptions.Center), 46f);
+            string weekendCourt = WeekendCourt.CourtFor(DailyChallenges.DayNumber(System.DateTime.Now));
+            if (weekendCourt != null && App.Catalog.Court(weekendCourt) != null)
+                UiKit.Size(UiKit.Label(column, Loc.T("WEEKEND COURT") + ":  " + App.Catalog.Court(weekendCourt).displayName.ToUpperInvariant() + "  ·  " + Loc.T("free in today's DAILY CHALLENGE"),
+                                       24f, Theme.Cyan, TextAlignmentOptions.Center, true), 46f);
+
             Section(column, "STORY");
             var story = career.story ?? new StorySaveData();
             Mode(column, "SUMMER STORY", story.finished ? "Sunburst champions. Replay any chapter."
@@ -587,6 +604,8 @@ namespace CallerRetroBall.UI
             Mode(column, "HOLIDAY GAMES", "Christmas, Halloween, Easter and Fourth of July courts.", () => ShowHolidays(), ButtonStyle.Secondary);
 
             Section(column, "CAREERS");
+            // I185 CAREER STATS.
+            Mode(column, "CAREER STATS", Loc.T("Everything you've done: posters, chase-downs, clutch buckets, steals and more."), ShowCareerStats, ButtonStyle.Ghost);
             var lg = career.legacy;
             Mode(column, "LEGACY", lg != null && lg.active ? Legacy.StageName(lg).ToLowerInvariant() + "  ·  age " + lg.age
                 : "Your player's career: high school, college, the draft, the pros, the Hall of Fame.", () =>

@@ -796,3 +796,36 @@ Logic lives in `Logic/Progression/Shop.cs`. The App Store bridge is `Core/ShopSt
 **Checks:** logic suite 1,265 of 1,265 pass. UnityCheck has 0 errors, the strict text audit is clean, and the App Store audit passes 73 of 73.
 
 **Not seen on a phone yet.**
+
+### Improvements I176–I195: chase-downs, clutch buckets, GREEN runs and polish (20 Nov 2026)
+
+- **I176 CHASE-DOWN BLOCK:** a block by a defender who was further from the rim than the shooter (coming from behind). It gets a callout, a heavy buzz and a highlight, and it's counted.
+- **I177 ICE COLD:** a bucket in the last 5 seconds of a clock game that ties it or puts your team in front. It gets a callout, the crowd and a highlight, and it's counted.
+- **I178 LOCKED IN:** three or more GREEN jumpers in a row by the same shooter. Layups and dunks in between don't break the run. The best run is kept on the career.
+- **I179 FEEL THE GREEN** (Settings, off by default): a light buzz the moment your shot meter enters the GREEN window.
+- **I180 BLOCK RING:** on defence, the SHOOT/BLOCK button shows the jump recovering, the same way STEAL does.
+- **I181 BUTTON HINTS:**
+  - PASS without the ball says CALLING FOR IT.
+  - SWITCH when you're already guarding the ball says ALREADY ON THE BALL.
+- **I182 DIFFICULTY NUDGE:** after three Quick Call wins in a row by 8 or more, the post-game offers the next difficulty up. Three losses by 8 or more in a row offer the one below. One tap changes it.
+- **I183 SHARE RESULT:** the post-game can share a plain-text result through the share sheet: score, court, your line and the play of the game.
+- **I184 PLAY OF THE GAME:** the post-game names it (POSTERIZED!, ICE COLD!, CHASE-DOWN!, ...).
+- **I185 CAREER STATS** (PLAY ▸ CAREERS): everything the career counts, including the new numbers and percentages.
+- **I186 SURPRISE ME:** a Quick Call court choice that picks one of your courts at tip-off.
+- **I187 COMMENTARY:** new lines for chase-downs, clutch buckets and green runs.
+- **I188 WHAT'S NEW:** a new card, shown once to returning players.
+- **I189 LOYALTY ON THE PLAY MENU:** how many days until your next free court, or that a pick is waiting.
+- **I190 WEEKEND COURT ON THE PLAY MENU:** the shop court in today's Daily Challenge.
+- **I191 MAKE HOME:** in the SHOP, an owned or loyalty court can become your own team's home court.
+- **I192 WEAR IT:** puts on a whole owned gear pack in one tap.
+- **I193 LOW MEMORY:** the SHOP's court and gear pictures are freed when iOS runs low on memory.
+- **I194 OFFLINE SHOP:** if the App Store sends no prices, the SHOP says so plainly.
+- **I195 SAVES, SPANISH, TESTS:**
+  - New totals and the FEEL THE GREEN setting save.
+  - 30 new Spanish lines.
+  - `ImprovementsI176Tests` has 12 tests.
+  - One older test was updated: the I139 what's-new id test now accepts later cards.
+
+**Checks:** logic suite 1,277 of 1,277 pass. UnityCheck has 0 errors, the strict text audit is clean, and the App Store audit passes 73 of 73.
+
+**Not seen on a phone yet.**

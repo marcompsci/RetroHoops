@@ -398,6 +398,7 @@ namespace CallerRetroBall.Gameplay
                 _daily = DailyChallenges.For(day, catalog);
 
             var court = catalog.Court(_request.CourtId) ?? catalog.Court(setup.TeamA.homeCourtId);
+            _courtName = court?.displayName;
             BuildWorld(court, setup);
 
             var settings = App.Career?.settings;
@@ -945,7 +946,11 @@ namespace CallerRetroBall.Gameplay
                 if (live && _match.HumanHasBall && !_match.MustClear && _match.ChargingIndex < 0 && _buffer.Consume(ActionButton.Shoot, now))
                     input.ShootPressed = true;
                 if (live && (_match.HumanHasBall || _match.HumanTeamHasBall) && _match.ChargingIndex < 0 && _buffer.Consume(ActionButton.Pass, now))
+                {
                     input.PassPressed = true;
+                    // I181: without the ball, PASS asks a teammate for it: say so on the button.
+                    if (!_match.HumanHasBall) _controls.Pass.ShowHint("CALLING FOR IT", 0.7f);
+                }
                 bool canFinish = _match.Phase == MatchPhase.Live && _match.HumanHasBall && !_match.MustClear && !_match.MustInbound && _match.ChargingIndex < 0;
                 if (canFinish && _buffer.Consume(ActionButton.Dunk, now)) input.DunkPressed = true;
                 if (canFinish && _buffer.Consume(ActionButton.Layup, now)) input.LayupPressed = true;
@@ -1247,6 +1252,8 @@ namespace CallerRetroBall.Gameplay
                 string title = _match.Winner < 0 ? "TIE" : ((_match.Winner == 0 ? home : away).ToUpperInvariant() + " WIN" + (_watch.Setup.IsCup ? "S" : ""));
                 // The full post-game: box scores, PLAY OF THE GAME and SHARE HIGHLIGHT (plus SAVE GAME TAPE when watching live).
                 _hud.HasPlayOfTheGame = _recorder.BestPlay != null;
+                _hud.KeyPlay = _recorder.BestPlay?.Label; // I184
+                _hud.CourtName = _courtName;              // I183
                 _hud.HighlightCount = _recorder.Highlights.Count;
                 _hud.ShowPostGame(title, MatchSummary.From(_match, _request.Mode, "versus"), default, false,
                                   _watch.IsTape ? "End of tape. REMATCH watches it again." : "Stay here: if they play again, you'll watch that game too.",
@@ -1942,6 +1949,23 @@ namespace CallerRetroBall.Gameplay
                     case MatchEventType.Posterized:
                         OnPoster(e, human);
                         break;
+                    case MatchEventType.ChaseDown:
+                        // I176: the block from behind.
+                        _hud.Toast(e.Team == human || Versus ? Loc.T("CHASE-DOWN BLOCK!") : Loc.T("CHASED DOWN"), 1.2f);
+                        if (e.Team == human) Haptics.Heavy();
+                        NoteBigPlay(e.PlayerIndex, "CHASE-DOWN!", 110);
+                        break;
+                    case MatchEventType.Clutch:
+                        // I177: a tying or go-ahead bucket at the death.
+                        _hud.Toast(e.Team == human || Versus ? Loc.T("ICE COLD!") : Loc.T("THEY HIT IT LATE"), 1.3f);
+                        Sfx(SfxId.CrowdOooh, 1f);
+                        if (e.Team == human) Haptics.Heavy();
+                        NoteBigPlay(e.PlayerIndex, "ICE COLD!", 130);
+                        break;
+                    case MatchEventType.GreenStreak:
+                        // I178: GREEN after GREEN.
+                        if (e.Team == human || Versus) _hud.Toast(Loc.T("LOCKED IN") + "  ·  " + e.Value + " " + Loc.T("GREENS IN A ROW"), 1.1f);
+                        break;
                     case MatchEventType.Pickpocket:
                         _hud.Toast(e.Team == human || Versus ? "PICKPOCKET!  " + e.Value + " " + Loc.T("IN A ROW") : "PICKED AGAIN", 1.1f);
                         if (e.Team == human) Haptics.Success();
@@ -2347,6 +2371,7 @@ namespace CallerRetroBall.Gameplay
 
         private int _rimShaken;
         private int _swingSide;
+        private string _courtName;
 
         private void SyncRimDip(int dipPx, int shakePx)
         {
@@ -3125,6 +3150,10 @@ namespace CallerRetroBall.Gameplay
 
             // Rise and the Classic continue their run instead of offering a rematch.
             _hud.HasPlayOfTheGame = _recorder.BestPlay != null;
+            _hud.KeyPlay = _recorder.BestPlay?.Label; // I184
+            _hud.CourtName = _courtName;              // I183
+            _hud.Nudge = summary.mode == GameMode.QuickCall
+                ? DifficultyNudge.Suggest(App.Career?.totals, CityCrews.Pickable(App.Catalog), App.Career?.settings.difficultyId) : null; // I182
             _hud.HighlightCount = _recorder.Highlights.Count;
             bool run = IsRun;
             _hud.FairPlayLine = _fair.Line(_match.Setup.HumanTeam, Loc.T("YOU"), (_match.Setup.HumanTeam == 0 ? _match.Setup.TeamB : _match.Setup.TeamA)?.abbreviation ?? "CPU");
@@ -3523,6 +3552,16 @@ namespace CallerRetroBall.Gameplay
             _recorder.OfferBestPlay("POSTERIZED!", 140);
             OfferPhoto("POSTERIZED!", 140);
             _lastHighlight = _recorder.Snapshot(3.5f, "POSTERIZED!", 140);
+            if (_link == null) _hud.OfferReplay(3f);
+        }
+
+        /// <summary>I176 + I177: a big play by a person becomes the game's highlight (replay and photo offer).</summary>
+        private void NoteBigPlay(int player, string label, int score)
+        {
+            if (_practice != null || _horse != null || _tutorial != null || Demo || player < 0 || !_match.IsHumanControlled(player)) return;
+            _recorder.OfferBestPlay(label, score);
+            OfferPhoto(label, score);
+            _lastHighlight = _recorder.Snapshot(3.5f, label, score);
             if (_link == null) _hud.OfferReplay(3f);
         }
 

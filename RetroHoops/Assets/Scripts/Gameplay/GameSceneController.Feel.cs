@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using CallerRetroBall.Controls;
+using CallerRetroBall.Core;
 using CallerRetroBall.Logic;
 using UnityEngine;
 
@@ -31,12 +32,40 @@ namespace CallerRetroBall.Gameplay
             // I134: the dark sweep on STEAL while your reach recovers.
             bool defending = _match.OffenseTeam != _match.Setup.HumanTeam && _match.ControlledIndex >= 0;
             _controls.Defense.SetCooldown(defending ? _match.StealWait01(_match.ControlledIndex) : 0f);
+            // I180: BLOCK (SHOOT on defence) shows its jump recovery the same way.
+            _controls.Shoot.SetCooldown(defending ? _match.JumpWait01(_match.ControlledIndex) : 0f);
+            // I181: SWITCH with nobody to switch with says so.
+            if (_match.SwitchRefusedAt > _lastSwitchRefused)
+            {
+                _lastSwitchRefused = _match.SwitchRefusedAt;
+                if (defending) _controls.Pass.ShowHint("ALREADY ON THE BALL", 0.8f);
+            }
+            SyncGreenBuzz();
             if (_controls2 != null && _match.SecondControlledIndex >= 0)
             {
                 int p2 = _match.SecondControlledIndex;
                 bool p2Defending = _match.OffenseTeam != _match.Players[p2].Team;
                 _controls2.Defense.SetCooldown(p2Defending ? _match.StealWait01(p2) : 0f);
+                _controls2.Shoot.SetCooldown(p2Defending ? _match.JumpWait01(p2) : 0f);
             }
+        }
+
+        private float _lastSwitchRefused = -99f;
+        private bool _inGreen;
+
+        /// <summary>
+        /// I179 FEEL THE GREEN (Settings, off by default): a light buzz the moment your shot meter enters the GREEN window,
+        /// so the release can be timed by feel as well as by eye.
+        /// </summary>
+        private void SyncGreenBuzz()
+        {
+            int i = _match.ChargingIndex;
+            bool on = App.Career != null && App.Career.settings.greenBuzz && i >= 0 && _match.IsHumanControlled(i);
+            if (!on) { _inGreen = false; return; }
+            var shooter = _match.Players[i];
+            bool green = ShotModel.Grade(_match.ChargeMeter, shooter.Def.attributes.shooting, _match.TuningFor(i)) == TimingGrade.Green;
+            if (green && !_inGreen) Core.Haptics.Light();
+            _inGreen = green;
         }
 
         /// <summary>I138: after your reach, a word over STEAL when it didn't work (TOO FAR, GET CLOSER, MISSED).</summary>

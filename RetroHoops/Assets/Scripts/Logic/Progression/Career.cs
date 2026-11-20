@@ -118,6 +118,7 @@ namespace CallerRetroBall.Logic
             t.games++;
             if (summary.HumanWon) t.wins++;
             else t.losses++;
+            DifficultyNudge.AddGame(t, summary); // I182
             var line = summary.HumanLine?.stats;
             if (line != null)
             {
@@ -134,6 +135,9 @@ namespace CallerRetroBall.Logic
                 t.posters += line.posters;
                 t.rimHangs += line.rimHangs;
                 t.stealAttempts += line.stealAttempts;
+                t.chaseDowns += line.chaseDowns;
+                t.clutchMakes += line.clutchMakes;
+                t.bestGreenRun = Math.Max(t.bestGreenRun, line.bestGreenRun);
                 Habits.AddGame(t, line); // I162 + I163
                 if (data.shotChart == null) data.shotChart = new ShotChartData();
                 var before = ShotCharts.Copy(data.shotChart);

@@ -90,6 +90,15 @@ namespace CallerRetroBall.Logic
                                       "OH NO, " + victim + "! " + who + " HAS NO MERCY!"));
                         break;
                     }
+                    case MatchEventType.ChaseDown:
+                        Offer(5, Pick("chase", "CHASE-DOWN BLOCK! " + who + " CAME FROM NOWHERE!", "WHO SAID THAT WAS AN EASY TWO? " + who + " PINS IT!", who + " HUNTS IT DOWN FROM BEHIND!"));
+                        break;
+                    case MatchEventType.Clutch:
+                        Offer(5, Pick("clutch", "ICE IN THE VEINS! " + who + " WITH THE BIG ONE!", who + " WANTED THAT SHOT, AND HE HIT IT!", "CLUTCH! " + who + " DELIVERS LATE!"));
+                        break;
+                    case MatchEventType.GreenStreak:
+                        if (e.Value == 3) Offer(3, Pick("locked", who + " IS LOCKED IN!", "THREE GREENS IN A ROW FOR " + who + "!", who + " CAN'T MISS THE WINDOW!"));
+                        break;
                     case MatchEventType.Pickpocket:
                         Offer(4, Pick("pickpocket", who + " PICKS ANOTHER POCKET!", "CHECK YOUR WALLET! " + who + " AGAIN!", who + " HAS QUICK HANDS TONIGHT!"));
                         break;

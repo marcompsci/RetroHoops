@@ -130,6 +130,9 @@ namespace CallerRetroBall.UI
             UiControls.ToggleRow(column, "COMMENTARY (MIC TALLY)", s.commentary, v => { s.commentary = v; Save(); });
             UiControls.ToggleRow(column, "LIVE STAT LINE", s.liveStatLine, v => { s.liveStatLine = v; Save(); });
             UiControls.ToggleRow(column, "FORGIVING METER", s.forgivingMeter, v => { s.forgivingMeter = v; Save(); });
+            // I179: time the release by feel too.
+            UiControls.ToggleRow(column, "FEEL THE GREEN", s.greenBuzz, v => { s.greenBuzz = v; Save(); if (v) Haptics.Light(); });
+            UiKit.Size(UiKit.Label(column, "FEEL THE GREEN: a light buzz the moment the shot meter enters the GREEN window. Needs HAPTICS on.", 28f, Theme.Muted), 70f);
             UiControls.ToggleRow(column, "PLAY-BY-PLAY VOICE (THE STREETS)", s.playByPlayVoice, v => { s.playByPlayVoice = v; Save(); if (!v) Core.Speech.Stop(); });
             UiKit.Size(UiKit.Label(column, "Full Court always plays sideways. Turn this on to play every mode sideways (2 Player stays upright).", 28f, Theme.Muted), 80f);
             UiControls.ToggleRow(column, "TAP TO SHOOT", s.tapToShoot, v => { s.tapToShoot = v; Save(); });
