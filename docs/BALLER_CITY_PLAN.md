@@ -686,3 +686,75 @@ Omari: "I want the players to actually hang from the rim when they dunk, make th
 - The balance probe was re-run (AI vs AI): the I50 range tests pass, with 1.3–2.2 steals per game.
 
 **Not seen on a phone yet:** the hang art, the new layout, the fades and the press feel have only been checked by tests and by rendering the frames and the layout offline.
+
+### Improvements I141–I155: the SHOP (20 Nov 2026)
+
+Omari asked for in-game purchases (cooler gear, designed courts, courts he can customize) so players can make the game their own and the studio earns enough to keep the game going.
+
+**What other retro sports games sell** (checked on the App Store, 20 Nov 2026):
+- Retro Bowl: a $0.99 Unlimited unlock, plus coaching-credit packs from $0.99 to $29.99.
+- Retro Goal: a $1.99 Unlimited unlock, plus "Bux" packs and players.
+- Mini Basketball and Basketball Superstars: gem and coin packs, season passes, random items or loot boxes, and ads with paid ad removal.
+
+**Retro Hoops' approach:** cosmetic only, nothing random, no ads, no timers, one-time unlocks that can be restored, and the free game stays complete.
+
+Logic lives in `Logic/Progression/Shop.cs`. The App Store bridge is `Core/ShopStore.cs` plus `Plugins/iOS/RetroShop.swift`. The screen is `UI/MainMenuController.Shop.cs`.
+
+- **I141 SHOP CATALOG:** 13 App Store products and the rules for what each one unlocks. Ownership comes from the App Store, and the career keeps the last answer.
+- **I142 STOREKIT BRIDGE:** many products at once.
+  - Ownership comes from `currentEntitlements`.
+  - Tips are counted once each (by transaction id).
+  - Unfinished transactions and Ask to Buy approvals are picked up on launch.
+  - RESTORE runs `AppStore.sync()`.
+  - Pro keeps its own bridge.
+- **I143 COURT PACKS:** 4 packs of 3 designed courts at $1.99 each: NEON NIGHTS, COAST TO COAST, CITY LIGHTS and LEGENDS ARENA. Each court has its own floor, sky, stands and centre logo, and it can be your home court once owned.
+- **I144 NEW FLOORS:** CHECKER, SUNBURST and PARQUET, drawn by the court generator.
+- **I145 COURT DESIGNER PLUS ($2.99):**
+  - 8 court slots (3 free).
+  - The three new floors, 6 new skies, and every centre-court logo (the season logos too).
+  - The free builder is unchanged. Picking a Plus option offers the shop.
+- **I146 GEAR PACKS:** 4 packs of 5 items (two jerseys, shoes, a banner and a gear piece): STREET KINGS, ARCADE GLOW, OLD SCHOOL '79 and CHAMPION GOLD. They show in the Locker Room as IN THE SHOP and are never sold for SP or street cash.
+- **I147 SHOP SCREEN:**
+  - Opened from the main menu and from PLAY.
+  - Court pictures are drawn by the real generator.
+  - Every price comes with plain terms underneath.
+  - TERMS OF USE, PRIVACY POLICY and RESTORE PURCHASES are on the screen.
+- **I148 TRY BEFORE YOU BUY:** one free Quick Call a day on each shop court you don't own. Courts you own get a PLAY button.
+- **I149 COLLECTION AND SPOTLIGHT:**
+  - A collection count, out of 32 items.
+  - A weekly spotlight pack, on a fixed rotation. Every pack comes back at the same price, with no timer.
+- **I150 TIP JAR:** three consumable tips ($0.99, $2.99, $9.99). The first tip puts the Studio Supporter banner in your locker.
+- **I151 ALL-ACCESS ($12.99):** everything in the shop plus Retro Hoops Pro. Bought separately, the same items cost about $23.90.
+- **I152 FAIR-PLAY GUARDRAILS:**
+  - Cosmetic only.
+  - No random items, no ads, no countdowns.
+  - Refunds take gear back, and anything equipped falls back to a default.
+  - Ask to Buy is handled.
+- **I153 APP STORE AUDIT:**
+  - 9 new checks:
+    - The SHOP screen shows Terms of Use, Privacy Policy and Restore Purchases (3 checks).
+    - The terms are plain.
+    - Nothing random.
+    - Every product id is listed in the docs.
+    - Only tips are consumable.
+    - Transactions are finished and updates are listened for.
+    - No ads or countdowns.
+  - The currency check now catches currency product ids built from the prefix too.
+  - 2 new manual items: create the 13 products in App Store Connect, and do a sandbox test.
+- **I154 APP STORE CONNECT SHEET:** `docs/APP_STORE.md` now has an "In-app purchases" table (ids, types, suggested prices). The price line, description, age-rating row and review notes no longer say Pro is the only purchase.
+- **I155 SAVES, SPANISH, TESTS:**
+  - Shop ownership, tips and tries save. Junk ids are dropped on load.
+  - 102 new Spanish lines.
+  - `ImprovementsI141Tests` has 15 tests.
+  - One older test was updated: the builder now allows every centre-court logo the generator draws.
+
+**Checks:**
+- Logic suite: 1,247 of 1,247 pass.
+- UnityCheck: 0 errors.
+- Strict text audit: clean.
+- App Store audit: 73 of 73.
+
+**Not verified:**
+- `RetroShop.swift` hasn't been compiled. There is no Swift compiler in the cloud workspace, so the first Xcode build will be its first compile.
+- No purchase has been made, not even in the sandbox.
+- The 13 products don't exist in App Store Connect yet. Until they do, the SHOP shows fallback prices and BUY reports that the App Store didn't return the item.

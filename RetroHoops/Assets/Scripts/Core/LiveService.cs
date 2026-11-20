@@ -81,6 +81,8 @@ namespace CallerRetroBall.Core
         {
             get
             {
+                // I151: ALL-ACCESS from the SHOP includes Pro.
+                if (Shop.GivesPro(App.Career)) return true;
                 var s = State;
                 if (s == StoreState.Owned) return true;
                 if (s == StoreState.NotOwned) return false;
@@ -94,8 +96,9 @@ namespace CallerRetroBall.Core
             var d = App.Career;
             if (d == null) return;
             var s = State;
-            if (s != StoreState.Owned && s != StoreState.NotOwned) return;
-            if (Pro.Apply(d, App.Catalog, s == StoreState.Owned)) App.SaveCareer();
+            bool bundle = Shop.GivesPro(d);
+            if (s != StoreState.Owned && s != StoreState.NotOwned && !bundle) return;
+            if (Pro.Apply(d, App.Catalog, s == StoreState.Owned || bundle)) App.SaveCareer();
         }
 
         public static void Buy()

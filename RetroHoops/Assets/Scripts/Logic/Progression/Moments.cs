@@ -160,7 +160,7 @@ namespace CallerRetroBall.Logic
                 case "cosmetic.gear.ink_sleeve": return GearParts.Ink;
                 case "cosmetic.gear.goggles": return GearParts.Goggles;
                 case "cosmetic.gear.vet_package": return GearParts.Goggles | GearParts.LegSleeves;
-                default: return GearParts.None;
+                default: return Shop.GearPartsOf(cosmeticId); // I146: the shop's gear packs
             }
         }
     }

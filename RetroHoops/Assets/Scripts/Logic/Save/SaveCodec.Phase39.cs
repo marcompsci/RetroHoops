@@ -34,13 +34,22 @@ namespace CallerRetroBall.Logic
 
         // Phase 41: Retro Hoops Pro (cached App Store answer).
         private static object EncodePro(CareerSaveData d) =>
-            new Dictionary<string, object> { ["owned"] = d.proOwned, ["granted"] = d.proGranted };
+            new Dictionary<string, object>
+            {
+                ["owned"] = d.proOwned, ["granted"] = d.proGranted,
+                // I141-I150: the SHOP (cached App Store answer, tips, free tries).
+                ["shop"] = Strings(d.shopOwned ?? new List<string>()), ["tips"] = d.shopTips, ["tries"] = Strings(d.shopTries ?? new List<string>()),
+            };
 
         private static void DecodePro(CareerSaveData d, Dictionary<string, object> o)
         {
             if (o == null) return;
             d.proOwned = Bool(o, "owned", false);
             d.proGranted = Bool(o, "granted", false);
+            d.shopOwned = StrList(o, "shop").FindAll(id => Shop.Product(id) != null && !Shop.Product(id).Consumable);
+            d.shopTips = Math.Max(0, Int(o, "tips", 0));
+            d.shopTries = StrList(o, "tries");
+            while (d.shopTries.Count > 40) d.shopTries.RemoveAt(0);
         }
 
         // 12 Oct 2026: BETA FEEDBACK profile.

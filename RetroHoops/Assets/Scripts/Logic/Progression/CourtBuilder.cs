@@ -41,11 +41,13 @@ namespace CallerRetroBall.Logic
     /// </summary>
     public static class CourtBuilder
     {
-        public const int Slots = 3;
+        /// <summary>I145: eight slots in all; three are free and the rest come with COURT DESIGNER PLUS (see <see cref="Shop.CourtSlots"/>).</summary>
+        public const int Slots = 8;
         public const string IdPrefix = "court.custom.";
         public const int MaxName = 16;
 
-        public static readonly string[] FloorNames = { "ASPHALT", "HARDWOOD", "NEON GRID", "TILES", "RUBBER" };
+        /// <summary>The first five are free; CHECKER, SUNBURST and PARQUET come with COURT DESIGNER PLUS (I144/I145).</summary>
+        public static readonly string[] FloorNames = { "ASPHALT", "HARDWOOD", "NEON GRID", "TILES", "RUBBER", "CHECKER", "SUNBURST", "PARQUET" };
         public static readonly string[] StandNames = { "CROWD", "FENCE", "BRICK WALL" };
         public static readonly string[] CrowdNames = { "EMPTY", "SPARSE", "HALF FULL", "BUSY", "PACKED" };
 
@@ -59,6 +61,13 @@ namespace CallerRetroBall.Logic
             new SkyPreset("NEON", "#10002B", "#4CC9F0"),
             new SkyPreset("DAWN", "#5A189A", "#FFD166"),
             new SkyPreset("ARENA", "#1A1A2E", "#3A3A55"),
+            // I145: COURT DESIGNER PLUS skies.
+            new SkyPreset("AURORA", "#0B1D3A", "#3DDC97"),
+            new SkyPreset("VAPOR", "#2D00F7", "#F20089"),
+            new SkyPreset("DEEP SEA", "#03045E", "#00B4D8"),
+            new SkyPreset("EMBER", "#370617", "#F48C06"),
+            new SkyPreset("MINT", "#1B4332", "#B7E4C7"),
+            new SkyPreset("GOLD HOUR", "#7F5539", "#FFD166"),
         };
 
         public static string Id(int slot) => IdPrefix + slot;
@@ -92,7 +101,7 @@ namespace CallerRetroBall.Logic
             d.sky = Math.Max(0, Math.Min(Skies.Length - 1, d.sky));
             d.crowd = Math.Max(0, Math.Min(CrowdNames.Length - 1, d.crowd));
             d.stands = Math.Max(0, Math.Min(StandNames.Length - 1, d.stands));
-            d.logoMotif = Math.Max(-1, Math.Min(10, d.logoMotif));
+            d.logoMotif = Math.Max(-1, Math.Min((int)LogoMotif.Flag, d.logoMotif));
             d.logoShape = Math.Max(0, Math.Min(4, d.logoShape));
         }
 
@@ -147,16 +156,17 @@ namespace CallerRetroBall.Logic
         {
             var rng = new SeededRandom(seed == 0 ? 1u : seed);
             var d = new CustomCourtData { built = false, name = name };
-            d.floorStyle = rng.Range(0, FloorNames.Length);
+            // Free options only (Plus options are picked by hand).
+            d.floorStyle = rng.Range(0, Shop.FreeFloors);
             var floor = Kits.Palette64[rng.Range(0, Kits.Palette64.Length)];
             d.floor = Kits.Pack(floor);
             var lines = floor.Luminance > 0.5 ? RgbColor.FromHex("#1A1A1F") : RgbColor.FromHex("#F4F1DE");
             d.lines = Kits.Pack(lines);
             d.paint = Kits.Pack(Kits.Palette64[rng.Range(0, Kits.Palette64.Length)]);
-            d.sky = rng.Range(0, Skies.Length);
+            d.sky = rng.Range(0, Shop.FreeSkies);
             d.crowd = rng.Range(1, CrowdNames.Length);
             d.stands = rng.Range(0, StandNames.Length);
-            d.logoMotif = rng.Range(-1, 11);
+            d.logoMotif = rng.Range(-1, Shop.FreeMotifs);
             d.logoShape = rng.Range(0, 5);
             d.logoColor = Kits.Pack(Kits.Palette64[rng.Range(0, Kits.Palette64.Length)]);
             return d;

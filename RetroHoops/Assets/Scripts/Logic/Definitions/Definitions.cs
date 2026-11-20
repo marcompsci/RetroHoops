@@ -174,10 +174,11 @@ namespace CallerRetroBall.Logic
 
     public enum CourtCircuit { Blacktop = 0, League = 1, Practice = 2, /** Hidden courts unlocked by secrets: neon grid floor. */ Secret = 3,
         /** Seasonal courts for the Holiday Games (always open). */ Holiday = 4,
-        /** Courts you built in the Court Builder. */ Custom = 5 }
+        /** Courts you built in the Court Builder. */ Custom = 5,
+        /** I143: designed courts from the SHOP's court packs (playable once the pack is owned). */ Shop = 6 }
 
     /// <summary>How a court's floor is drawn (−1 on a court = pick from its circuit).</summary>
-    public enum FloorStyle { Asphalt = 0, Hardwood = 1, NeonGrid = 2, Tiles = 3, Rubber = 4 }
+    public enum FloorStyle { Asphalt = 0, Hardwood = 1, NeonGrid = 2, Tiles = 3, Rubber = 4, /** I144 (20 Nov 2026). */ Checker = 5, Sunburst = 6, Parquet = 7 }
 
     /// <summary>What's behind the baseline.</summary>
     public enum StandsStyle { Crowd = 0, Fence = 1, Brick = 2 }
@@ -298,6 +299,8 @@ namespace CallerRetroBall.Logic
         public RgbColor colorB;
         /// <summary>I30: sold only in this region's store, for street cash (null = the usual shops).</summary>
         public string store;
+        /// <summary>I146: comes in this SHOP pack (an App Store product id); not sold for SP or street cash.</summary>
+        public string shopPack;
 
         public string Id => id;
     }

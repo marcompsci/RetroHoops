@@ -106,8 +106,12 @@ namespace CallerRetroBall.Logic
         }
 
         /// <summary>Courts you can choose as home: every street and league court (not practice or hidden ones).</summary>
-        public static List<CourtDef> HomeCourts(ContentCatalog c) =>
-            c.Courts.FindAll(x => x.circuit == CourtCircuit.Blacktop || x.circuit == CourtCircuit.League || x.circuit == CourtCircuit.Custom);
+        public static List<CourtDef> HomeCourts(ContentCatalog c) => HomeCourts(c, null);
+
+        /// <summary>As above, plus the SHOP courts this career owns (I143).</summary>
+        public static List<CourtDef> HomeCourts(ContentCatalog c, CareerSaveData career) =>
+            c.Courts.FindAll(x => x.circuit == CourtCircuit.Blacktop || x.circuit == CourtCircuit.League || x.circuit == CourtCircuit.Custom
+                                  || (x.circuit == CourtCircuit.Shop && career != null && Shop.CourtOpen(career, x.id)));
 
         /// <summary>
         /// Puts (or refreshes) your team in the catalog so matches, logos and menus can find it, and

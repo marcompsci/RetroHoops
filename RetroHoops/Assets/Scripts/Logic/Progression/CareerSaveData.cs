@@ -325,6 +325,12 @@ namespace CallerRetroBall.Logic
         public int loginDay = -1, loginStreak, loginBest;
         /// <summary>Phase 41: last App Store answer for Retro Hoops Pro (a cache; the App Store decides), and whether its pass items were granted.</summary>
         public bool proOwned, proGranted;
+        /// <summary>I141: the SHOP's one-time unlocks the App Store last said are owned (product ids).</summary>
+        public List<string> shopOwned = new List<string>();
+        /// <summary>I150: tips given to the studio (count).</summary>
+        public int shopTips;
+        /// <summary>I148: free tries used on shop courts ("courtId@day", the last 40).</summary>
+        public List<string> shopTries = new List<string>();
         /// <summary>12 Oct 2026: the TestFlight tester's profile (see <see cref="BetaFeedback"/>).</summary>
         public BetaProfileData beta = new BetaProfileData();
         /// <summary>14 Oct 2026: the in-game phone (MUSIC playlist, agent texts, FEED).</summary>

@@ -74,6 +74,9 @@ namespace CallerRetroBall.Core
         /// <summary>Phase 41: set by the Rise hub (season 4 needs Pro) so the main menu opens the Retro Hoops Pro screen.</summary>
         public static bool OpenProOnMenu { get; set; }
 
+        /// <summary>I147: open the SHOP when the main menu loads (the Locker Room's shop items link here).</summary>
+        public static bool OpenShopOnMenu { get; set; }
+
         /// <summary>Set after a First Call Classic game so the main menu reopens the bracket.</summary>
         public static bool OpenClassicOnMenu { get; set; }
 

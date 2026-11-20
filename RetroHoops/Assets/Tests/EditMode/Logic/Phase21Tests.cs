@@ -609,7 +609,7 @@ namespace CallerRetroBall.Tests
             Assert.AreEqual(0, d.sky);
             Assert.AreEqual(4, d.crowd);
             Assert.AreEqual(CourtBuilder.StandNames.Length - 1, d.stands);
-            Assert.AreEqual(10, d.logoMotif);
+            Assert.AreEqual((int)LogoMotif.Flag, d.logoMotif, "I145 (20 Nov 2026): every logo the generator draws (the season ones come with Court Designer Plus)");
             Assert.AreEqual(0, d.logoShape);
             Assert.LessOrEqual(d.name.Length, CourtBuilder.MaxName);
             Assert.AreEqual(0x7FFF, d.floor & 0x7FFF);

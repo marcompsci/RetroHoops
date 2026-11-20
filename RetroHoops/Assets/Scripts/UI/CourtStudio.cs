@@ -42,18 +42,30 @@ namespace CallerRetroBall.UI
 
         public void Build()
         {
-            var slots = UiKit.Row(_content, 10f, "Slots");
-            UiKit.Size(slots, 90f);
+            // I145: eight slots in two rows; slots 4-8 come with COURT DESIGNER PLUS.
+            var career = App.Career;
+            int open = Shop.CourtSlots(career);
+            RectTransform slots = null;
             for (int i = 0; i < CourtBuilder.Slots; i++)
             {
+                if (i % 4 == 0)
+                {
+                    slots = UiKit.Row(_content, 10f, "Slots" + i);
+                    UiKit.Size(slots, 80f);
+                }
                 int slot = i;
                 var d = _drafts[i];
-                UiKit.Button(slots, (d.built ? d.name.ToUpperInvariant() : Loc.T("EMPTY") + " " + (i + 1)), () =>
+                bool locked = i >= open && !d.built;
+                UiKit.Button(slots, locked ? Loc.T("PLUS") + " " + (i + 1) : (d.built ? d.name.ToUpperInvariant() : Loc.T("EMPTY") + " " + (i + 1)), () =>
                 {
+                    if (locked) { NeedsPlus(); return; }
                     _slot = slot;
                     _rebuild();
-                }, i == _slot ? ButtonStyle.Primary : ButtonStyle.Ghost, 80f, 24f);
+                }, i == _slot ? ButtonStyle.Primary : ButtonStyle.Ghost, 70f, 22f);
             }
+            if (!Shop.DesignerPlusOwned(career))
+                UiKit.Size(UiKit.Label(_content, Loc.T("COURT DESIGNER PLUS adds 5 more court slots, the CHECKER, SUNBURST and PARQUET floors, 6 more skies and every centre-court logo."),
+                                       24f, Theme.Gold), 70f);
 
             var frame = UiKit.Panel(_content, new Color32(0x0B, 0x0B, 0x16, 255), name: "PreviewFrame");
             UiKit.Size(frame, 640f);
@@ -65,18 +77,35 @@ namespace CallerRetroBall.UI
             UiKit.Size(UiKit.Label(_content, "NAME", 30f, Theme.Muted, TextAlignmentOptions.Left, true), 40f);
             UiControls.TextField(_content, D.name, CourtBuilder.MaxName, v => { D.name = CustomTeams.Clean(v, CourtBuilder.MaxName, "My Court"); Changed(); });
 
-            UiControls.ChoiceRow(_content, "FLOOR", CourtBuilder.FloorNames, D.floorStyle, i => { D.floorStyle = i; Changed(); });
+            UiControls.ChoiceRow(_content, "FLOOR", PlusNames(CourtBuilder.FloorNames, Shop.FreeFloors), D.floorStyle, i =>
+            {
+                if (!Shop.FloorOpen(App.Career, i)) { NeedsPlus(); return; }
+                D.floorStyle = i;
+                Changed();
+            });
             ColorRow("FLOOR COLOUR", D.floor, v => D.floor = v);
             ColorRow("LINES", D.lines, v => D.lines = v);
             ColorRow("PAINT", D.paint, v => D.paint = v);
             UiControls.ChoiceRow(_content, "BEHIND", CourtBuilder.StandNames, D.stands, i => { D.stands = i; Changed(); });
             UiControls.ChoiceRow(_content, "CROWD", CourtBuilder.CrowdNames, D.crowd, i => { D.crowd = i; Changed(); });
             var skies = Array.ConvertAll(CourtBuilder.Skies, s => s.Name);
-            UiControls.ChoiceRow(_content, "SKY", skies, D.sky, i => { D.sky = i; Changed(); });
-            var logos = new string[CustomTeams.MotifNames.Length + 1];
+            UiControls.ChoiceRow(_content, "SKY", PlusNames(skies, Shop.FreeSkies), D.sky, i =>
+            {
+                if (!Shop.SkyOpen(App.Career, i)) { NeedsPlus(); return; }
+                D.sky = i;
+                Changed();
+            });
+            // I145: every motif the logo generator draws (the season ones with Plus).
+            var motifs = Enum.GetNames(typeof(LogoMotif));
+            var logos = new string[motifs.Length + 1];
             logos[0] = "NONE";
-            for (int i = 0; i < CustomTeams.MotifNames.Length; i++) logos[i + 1] = CustomTeams.MotifNames[i];
-            UiControls.ChoiceRow(_content, "CENTRE LOGO", logos, D.logoMotif + 1, i => { D.logoMotif = i - 1; Changed(); });
+            for (int i = 0; i < motifs.Length; i++) logos[i + 1] = motifs[i].ToUpperInvariant() + (i >= Shop.FreeMotifs ? " +" : "");
+            UiControls.ChoiceRow(_content, "CENTRE LOGO", logos, D.logoMotif + 1, i =>
+            {
+                if (i - 1 >= 0 && !Shop.MotifOpen(App.Career, i - 1)) { NeedsPlus(); return; }
+                D.logoMotif = i - 1;
+                Changed();
+            });
             UiControls.ChoiceRow(_content, "LOGO SHAPE", CustomTeams.ShapeNames, D.logoShape, i => { D.logoShape = i; Changed(); });
             ColorRow("LOGO COLOUR", D.logoColor, v => D.logoColor = v);
 
@@ -113,6 +142,22 @@ namespace CallerRetroBall.UI
             }
             UiKit.Size(UiKit.Label(_content, "Saved courts show up in Quick Call's court list and can be your team's home court (Locker Room ► TEAM).",
                                    26f, Theme.Muted), 80f);
+        }
+
+        /// <summary>Option names with a "+" on the ones that come with COURT DESIGNER PLUS.</summary>
+        private static string[] PlusNames(string[] names, int free)
+        {
+            var list = (string[])names.Clone();
+            for (int i = free; i < list.Length; i++) list[i] += " +";
+            return list;
+        }
+
+        /// <summary>I145: a Plus option was picked without Plus: say so, and offer the SHOP.</summary>
+        private void NeedsPlus()
+        {
+            UiControls.Dialog(Loc.T("COURT DESIGNER PLUS"), Loc.T(Shop.Product(Shop.DesignerPlus).Blurb),
+                ("SHOP", ButtonStyle.Primary, () => { App.OpenShopOnMenu = true; SceneFlow.GoTo(SceneNames.MainMenu); }),
+                ("NOT NOW", ButtonStyle.Ghost, () => _rebuild()));
         }
 
         private void ColorRow(string label, int value, Action<int> set)

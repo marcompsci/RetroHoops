@@ -88,6 +88,34 @@ namespace CallerRetroBall.Logic.PixelArt
                         bool grout = x % 12 == 0 || y % 12 == 0;
                         col = grout ? floorDark : (((x / 12) + (y / 12)) % 2 == 0 ? court.floor : floorLight);
                     }
+                    else if (style == FloorStyle.Checker)
+                    {
+                        // I144: a bold checkerboard in the floor and paint colours (paint toned down so lines still read).
+                        bool dark = ((x / 10) + (y / 10)) % 2 == 0;
+                        col = dark ? court.floor : SpriteDetailMix(court.floor, court.paint, 0.45f);
+                        if (x % 10 == 0 || y % 10 == 0) col = col.Darken(0.06f);
+                    }
+                    else if (style == FloorStyle.Sunburst)
+                    {
+                        // I144: rays fanning out from centre court, alternating floor and a lighter tone.
+                        CourtToPixel(g, new Vec2(0f, g.depth * 0.55f), out float sx, out float sy);
+                        double ang = Math.Atan2(y - sy, x - sx);
+                        int ray = (int)Math.Floor((ang + Math.PI) / (Math.PI / 12.0));
+                        col = ray % 2 == 0 ? court.floor : SpriteDetailMix(court.floor, court.paint, 0.25f);
+                        if (Hash((uint)(x * 7919) ^ (uint)(y * 104729) ^ seed) % 41 == 0) col = col.Darken(0.05f);
+                    }
+                    else if (style == FloorStyle.Parquet)
+                    {
+                        // I144: classic parquet: 8x8 blocks of short boards, the grain turning a quarter each block.
+                        int bx = x / 8, by = y / 8;
+                        bool across = (bx + by) % 2 == 0;
+                        int board = across ? (y % 8) / 2 : (x % 8) / 2; // four boards of two pixels
+                        uint bh = Hash((uint)(bx * 92821 + by * 68917 + board) ^ seed);
+                        int tone = (int)(bh % 3);
+                        col = tone == 0 ? court.floor : (tone == 1 ? floorLight : court.floor.Darken(0.06f));
+                        // Block edges are dark; boards inside a block are told apart by tone only.
+                        if (x % 8 == 0 || y % 8 == 0) col = floorDark;
+                    }
                     else if (style == FloorStyle.Rubber)
                     {
                         // Poured rubber: solid colour with confetti flecks in the paint and line colours.
@@ -481,7 +509,7 @@ namespace CallerRetroBall.Logic.PixelArt
         /// <summary>Centre-court logo just inside the half-court line, blended into the floor.</summary>
         private static void DrawCenterLogo(PixelCanvas c, CourtGeometry g, CourtDef court)
         {
-            var logo = LogoGenerator.Generate(court.logoShape, (LogoMotif)Math.Max(0, Math.Min(10, court.logoMotif)),
+            var logo = LogoGenerator.Generate(court.logoShape, (LogoMotif)Math.Max(0, Math.Min((int)LogoMotif.Flag, court.logoMotif)),
                                               court.logoColor, court.lines, court.floor.Darken(0.35f));
             CourtToPixel(g, new Vec2(0f, g.depth - 1.05f), out float cx, out float cy);
             int left = (int)Math.Round(cx) - LogoGenerator.Size / 2, bottom = (int)Math.Round(cy) - LogoGenerator.Size / 2;
@@ -549,6 +577,13 @@ namespace CallerRetroBall.Logic.PixelArt
                     c.FillRect(x + 1, baseY + 3 + jitter, 2, 2, col); // head
                 }
             }
+        }
+
+        /// <summary>I144: a blend of two colours (0 = a, 1 = b).</summary>
+        private static RgbColor SpriteDetailMix(RgbColor a, RgbColor b, float t)
+        {
+            t = Math.Max(0f, Math.Min(1f, t));
+            return new RgbColor((byte)Math.Round(a.r + (b.r - a.r) * t), (byte)Math.Round(a.g + (b.g - a.g) * t), (byte)Math.Round(a.b + (b.b - a.b) * t), 255);
         }
     }
 }

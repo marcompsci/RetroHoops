@@ -174,9 +174,33 @@ check("No API secrets or private keys in tracked files (server/test generates th
 scripts_all = ""
 for p in glob.glob(os.path.join(GAME, "Assets", "Scripts", "**", "*.cs"), recursive=True):
     scripts_all += open(p, encoding="utf-8", errors="ignore").read()
-check("3.1.1: play money (street cash, front-office credits) is never sold: only the Pro product id exists",
+check("3.1.1: play money (street cash, front-office credits) is never sold: no currency product ids",
       re.findall(r'"com\.phoronomicstudios\.retrohoops\.[a-z.]+"', scripts_all).count('"com.phoronomicstudios.retrohoops.pro"') >= 1
-      and not re.search(r'"com\.phoronomicstudios\.retrohoops\.(cash|credits|coins|gems)', scripts_all))
+      and not re.search(r'com\.phoronomicstudios\.retrohoops\.(cash|credits|coins|gems|bux)', scripts_all)
+      and not re.search(r'Prefix \+ "(cash|credits|coins|gems|bux)', scripts_all))
+
+# I153 (20 Nov 2026): the SHOP's in-app purchases.
+shop = read("Assets", "Scripts", "Logic", "Progression", "Shop.cs")
+shopui = read("Assets", "Scripts", "UI", "MainMenuController.Shop.cs")
+shopstore = read("Assets", "Scripts", "Core", "ShopStore.cs")
+shopswift = read("Assets", "Plugins", "iOS", "RetroShop.swift")
+appstore_md = read("docs", "APP_STORE.md")
+for label in ("TERMS OF USE", "PRIVACY POLICY", "RESTORE PURCHASES"):
+    check("SHOP screen shows " + label, '"' + label + '"' in shopui)
+check("SHOP terms say one-time, not a subscription, and looks only", "one-time purchase" in shop and "Not a subscription" in shop and "never your ratings" in shop)
+check("SHOP: nothing random for sale (no loot boxes; no RNG in the shop code)",
+      not re.search(r"SeededRandom|System\.Random|Random\.(Range|value)|NextFloat\(", shop + shopstore + shopui))
+ids = re.findall(r'Prefix \+ "([a-z.]+)"', shop)
+check("SHOP: every product id is listed in docs/APP_STORE.md", ids != [] and all(("com.phoronomicstudios.retrohoops." + i) in appstore_md for i in ids),
+      ", ".join(i for i in ids if ("com.phoronomicstudios.retrohoops." + i) not in appstore_md))
+check("SHOP: only tips are consumable", "public bool Consumable => Kind == ShopKind.Tip;" in shop)
+check("SHOP plugin finishes transactions and listens for updates (Ask to Buy, refunds, other devices)",
+      "await t.finish()" in shopswift and "Transaction.updates" in shopswift and "Transaction.unfinished" in shopswift and "AppStore.sync()" in shopswift)
+check("SHOP: ownership comes from the App Store (currentEntitlements), refunds take gear back",
+      "Transaction.currentEntitlements" in shopswift and "d.ownedCosmetics.Remove(item)" in shop)
+check("SHOP: no ads SDK anywhere, no countdown or limited-time pressure on the SHOP screen",
+      not re.search(r"(GADMobileAds|AdMob|UnityEngine\.Advertisements|IronSource)", scripts_all)
+      and not re.search(r"(countdown|ends in|limited time|only \d+ left)", shopui, re.I))
 gamble = re.search(r"\b(casino|roulette|blackjack|poker|jackpot|slot machine|wager)\b", scripts_all, re.I)
 check("Age rating: no simulated gambling words in game code (casino, poker, wager...)", gamble is None, gamble.group(0) if gamble else "")
 check("Front office says credits are play money", "Nothing here costs real money." in scripts_all)
@@ -189,6 +213,8 @@ MANUAL = [
     "GitHub: the Release gate workflow is green on the commit being shipped (not readable from the cloud workspace)",
     "App Store Connect: screenshots show the current game (THE STREETS, BALLER CITY / BALLER WORLD, Franchise OFFICE)",
     "App Store Connect: Retro Hoops Pro IAP is Ready to Submit and attached to the version",
+    "App Store Connect: the 13 SHOP in-app purchases in docs/APP_STORE.md are created (ids exactly as listed), priced, Ready to Submit and attached to the version",
+    "Sandbox: buy a court pack, a gear pack, Designer Plus, ALL-ACCESS and a tip on a real iPhone; then RESTORE PURCHASES on a second device",
     "Agreements: BETA_CONTRACT_MISSING resolved before external TestFlight",
     "Xcode signed in (Settings > Accounts) so the export/upload step can run",
     "A fresh-install playthrough on a real iPhone and iPad (onboarding, a game, Pro purchase in sandbox, restore, Live with a second account)",

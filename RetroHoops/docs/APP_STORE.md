@@ -12,7 +12,7 @@ Draft metadata and answers for App Store Connect. Character counts are checked a
 | SKU | `retroball-ios-1` (any unique string) |
 | Primary category | Games ▸ Sports |
 | Secondary category | Games ▸ Arcade |
-| Price | Free. One optional in-app purchase: **Retro Hoops Pro**, a one-time $3.99 non-consumable unlock (see `LIVE.md`). |
+| Price | Free. Optional in-app purchases: **Retro Hoops Pro** (one-time $3.99 unlock, see `LIVE.md`) and, since I141 (20 Nov 2026), the **SHOP**: cosmetic court packs, gear packs, Court Designer Plus, an ALL-ACCESS bundle and an optional tip jar (see "In-app purchases" below). |
 | Version | 1.0.0 (build 1). Raise the build number for every upload. |
 
 ## Promotional text (170)
@@ -77,7 +77,7 @@ Draft metadata and answers for App Store Connect. Character counts are checked a
 > • Colour filters, captions, VoiceOver menus, left-handed layout, large buttons, tap-to-shoot, reduce motion
 >
 > **MADE TO RESPECT YOUR TIME**
-> Everything except Live works offline. No account, no ads, no tracking. The only purchase is the optional one-time Retro Hoops Pro unlock.
+> Everything except Live works offline. No account, no ads, no tracking. Optional one-time purchases (Pro, courts, gear) change looks, never ratings. Nothing random.
 >
 > All teams, players, courts, art and music are original.
 
@@ -100,7 +100,7 @@ Add **Spanish (Mexico)** as a localization in App Store Connect and paste these.
 >
 > Modo Franquicia con Retro Hoops Pro (traspasos, agencia libre, draft y tope salarial), Fin de Semana de las Estrellas con concurso de clavadas y de triples, Cancha completa 5 contra 5, constructor de canchas, estudio de uniformes y nueve temas chiptune originales. Modo Ascenso, Escalera Arcade con jefe secreto, Rey de la Cancha, la Caller Cup, 1 contra 1, Reto Diario y 2 jugadores en un dispositivo. Crea tu jugador y tu propio equipo, descubre códigos secretos y llena tu sala de trofeos.
 >
-> Controles táctiles o mando Bluetooth. Todo funciona sin conexión salvo Live. Sin cuenta, sin anuncios y sin rastreo; la única compra es Retro Hoops Pro, un desbloqueo opcional de pago único. Todo el contenido es original.
+> Controles táctiles o mando Bluetooth. Todo funciona sin conexión salvo Live. Sin cuenta, sin anuncios y sin rastreo. Las compras son opcionales y de pago único: Retro Hoops Pro, y canchas, equipamiento y el Diseñador de Canchas Plus en la TIENDA. Solo cambian cómo se ve el juego, nunca tus valoraciones, y nada es aleatorio. Todo el contenido es original.
 
 ## Keywords (100)
 
@@ -138,7 +138,7 @@ Answer **None** to everything: violence, sexual content, profanity, drugs, horro
 | User-generated content | **Recommended: Yes** (16 Oct 2026 compliance gate). Typed nicknames are never sent to Live opponents (they see the Game Center name and a built-in team), but kit and court codes carry a short player-chosen name, and two-phone games nearby show a friend's custom team. All of it passes the on-device word filter, and Live has REPORT PLAYER / BLOCK PLAYER. |
 | Online play with other people | Yes, Live (Game Center matchmaking with people you don't know, or Game Center friends). |
 | Messaging or chat | **Recommended: Yes, preset only.** Quick chat sends one of 8 fixed phrases ("GG!", "NICE SHOT!"…); no typed text. It can be turned off (LIVE screen or the phone), and a blocked player's chat is hidden. |
-| In-app purchases | **Yes**: Retro Hoops Pro, a one-time non-consumable unlock (see `LIVE.md`) |
+| In-app purchases | **Yes**: Retro Hoops Pro and the SHOP's cosmetic packs (non-consumable) and tips (consumable). No random items (no loot boxes). |
 | Advertising | No |
 
 The expected rating is the lowest (4+), but App Store Connect decides it from your answers, not this file. Apple updated the questionnaire in 2025 (new 13+/16+/18+ tiers and questions about in-app controls and age assurance). Answer the content questions (violence, profanity and so on) None, answer the capability questions as above, say Yes to in-app controls if asked (quick chat off switch, BLOCK PLAYER), and re-read each question when you fill it in. Don't declare the "social media" capability: the game has no feed of other players' posts (the phone's FEED is made up by the game).
@@ -185,8 +185,31 @@ Use **Retro Hoops ▸ Release ▸ Capture Store Screenshot** in Play mode (see `
 
 Only show real gameplay. Don't add device frames that show non-Apple hardware, and don't include text that mentions other games or leagues.
 
+## In-app purchases (create these in App Store Connect ▸ Monetization ▸ In-App Purchases)
+
+I154 (20 Nov 2026). Product ids must match `Logic/Progression/Shop.cs` exactly; prices are the suggested tiers (App Store Connect sets the real ones and the game shows whatever the App Store returns). Each needs a display name, a short description, a 1024×1024-or-smaller review screenshot of the SHOP, and review notes ("Cosmetic only; see main menu ▸ SHOP").
+
+| Product id | Type | Suggested price | Name |
+|---|---|---|---|
+| com.phoronomicstudios.retrohoops.pro | Non-consumable | $3.99 | Retro Hoops Pro (already exists) |
+| com.phoronomicstudios.retrohoops.courts.neon | Non-consumable | $1.99 | Neon Nights court pack |
+| com.phoronomicstudios.retrohoops.courts.coast | Non-consumable | $1.99 | Coast to Coast court pack |
+| com.phoronomicstudios.retrohoops.courts.city | Non-consumable | $1.99 | City Lights court pack |
+| com.phoronomicstudios.retrohoops.courts.legends | Non-consumable | $1.99 | Legends Arena court pack |
+| com.phoronomicstudios.retrohoops.designer | Non-consumable | $2.99 | Court Designer Plus |
+| com.phoronomicstudios.retrohoops.gear.streetkings | Non-consumable | $1.99 | Street Kings gear |
+| com.phoronomicstudios.retrohoops.gear.arcade | Non-consumable | $1.99 | Arcade Glow gear |
+| com.phoronomicstudios.retrohoops.gear.oldschool | Non-consumable | $1.99 | Old School '79 gear |
+| com.phoronomicstudios.retrohoops.gear.champion | Non-consumable | $2.99 | Champion Gold gear |
+| com.phoronomicstudios.retrohoops.allaccess | Non-consumable | $12.99 | All-Access (everything + Pro) |
+| com.phoronomicstudios.retrohoops.tip.small | Consumable | $0.99 | Courtside Snack (tip) |
+| com.phoronomicstudios.retrohoops.tip.medium | Consumable | $2.99 | Fresh Pair of Kicks (tip) |
+| com.phoronomicstudios.retrohoops.tip.large | Consumable | $9.99 | MVP Supporter (tip) |
+
+Until a product is created and "Ready to Submit", the App Store doesn't return it: the SHOP shows the fallback price and a purchase reports that the App Store didn't return the item. Nothing else breaks.
+
 ## App Review notes (paste into "Notes")
 
 *16 Oct 2026: the current, fuller notes (LIVE report/block, quick chat, MY MIX, secret codes) are in `docs/app-review-notes.md` at the repo root. Use those; the paragraph below is the older short version.*
 
-> No login of our own and no ads. LIVE online play is free (Game Center matchmaking; a match needs a second device with another Game Center account). One optional in-app purchase, Retro Hoops Pro (non-consumable, $3.99), unlocks FRANCHISE mode, Rise seasons 2 and up and every Hoops Pass cosmetic: PLAY ▸ RETRO HOOPS PRO (Restore Purchases is on that screen). Everything else is free and works offline. Optional Apple services only: Game Center (Settings ▸ Game Center) and iCloud save sync (Settings ▸ iCloud Sync). All content is original and generated procedurally. To see the main modes quickly: Main menu ▸ PLAY ▸ FRANCHISE · PRO (needs the Pro purchase in the sandbox; then START FRANCHISE, then SIM GAME or PLAY GAME) and PLAY ▸ ALL-STAR CONTESTS ▸ DUNK CONTEST. Rise Mode: Main menu ▸ RISE MODE ▸ PLAY NEXT.
+> No login of our own and no ads. LIVE online play is free (Game Center matchmaking; a match needs a second device with another Game Center account). Optional in-app purchases: Retro Hoops Pro (non-consumable, $3.99) unlocks FRANCHISE mode, Rise seasons 2 and up and every Hoops Pass cosmetic: PLAY ▸ RETRO HOOPS PRO. The SHOP (main menu ▸ SHOP) sells cosmetic court packs, gear packs and Court Designer Plus (non-consumable), an ALL-ACCESS bundle that includes Pro, and optional tips (consumable, they unlock only a thank-you banner). Nothing is random and nothing changes gameplay ratings. Restore Purchases is on both screens. Everything else is free and works offline. Optional Apple services only: Game Center (Settings ▸ Game Center) and iCloud save sync (Settings ▸ iCloud Sync). All content is original and generated procedurally. To see the main modes quickly: Main menu ▸ PLAY ▸ FRANCHISE · PRO (needs the Pro purchase in the sandbox; then START FRANCHISE, then SIM GAME or PLAY GAME) and PLAY ▸ ALL-STAR CONTESTS ▸ DUNK CONTEST. Rise Mode: Main menu ▸ RISE MODE ▸ PLAY NEXT.

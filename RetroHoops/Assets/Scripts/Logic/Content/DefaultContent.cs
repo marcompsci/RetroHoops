@@ -74,6 +74,7 @@ namespace CallerRetroBall.Logic
             AddDifficulties(c);
             AddUpgrades(c);
             AddCosmetics(c);
+            Shop.AddContent(c); // I143 + I146: the SHOP's courts and gear (locked until bought)
             AddSeason(c);
             AddSchemes(c);
             return c;

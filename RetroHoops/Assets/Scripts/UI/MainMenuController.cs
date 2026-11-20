@@ -118,6 +118,8 @@ namespace CallerRetroBall.UI
                 UiKit.Button(column, Holidays.Get(season).Name, () => ShowHolidays(season), ButtonStyle.Secondary, 110f, 44f);
             UiKit.Button(column, "PRACTICE LAB", ShowPractice, ButtonStyle.Secondary, 120f, 52f);
             UiKit.Button(column, "LOCKER ROOM", () => SceneFlow.GoTo(SceneNames.LockerRoom), ButtonStyle.Secondary, 120f, 52f);
+            // I147: the SHOP (courts, gear, Court Designer Plus, the tip jar).
+            UiKit.Button(column, "SHOP", () => ShowShop(CloseOverlay), ButtonStyle.Secondary, 110f, 48f);
             // 14 Oct 2026: SETTINGS and your player's PHONE (music, texts, feed) side by side.
             var lowRow = UiKit.Row(column, 20f, "SettingsPhone");
             UiKit.Size(lowRow, 104f);
@@ -139,7 +141,13 @@ namespace CallerRetroBall.UI
             // Phase 37: an App Store screenshot launch opens its screen and skips the first-launch dialogs.
             if (RunStoreShot()) return;
 
-            if (App.OpenProOnMenu)
+            ShopStore.Sync(); // I142: settle what the App Store says the SHOP has sold you
+            if (App.OpenShopOnMenu)
+            {
+                App.OpenShopOnMenu = false;
+                ShowShop(CloseOverlay);
+            }
+            else if (App.OpenProOnMenu)
             {
                 App.OpenProOnMenu = false;
                 ShowPro(ShowPlayMenu);
@@ -460,6 +468,8 @@ namespace CallerRetroBall.UI
             // Play anywhere: home court, any street court, and hidden courts once unlocked.
             var courts = new List<string> { null };
             foreach (var court in c.Courts) if (court.circuit == CourtCircuit.Custom) courts.Add(court.id);
+            // I143: SHOP courts you own.
+            courts.AddRange(Shop.OwnedCourts(App.Career));
             // I24 COURT PASSPORT: BALLER WORLD courts join the list once you've been to their region.
             foreach (var court in c.Courts)
                 if ((court.circuit == CourtCircuit.Blacktop || court.circuit == CourtCircuit.Holiday) && WorldAtlas.CourtStamped(App.Career, court.id)) courts.Add(court.id);
@@ -552,6 +562,7 @@ namespace CallerRetroBall.UI
             Mode(column, "LIVE", Loc.T("Play people online, free. Rating") + " " + (career.live?.rating ?? LiveMode.StartRating) + "  ·  " + LiveMode.Tier(career.live?.rating ?? LiveMode.StartRating), ShowLive, ButtonStyle.Secondary);
             Mode(column, "RETRO HOOPS PRO", ProStore.Owned ? Loc.T("Unlocked. Thanks for supporting Retro Hoops!")
                 : Loc.T("One-time unlock: FRANCHISE, Rise seasons 2+ and every Hoops Pass item.") + " " + ProStore.Price, () => ShowPro(ShowPlayMenu), ButtonStyle.Ghost);
+            Mode(column, "SHOP", Loc.T("Designed courts, gear packs, Court Designer Plus and the tip jar. Looks only, nothing random."), () => ShowShop(ShowPlayMenu), ButtonStyle.Ghost);
 
             Section(column, "THE STREETS");
             Mode(column, "THE STREETS", "3 on 3 street ball to 21. Tricks, combos and SHOWSTOPPERS. Record " + (career.streets?.wins ?? 0) + "-" + (career.streets?.losses ?? 0) + ".",

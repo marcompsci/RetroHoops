@@ -334,7 +334,7 @@ namespace CallerRetroBall.UI
             Choice("JERSEY PATTERN", CustomTeams.PatternNames, d.pattern, i => d.pattern = i);
             Choice("LOGO SHAPE", CustomTeams.ShapeNames, d.logoShape, i => d.logoShape = i);
             Choice("LOGO ICON", CustomTeams.MotifNames, d.logoMotif, i => d.logoMotif = i);
-            var courts = CustomTeams.HomeCourts(c);
+            var courts = CustomTeams.HomeCourts(c, career);
             int ci = Mathf.Max(0, courts.FindIndex(x => x.id == d.homeCourtId));
             Choice("HOME COURT", courts.ConvertAll(x => x.displayName.ToUpperInvariant()).ToArray(), ci, i => d.homeCourtId = courts[i].id);
             UiControls.ToggleRow(_content, "WEAR IT IN RISE MODE", d.useInRise, v => d.useInRise = v);
@@ -501,6 +501,7 @@ namespace CallerRetroBall.UI
                           : check == CosmeticCheck.PassOnly && item.id == LiveSeason.StarBannerId ? "<color=#9B4DFF>LIVE SEASON: FINISH ALL-STAR</color>"
                           : check == CosmeticCheck.PassOnly ? "<color=#9B4DFF>HOOPS PASS TIER " + PassTierOf(item.id) + "</color>"
                           : check == CosmeticCheck.StoreOnly ? "<color=#2EC4B6>" + Loc.T("SOLD IN") + " " + RegionStore.Name(item.store) + "</color>"
+                          : check == CosmeticCheck.ShopPack ? "<color=#FFD166>" + Loc.T("IN THE SHOP") + ": " + Loc.T(Shop.Product(item.shopPack)?.Name ?? "") + "</color>"
                           : check == CosmeticCheck.NeedsFans ? "<color=#F72585>Needs " + item.fansRequired + " fans</color>"
                           : "<color=#FFD166>" + item.cost + " SP</color>";
             var text = UiKit.Label(card.transform, item.displayName.ToUpperInvariant() + "\n<size=75%>" + status + "</size>",
@@ -510,12 +511,19 @@ namespace CallerRetroBall.UI
             text.rectTransform.offsetMax = new Vector2(-230f, -6f);
 
             if (equipped) return;
-            string label = owned ? "EQUIP" : "BUY";
-            bool usable = owned || check == CosmeticCheck.Ok;
+            string label = owned ? "EQUIP" : check == CosmeticCheck.ShopPack ? "SHOP" : "BUY";
+            bool usable = owned || check == CosmeticCheck.Ok || check == CosmeticCheck.ShopPack;
             var cosmetic = item;
             var button = UiKit.Button(card.transform, label, () =>
             {
                 var data = App.Career;
+                if (!data.ownedCosmetics.Contains(cosmetic.id) && cosmetic.shopPack != null)
+                {
+                    // I147: shop gear opens the SHOP (a tip-jar banner too).
+                    App.OpenShopOnMenu = true;
+                    SceneFlow.GoTo(SceneNames.MainMenu);
+                    return;
+                }
                 bool changed = data.ownedCosmetics.Contains(cosmetic.id)
                     ? Career.Equip(data, cosmetic)
                     : Career.Buy(data, cosmetic) == CosmeticCheck.Ok;
