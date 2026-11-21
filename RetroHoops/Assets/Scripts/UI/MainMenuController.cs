@@ -439,9 +439,11 @@ namespace CallerRetroBall.UI
             var column = OpenOverlay("QUICK CALL", out var footer);
             var league = Secrets.OpponentTeams(c, App.Career.secrets);
             var mine = Secrets.PlayableTeams(c, App.Career.secrets);
-            int myIndex = 0;
+            // I255: the last matchup you played comes back picked.
+            int myIndex = Mathf.Max(0, QuickPicks.IndexOf(mine, App.Career.settings.lastQuickTeam));
             int courtChoice = 0; // 0 = home court, then any unlocked hidden courts
             int oppIndex = 0;
+            string wantOpp = App.Career.settings.lastQuickOpp;
             TextMeshProUGUI oppLabel = null; // assigned below; declared first so Refresh() can see it
             TextMeshProUGUI h2hLabel = null;
             var opponents = new List<TeamDef>();
@@ -469,6 +471,13 @@ namespace CallerRetroBall.UI
             UiKit.Size(h2h, 40f);
             h2hLabel = h2h;
             UiKit.Button(column, "CHANGE OPPONENT", () => { oppIndex = (oppIndex + 1) % opponents.Count; Refresh(); }, ButtonStyle.Ghost, 100f, 36f);
+            // I256: let the game pick the matchup.
+            UiKit.Button(column, "RANDOM MATCHUP", () =>
+            {
+                QuickPicks.Random(mine, league, (uint)System.Environment.TickCount, out myIndex, out wantOpp);
+                Haptics.Light();
+                Refresh();
+            }, ButtonStyle.Ghost, 100f, 36f);
 
             // Play anywhere: home court, any street court, and hidden courts once unlocked.
             var courts = new List<string> { null };
@@ -508,6 +517,8 @@ namespace CallerRetroBall.UI
                 var away = opponents[oppIndex];
                 App.Career.settings.difficultyId = difficulties[diffIndex].id;
                 App.Career.settings.houseRules = HouseRules.Pack(house);
+                App.Career.settings.lastQuickTeam = home.id; // I255
+                App.Career.settings.lastQuickOpp = away.id;
                 App.SaveCareer();
                 App.PendingMatch = new MatchRequest
                 {
@@ -530,6 +541,7 @@ namespace CallerRetroBall.UI
                 for (int i = 0; i < cards.Count; i++) cards[i].color = i == myIndex ? Color.white : new Color(0.55f, 0.55f, 0.6f, 1f);
                 opponents.Clear();
                 foreach (var t in league) if (t.id != mine[myIndex].id) opponents.Add(t);
+                if (wantOpp != null) { oppIndex = Mathf.Max(0, QuickPicks.IndexOf(opponents, wantOpp)); wantOpp = null; }
                 oppIndex %= opponents.Count;
                 oppLabel.text = "VS  " + opponents[oppIndex].FullName.ToUpperInvariant();
                 if (h2hLabel != null) h2hLabel.text = HeadToHead.Line(App.Career, opponents[oppIndex].id) ?? Loc.T("FIRST MEETING LATELY");
@@ -575,7 +587,8 @@ namespace CallerRetroBall.UI
                                        24f, Theme.Cyan, TextAlignmentOptions.Center, true), 46f);
             // I200 + I205 + I206: your login run, your last game and your win streak.
             foreach (var extra in new[] { LoginStrip.Line(career), LastGame.Line(career, App.Catalog), LastGame.StreakLine(career),
-                                          Form.Line(career), Form.Week(career, App.Today) }) // I223 + I224
+                                          Form.Line(career), Form.Week(career, App.Today),
+                                          NextMilestone.Line(career.totals), DailyTip.For(App.Today) }) // I223 + I224, I247 + I248
             {
                 if (extra == null) continue;
                 var l = UiKit.Label(column, extra, 24f, Theme.Cream, TextAlignmentOptions.Center, true);

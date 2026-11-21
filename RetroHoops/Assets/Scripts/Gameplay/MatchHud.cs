@@ -741,9 +741,29 @@ namespace CallerRetroBall.Gameplay
         }
 
         /// <summary>Brief centre-screen callout ("STEAL!", "BALL!").</summary>
+        /// <summary>I254: Settings ► CALLOUTS (the game screen sets it). Minor callouts are skipped on BIG PLAYS ONLY.</summary>
+        public static int CalloutLevel { get; set; }
+
+        // I267: a minor callout that arrives while another is fresh waits its turn instead of wiping it.
+        private string _queuedText;
+        private float _queuedSeconds, _toastShownAt = -10f;
+
+        public void Toast(string text, float seconds, bool minor)
+        {
+            if (!Callouts.Show(CalloutLevel, minor)) return;
+            if (minor && _toastShown && Time.unscaledTime - _toastShownAt < 0.6f && _toast.text != Loc.T(text))
+            {
+                _queuedText = text;
+                _queuedSeconds = seconds;
+                return;
+            }
+            Toast(text, seconds);
+        }
+
         public void Toast(string text, float seconds = 1.2f)
         {
             string t = Loc.T(text);
+            _toastShownAt = Time.unscaledTime;
             // Callouts rise and fade in, and fade out instead of vanishing (audit).
             if (!_toastShown || _toast.text != t) UiMotion.Enter(_toast, UiMotion.Toast, new Vector2(0f, -12f), 0.96f);
             _toastShown = true;
@@ -931,7 +951,8 @@ namespace CallerRetroBall.Gameplay
             for (int t = 0; t < 2; t++)
             {
                 bool at = m.Phase != MatchPhase.Final && GamePoint.At(m.Setup.Rules, m.Score[t], m.Score[1 - t]);
-                if (at && !_gamePoint[t]) Toast(Loc.T("GAME POINT") + "  ·  " + (t == 0 ? _teamA.text : _teamB.text), 1.2f);
+                if (at && !_gamePoint[t]) Toast(Loc.T("GAME POINT") + "  ·  " + (t == 0 ? m.Setup.TeamA.abbreviation : m.Setup.TeamB.abbreviation), 1.2f, true);
+                if (at != _gamePoint[t]) (t == 0 ? _scoreA : _scoreB).color = at ? Theme.Gold : Theme.Cream; // I265
                 _gamePoint[t] = at;
             }
         }
@@ -994,6 +1015,12 @@ namespace CallerRetroBall.Gameplay
                 _teamB.text = (m.OffenseTeam == 1 ? "• " : "") + m.Setup.TeamB.abbreviation;
             }
 
+            if (_toastShown && Time.unscaledTime > _toastUntil && _queuedText != null)
+            {
+                string q = _queuedText;
+                _queuedText = null;
+                Toast(q, _queuedSeconds);
+            }
             if (_toastShown && Time.unscaledTime > _toastUntil)
             {
                 _toastShown = false;

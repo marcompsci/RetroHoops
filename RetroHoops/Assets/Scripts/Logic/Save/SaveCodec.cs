@@ -51,7 +51,7 @@ namespace CallerRetroBall.Logic
                     ["recEarly"] = d.totals.recentEarly, ["recLate"] = d.totals.recentLate, ["recJumpers"] = d.totals.recentJumpers,
                     ["recShort"] = d.totals.recentShortReaches,
                     ["chase"] = d.totals.chaseDowns, ["clutch"] = d.totals.clutchMakes, ["greenRun"] = d.totals.bestGreenRun,
-                    ["comebacks"] = d.totals.comebacks, ["dd"] = d.totals.doubleDoubles, ["perfect"] = d.totals.perfectGames,
+                    ["comebacks"] = d.totals.comebacks, ["dd"] = d.totals.doubleDoubles, ["perfect"] = d.totals.perfectGames, ["potg"] = d.totals.playerOfGames,
                     ["blowW"] = d.totals.blowoutWins, ["blowL"] = d.totals.blowoutLosses,
                 },
                 ["practice"] = new Dictionary<string, object>
@@ -176,6 +176,7 @@ namespace CallerRetroBall.Logic
                 {
                     ["day"] = h.day, ["mode"] = (int)h.mode, ["opp"] = h.opponentId, ["for"] = h.scoreFor,
                     ["against"] = h.scoreAgainst, ["pts"] = h.points, ["ast"] = h.assists, ["reb"] = h.rebounds, ["team"] = h.teamId,
+                    ["court"] = h.courtId, ["stl"] = h.steals, ["blk"] = h.blocks,
                 }),
                 ["seasons"] = List(d.seasons ?? new List<SeasonHistoryEntry>(), e => new Dictionary<string, object>
                 {
@@ -534,6 +535,7 @@ namespace CallerRetroBall.Logic
                     recentJumpers = Math.Max(0, Int(t, "recJumpers", 0)), recentShortReaches = Math.Max(0, Int(t, "recShort", 0)),
                     chaseDowns = Math.Max(0, Int(t, "chase", 0)), clutchMakes = Math.Max(0, Int(t, "clutch", 0)),
                     comebacks = Math.Max(0, Int(t, "comebacks", 0)), doubleDoubles = Math.Max(0, Int(t, "dd", 0)), perfectGames = Math.Max(0, Int(t, "perfect", 0)),
+                    playerOfGames = Math.Max(0, Int(t, "potg", 0)),
                     bestGreenRun = Math.Max(0, Int(t, "greenRun", 0)),
                     blowoutWins = Math.Max(0, Int(t, "blowW", 0)), blowoutLosses = Math.Max(0, Int(t, "blowL", 0)),
                 };
@@ -696,6 +698,7 @@ namespace CallerRetroBall.Logic
                         opponentId = Str(h, "opp", null), scoreFor = Int(h, "for", 0), scoreAgainst = Int(h, "against", 0),
                         points = Int(h, "pts", 0), assists = Int(h, "ast", 0), rebounds = Int(h, "reb", 0),
                         teamId = Str(h, "team", null),
+                        courtId = Str(h, "court", null), steals = Math.Max(0, Int(h, "stl", 0)), blocks = Math.Max(0, Int(h, "blk", 0)),
                     });
                     if (d.history.Count >= Records.HistoryLength) break;
                 }

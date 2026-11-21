@@ -54,6 +54,7 @@ namespace CallerRetroBall.Logic
                 assists = line.assists,
                 rebounds = line.rebounds,
                 teamId = s.humanTeam == 0 ? s.teamAId : s.teamBId, // I237
+                courtId = s.courtId, steals = line.steals, blocks = line.blocks, // I249 + I259
             });
             while (d.history.Count > HistoryLength) d.history.RemoveAt(d.history.Count - 1);
 

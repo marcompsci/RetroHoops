@@ -176,6 +176,15 @@ namespace CallerRetroBall.Logic
             return list;
         }
 
+        /// <summary>I257: the callouts worth sharing (no lead-change line).</summary>
+        public static List<string> Highlights(MatchSummary s)
+        {
+            var list = For(s);
+            string lead = Loc.T("LEAD CHANGES");
+            list.RemoveAll(x => x.StartsWith(lead, StringComparison.Ordinal));
+            return list;
+        }
+
         /// <summary>Copies the flow of a finished game into its summary (the human's side).</summary>
         public static void Fill(MatchSummary s, ScoreFlow f)
         {

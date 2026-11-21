@@ -61,6 +61,7 @@ namespace CallerRetroBall.Logic
                 if (me.posters > 0) sb.Append("\n").Append(me.posters).Append(me.posters == 1 ? " POSTER" : " POSTERS");
             }
             if (!string.IsNullOrEmpty(keyPlay)) sb.Append("\nPLAY OF THE GAME: ").Append(keyPlay);
+            foreach (var h in GameCallouts.Highlights(s)) sb.Append("\n").Append(h); // I257
             sb.Append("\n\nRETRO HOOPS");
             return Strip(sb.ToString());
         }

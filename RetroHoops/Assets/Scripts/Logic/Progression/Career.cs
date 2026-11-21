@@ -122,6 +122,7 @@ namespace CallerRetroBall.Logic
             else t.losses++;
             DifficultyNudge.AddGame(t, summary); // I182
             if (GameCallouts.Comeback(summary) > 0) t.comebacks++; // I221
+            if (PlayerOfTheGameCount.IsHuman(summary)) t.playerOfGames++; // I246
             var line = summary.HumanLine?.stats;
             if (line != null)
             {

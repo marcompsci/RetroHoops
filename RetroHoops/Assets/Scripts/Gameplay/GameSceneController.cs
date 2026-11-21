@@ -421,6 +421,7 @@ namespace CallerRetroBall.Gameplay
             _controls.Call.UnavailableHint = "OFFENSE";
             _hud = MatchHud.Create(setup.TeamA, setup.TeamB);
             _hud.ShowMomentum(App.Career?.settings.momentumBar ?? true); // I202
+            MatchHud.CalloutLevel = App.Career?.settings.callouts ?? Callouts.All; // I254
             _hud.ShotClockTick += () =>
             {
                 // I229: the last three seconds tick when it's your ball.
@@ -432,7 +433,7 @@ namespace CallerRetroBall.Gameplay
                 if (_practice != null || _horse != null || _tutorial != null || Demo) return;
                 bool ours = team == _match.Setup.HumanTeam || Versus;
                 Sfx(ours ? SfxId.CrowdCheer : SfxId.CrowdGroan, ours ? 0.9f : 0.5f);
-                _hud.Toast(ours ? call : Loc.T("THEY'RE ON A RUN") + "  ·  " + call, 1.1f);
+                _hud.Toast(ours ? call : Loc.T("THEY'RE ON A RUN") + "  ·  " + call, 1.1f, true);
             };
             _hud.PlayChosen += play => _pendingCall = play;
             if (_match.StyleOn)
@@ -550,6 +551,34 @@ namespace CallerRetroBall.Gameplay
                      : _practice != null && _practice.Kind == DrillKind.Shootout ? "BEAT " + _practice.CpuName + ": " + _practice.CpuScore
                      : _practice != null ? DrillTitle(_practice.Kind)
                      : (_request.Mode == GameMode.Practice ? "PRACTICE LAB" : CheckBallLine()), 1.8f);
+        }
+
+        // ------------------------------------------------------------------ I242 + I243
+
+        private readonly RunTracker _myRun = new RunTracker();
+        private readonly StopTracker _stops = new StopTracker();
+        private int _stopsOffense = -1, _stopsOppScore;
+
+        /// <summary>I242: your own points in a row (anyone else scoring ends it).</summary>
+        private void NotePersonalRun(MatchEvent e)
+        {
+            if (_practice != null || _horse != null || _tutorial != null || Demo || Versus || _match.ControlledIndex < 0) return;
+            bool mine = e.PlayerIndex == _match.ControlledIndex;
+            if (_myRun.Add(mine ? 0 : 1, e.Value) && mine)
+                _hud.Toast(Loc.T("YOU'RE COOKING") + "  ·  " + _myRun.Points + " " + Loc.T("STRAIGHT"), 1.1f, true);
+        }
+
+        /// <summary>I243: one of their possessions ended; without a bucket it's a stop.</summary>
+        private void SyncStops(int human)
+        {
+            if (_practice != null || _horse != null || _tutorial != null || Demo || Versus) return;
+            int off = _match.OffenseTeam;
+            if (off == _stopsOffense) return;
+            int opp = 1 - human;
+            if (_stopsOffense == opp && _stops.End(_match.Score[opp] > _stopsOppScore))
+                _hud.Toast(Loc.T("LOCKDOWN") + "  ·  " + _stops.Run + " " + Loc.T("STOPS IN A ROW"), 1.1f, true);
+            _stopsOffense = off;
+            if (off == opp) _stopsOppScore = _match.Score[opp];
         }
 
         /// <summary>I197: CHECK BALL, plus your HOT SPOT from the career shot chart once you have one.</summary>
@@ -1750,11 +1779,12 @@ namespace CallerRetroBall.Gameplay
                 }
             }
             int human = _match.Setup.HumanTeam;
+            SyncStops(human); // I243
             // I222: a lead change gets a word (the first lead of the game and ties don't).
             if (_match.LastFlowChange == ScoreFlowChange.LeadChange && _match.Flow.LeadChanges > 0 && _practice == null && _horse == null && _tutorial == null && !Demo)
             {
                 bool oursNow = _match.Flow.Leader == human;
-                _hud.Toast(Versus ? Loc.T("LEAD CHANGE") : Loc.T(oursNow ? "YOU TAKE THE LEAD" : "THEY TAKE THE LEAD"), 1f);
+                _hud.Toast(Versus ? Loc.T("LEAD CHANGE") : Loc.T(oursNow ? "YOU TAKE THE LEAD" : "THEY TAKE THE LEAD"), 1f, true);
                 if (oursNow && !Versus) Haptics.Light();
             }
             float stop = 0f;
@@ -1933,6 +1963,7 @@ namespace CallerRetroBall.Gameplay
                         }
                         break;
                     case MatchEventType.ShotMade:
+                        NotePersonalRun(e); // I242
                         _lastMadeTeam = e.Team;
                         _lastMadePlayer = e.PlayerIndex;
                         _lastMadeAt = Time.unscaledTime;
@@ -2000,6 +2031,11 @@ namespace CallerRetroBall.Gameplay
                     case MatchEventType.GreenStreak:
                         // I178: GREEN after GREEN.
                         if (e.Team == human || Versus) _hud.Toast(Loc.T("LOCKED IN") + "  ·  " + e.Value + " " + Loc.T("GREENS IN A ROW"), 1.1f);
+                        break;
+                    case MatchEventType.Assist:
+                        // I241: your pass set it up.
+                        if (_match.IsHumanControlled(e.PlayerIndex) && !Demo && _practice == null)
+                            _hud.Toast(Loc.T("DIME!") + "  ·  " + _match.Stats[e.PlayerIndex].assists + " AST", 0.9f, true);
                         break;
                     case MatchEventType.Pickpocket:
                         _hud.Toast(e.Team == human || Versus ? "PICKPOCKET!  " + e.Value + " " + Loc.T("IN A ROW") : "PICKED AGAIN", 1.1f);
@@ -3183,6 +3219,15 @@ namespace CallerRetroBall.Gameplay
                 // I220 + I231 + I232: comebacks, double-doubles, perfect shooting and how the lead moved.
                 if (rewarded && VsAverage.Counts(summary.mode))
                     foreach (var call in GameCallouts.For(summary)) note = string.IsNullOrEmpty(note) ? call : note + "\n" + call;
+                if (rewarded && VsAverage.Counts(summary.mode))
+                {
+                    // I244–I246 + I263: tonight's shooting, player of the game, and your best run of stops.
+                    var tonight = summary.HumanLine?.stats;
+                    foreach (var extra in new[] { TonightShooting.BestSpot(tonight), TonightShooting.PerShot(tonight),
+                                                  PlayerOfTheGameCount.IsHuman(summary) ? PlayerOfTheGameCount.Line(App.Career.totals.playerOfGames) : null,
+                                                  _stops.Best >= 2 ? Loc.T("BEST STOP STREAK") + ": " + _stops.Best : null })
+                        if (extra != null) note = string.IsNullOrEmpty(note) ? extra : note + "\n" + extra;
+                }
                 string vsAvg = rewarded && VsAverage.Counts(summary.mode) ? VsAverage.Line(App.Career.totals, summary.HumanLine?.stats) : null; // I213
                 if (vsAvg != null) note = string.IsNullOrEmpty(note) ? vsAvg : note + "\n" + vsAvg;
                 // 14 Oct 2026: the phone's FEED posts about the game (titles get the CHAMPIONS post).
@@ -4182,7 +4227,8 @@ namespace CallerRetroBall.Gameplay
             SetTouchVisible(!paused && !_padMode);
             // I212: your line so far, on the pause menu.
             if (paused && _match != null && _match.ControlledIndex >= 0 && !Versus)
-                _hud.SetPauseLine(Situation.Line(_match.Score[_match.Setup.HumanTeam], _match.Score[1 - _match.Setup.HumanTeam]) + "\n" // I236
+                _hud.SetPauseLine(Situation.Line(_match.Score[_match.Setup.HumanTeam], _match.Score[1 - _match.Setup.HumanTeam])
+                                  + (GameLength.Line(_match.Setup.Rules, _match.GameClock) is string len ? "  ·  " + len : "") + "\n" // I236 + I264
                                   + Loc.T("YOUR GAME") + ":  " + MyLine.Text(_match.Stats[_match.ControlledIndex]));
             else if (paused) _hud.SetPauseLine(null);
             _hud.ShowPause(paused);

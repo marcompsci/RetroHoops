@@ -37,6 +37,10 @@ namespace CallerRetroBall.Logic
         public bool iconsOnly;
         /// <summary>I202: the MOMENTUM strip on the score bar (on by default).</summary>
         public bool momentumBar = true;
+        /// <summary>I254 CALLOUTS: <see cref="Callouts.All"/> or <see cref="Callouts.Fewer"/> (big plays only).</summary>
+        public int callouts;
+        /// <summary>I255: the last Quick Call matchup (team ids), picked again next time.</summary>
+        public string lastQuickTeam, lastQuickOpp;
         /// <summary>Play every mode in landscape, not only Full Court (2 Player and the demo stay portrait).</summary>
         public bool landscapeAll;
         /// <summary>Mic Tally's text commentary during games.</summary>
@@ -134,6 +138,9 @@ namespace CallerRetroBall.Logic
         public int rebounds;
         /// <summary>I237: the team you played as (RUN IT BACK uses it); null in saves from before it.</summary>
         public string teamId;
+        /// <summary>I249 + I259: the court, and your steals and blocks.</summary>
+        public string courtId;
+        public int steals, blocks;
         public bool Won => scoreFor > scoreAgainst;
     }
 
@@ -191,6 +198,8 @@ namespace CallerRetroBall.Logic
         public int blowoutWins, blowoutLosses;
         /// <summary>I221 comeback wins (down 6+), I232 double-doubles (or better), I233 perfect shooting games (5+ shots, no misses).</summary>
         public int comebacks, doubleDoubles, perfectGames;
+        /// <summary>I246: games you were player of the game in (wins only).</summary>
+        public int playerOfGames;
     }
 
     [Serializable]

@@ -50,6 +50,8 @@ namespace CallerRetroBall.Logic
         public GameRulesDef Rules = new GameRulesDef();
         public DifficultyDef Difficulty;
         public CourtGeometry Court = CourtGeometry.Default;
+        /// <summary>I249: the catalog court the game is played on (for match history); null when unknown.</summary>
+        public string CourtId;
         public MovementTuning Movement = MovementTuning.Default;
         public BallTuning Ball = BallTuning.Default;
         public ShotTuning Shot = ShotTuning.Default;
@@ -126,6 +128,7 @@ namespace CallerRetroBall.Logic
                 StreetRules = request.StreetRules || request.Mode == GameMode.Streets || request.StreetsStyle,
                 StyleMeter = (request.Mode == GameMode.Streets || request.StreetsStyle) && !full,
                 Court = full ? Logic.FullCourt.Geometry() : CourtGeometry.Default,
+                CourtId = request.CourtId,
                 // Half-court 3-on-3 is winners' ball; Full Court and 1-on-1 alternate possessions.
                 // THE STREETS: the ball changes hands after a bucket.
                 WinnersBall = !full && !drills && request.Mode != GameMode.OneOnOne && request.Mode != GameMode.Streets && !request.StreetsStyle,
@@ -374,6 +377,8 @@ namespace CallerRetroBall.Logic
         Clutch = 52,
         /// <summary>I178: GREEN releases in a row by one shooter (Value = how many, from 3).</summary>
         GreenStreak = 53,
+        /// <summary>I241: the pass before a made shot (PlayerIndex = the passer, Value = the scorer).</summary>
+        Assist = 54,
     }
 
     public struct MatchEvent
@@ -1171,7 +1176,10 @@ namespace CallerRetroBall.Logic
                 AdjustScheme(p.Team, Ball.ShotPoints, Ball.ShotType);
                 if (_lastCatcher == shooter && _lastPasser >= 0 && Players[_lastPasser].Team == p.Team
                     && Time - _lastCatchTime <= Setup.Flow.assistWindowSeconds)
+                {
                     Stats[_lastPasser].assists++;
+                    Events.Add(new MatchEvent(MatchEventType.Assist, _lastPasser, p.Team, shooter)); // I241
+                }
                 _lastPasser = -1;
                 _lastCatcher = -1;
 

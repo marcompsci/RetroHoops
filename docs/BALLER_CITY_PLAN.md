@@ -884,3 +884,42 @@ Logic lives in `Logic/Progression/Shop.cs`. The App Store bridge is `Core/ShopSt
 - **I239 What's New:** the card is refreshed (tour.whats_new_216).
 - **I240 Wrap-up:** Spanish for every new line. `ImprovementsI216Tests` has 12 tests.
   - Gate: 1,303 logic tests pass, UnityCheck shows 0 errors, App Store audit 73/73, strict text audit clean.
+
+### Improvements I241–I270: dimes, personal runs, stops, history and Quick Call picks (21 Nov 2026)
+
+**During games**
+- **I241 DIME!:** shows when your pass sets up a bucket, with your assist count. The simulation now raises an `Assist` event (54) for the passer.
+- **I242 YOU'RE COOKING:** your own points in a row, called at 6 and then every 4. Anyone else scoring ends it.
+- **I243 LOCKDOWN:** their possessions ending without a bucket, in a row. Called at 3 stops, then every 2.
+- **I254 CALLOUTS setting:** ALL or BIG PLAYS ONLY. Minor callouts are skipped on BIG PLAYS ONLY: runs, lead changes, GAME POINT, DIME, COOKING and LOCKDOWN.
+- **I264 Pause line:** now also shows the game length ("FIRST TO 21 · 1:12 LEFT").
+- **I265 GAME POINT score:** a team's score turns gold while it's at game point.
+- **I266 Reduce Motion:** the new flashes respect it.
+- **I267 Callout queue:** a minor callout that arrives while another is fresh waits its turn instead of wiping it.
+
+**After games**
+- **I244 Best spot tonight:** the post-game shows your best spot this game.
+- **I245 Points a shot:** the post-game shows your points per shot.
+- **I246 Player of the game:** counted across the career, with a post-game line ("#N IN YOUR CAREER").
+- **I257 SHARE RESULT:** now includes comebacks, double-doubles and perfect shooting.
+- **I263 Best stop streak:** shown on the post-game.
+
+**Career and history**
+- **I249 and I259 History:** match history saves the court, your steals and your blocks. `MatchSetup.CourtId` carries the court.
+- **I250–I252 CAREER STATS:** favorite court, best court, scoring trend (last 5 games against your career average) and your record by mode.
+- **I253 RECENT GAMES:** a screen listing your last 20 games.
+- **I260 and I261 Milestone tracks:** player of the game, assists and rebounds.
+- **I262 CAREER STATS:** assists and rebounds a game.
+
+**Menus**
+- **I247 Tip of the day:** shown on the PLAY menu (14 tips).
+- **I248 Next milestone:** shown on the PLAY menu, with how many to go.
+- **I255 Quick Call memory:** Quick Call remembers your last team and opponent.
+- **I256 RANDOM MATCHUP:** a Quick Call button that picks the teams for you.
+- **I258 SHOP suggestion:** NEXT FOR YOUR COLLECTION (the spotlight if you don't own it, otherwise the first pack you don't own).
+
+**Wrap-up**
+- **I268 Save guard:** a test where negative steals and an out-of-range callouts value decode safely.
+- **I269 What's New:** the card is refreshed (tour.whats_new_241).
+- **I270 Spanish and tests:** Spanish for every new line. `ImprovementsI241Tests` has 15 tests.
+- **Gate:** 1,318 logic tests pass, UnityCheck 0 errors, App Store audit 73/73, strict text audit clean.

@@ -30,6 +30,8 @@ namespace CallerRetroBall.UI
             Shop.Collection(career, out int have, out int total);
             UiKit.Size(UiKit.Label(column, Loc.T("COLLECTION") + "  " + have + " / " + total, 36f, Theme.Gold, TextAlignmentOptions.Center, true), 56f);
             UiKit.Size(UiKit.Label(column, PackSets.Progress(career), 26f, Theme.Cream, TextAlignmentOptions.Center, true), 42f); // I208
+            string next = ShopNext.Line(career, Shop.WeekNumber(DateTime.Now)); // I258
+            if (next != null) UiKit.Size(UiKit.Label(column, next, 24f, Theme.Cyan, TextAlignmentOptions.Center, true), 40f);
             UiKit.Size(UiKit.Label(column, Loc.T("Everything here changes how the game looks, never your ratings. Nothing is random, and there are no ads."),
                                    26f, Theme.Muted, TextAlignmentOptions.Center), 70f);
             if (Shop.Supporter(career))
@@ -268,7 +270,26 @@ namespace CallerRetroBall.UI
             var column = OpenOverlay("CAREER STATS", out var footer);
             foreach (var row in CareerStats.Rows(App.Career)) UiControls.Stat(column, row.label, row.value);
             foreach (var row in CareerStatsMore.Rows(App.Career, App.Catalog)) UiControls.Stat(column, row.label, row.value); // I225–I227
+            foreach (var row in RecentGames.Rows(App.Career, App.Catalog)) UiControls.Stat(column, row.label, row.value);     // I246–I252
+            UiKit.Button(column, "RECENT GAMES", ShowRecentGames, ButtonStyle.Secondary, 100f, 36f);
             UiKit.Button(footer, "BACK", ShowPlayMenu, ButtonStyle.Ghost, 130f, 44f);
+        }
+
+        /// <summary>I253: your last 20 games, newest first.</summary>
+        private void ShowRecentGames()
+        {
+            var column = OpenOverlay("RECENT GAMES", out var footer);
+            var lines = RecentGames.Lines(App.Career, App.Catalog);
+            if (lines.Count == 0) UiKit.Size(UiKit.Label(column, Loc.T("No games yet. Play one!"), 30f, Theme.Muted, TextAlignmentOptions.Center), 60f);
+            foreach (var line in lines)
+            {
+                var l = UiKit.Label(column, line, 24f, line.StartsWith("W", StringComparison.Ordinal) ? Theme.Cream : Theme.Muted, TextAlignmentOptions.Left, false);
+                l.enableAutoSizing = true;
+                l.fontSizeMin = 14f;
+                l.fontSizeMax = 24f;
+                UiKit.Size(l, 40f);
+            }
+            UiKit.Button(footer, "BACK", ShowCareerStats, ButtonStyle.Ghost, 130f, 44f);
         }
 
         /// <summary>I148: a Quick Call on a shop court with your team.</summary>

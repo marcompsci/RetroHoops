@@ -103,6 +103,9 @@ namespace CallerRetroBall.Logic
             ("CLUTCH BUCKETS", new[] { 5, 10, 25, 50 }),
             ("COMEBACK WINS", new[] { 1, 5, 10, 25 }),   // I234
             ("DOUBLE-DOUBLES", new[] { 1, 10, 25, 50 }),
+            ("PLAYER OF THE GAME", new[] { 1, 10, 25, 50, 100 }), // I260
+            ("ASSISTS", new[] { 50, 100, 250, 500, 1000 }),        // I261
+            ("REBOUNDS", new[] { 50, 100, 250, 500, 1000 }),
         };
 
         public static int ValueOf(CareerTotals t, string name)
@@ -121,6 +124,9 @@ namespace CallerRetroBall.Logic
                 case "CLUTCH BUCKETS": return t.clutchMakes;
                 case "COMEBACK WINS": return t.comebacks;
                 case "DOUBLE-DOUBLES": return t.doubleDoubles;
+                case "PLAYER OF THE GAME": return t.playerOfGames;
+                case "ASSISTS": return t.assists;
+                case "REBOUNDS": return t.rebounds;
                 default: return 0;
             }
         }

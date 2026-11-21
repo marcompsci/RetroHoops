@@ -136,6 +136,7 @@ namespace CallerRetroBall.UI
             // I201 + I202
             UiControls.ToggleRow(column, "ICONS ONLY (NO BUTTON WORDS)", s.iconsOnly, v => { s.iconsOnly = v; Save(); });
             UiControls.ToggleRow(column, "MOMENTUM BAR", s.momentumBar, v => { s.momentumBar = v; Save(); });
+            UiControls.ChoiceRow(column, "CALLOUTS", Callouts.Names, Callouts.Clamp(s.callouts), i => { s.callouts = Callouts.Clamp(i); Save(); }); // I254
             UiKit.Size(UiKit.Label(column, "MOMENTUM BAR: a strip under the score that fills toward the team on a run.", 28f, Theme.Muted), 70f);
             UiControls.ToggleRow(column, "PLAY-BY-PLAY VOICE (THE STREETS)", s.playByPlayVoice, v => { s.playByPlayVoice = v; Save(); if (!v) Core.Speech.Stop(); });
             UiKit.Size(UiKit.Label(column, "Full Court always plays sideways. Turn this on to play every mode sideways (2 Player stays upright).", 28f, Theme.Muted), 80f);
