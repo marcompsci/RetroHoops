@@ -200,6 +200,8 @@ namespace CallerRetroBall.Logic
         public int comebacks, doubleDoubles, perfectGames;
         /// <summary>I246: games you were player of the game in (wins only).</summary>
         public int playerOfGames;
+        /// <summary>I276: turnovers you've committed.</summary>
+        public int turnovers;
     }
 
     [Serializable]

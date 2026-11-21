@@ -16,9 +16,9 @@ namespace CallerRetroBall.Logic
     /// </summary>
     public static class Tours
     {
-        /// <summary>I269 (21 Nov 2026): a new id so players who saw the last card see this one once.</summary>
-        public static readonly TourCard WhatsNew = new TourCard("tour.whats_new_241", "NEW IN RETRO HOOPS",
-            "Set up a bucket for a DIME, score 6 straight and you're COOKING, string stops together for LOCKDOWN. Quick Call remembers your matchup (or tap RANDOM MATCHUP), the PLAY menu has a tip a day and your next milestone, and CAREER STATS has RECENT GAMES. Settings ► CALLOUTS turns the chatter down.");
+        /// <summary>I279 (21 Nov 2026): a new id so players who saw the last card see this one once.</summary>
+        public static readonly TourCard WhatsNew = new TourCard("tour.whats_new_271", "NEW IN RETRO HOOPS",
+            "CHECK BALL now scouts their best player. After the game you'll see who led in points, assists and rebounds, your first win of the day, and a drill to try when a game went sideways. The PLAY menu names your NEMESIS, and RECENT GAMES opens with your record over the last 20.");
         public static readonly TourCard TwoPhones = new TourCard("tour.two_phones", "TWO PHONES",
             "Each player on their own iPhone, side by side. One phone hosts and picks both teams; the other joins. No internet needed, just Wi-Fi or Bluetooth on.");
         public static readonly TourCard Live = new TourCard("tour.live", "RETRO HOOPS LIVE",

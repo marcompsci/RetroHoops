@@ -923,3 +923,20 @@ Logic lives in `Logic/Progression/Shop.cs`. The App Store bridge is `Core/ShopSt
 - **I269 What's New:** the card is refreshed (tour.whats_new_241).
 - **I270 Spanish and tests:** Spanish for every new line. `ImprovementsI241Tests` has 15 tests.
 - **Gate:** 1,318 logic tests pass, UnityCheck 0 errors, App Store audit 73/73, strict text audit clean.
+
+### Improvements I271–I280: scouting, stat leaders, nemesis, first win and bench notes (21 Nov 2026)
+
+- **I271 SCOUTING REPORT:** CHECK BALL names their best player (jersey, name and what he does best: shooter, finisher, playmaker, stopper, rebounder or burner). It's hidden on BIG PLAYS ONLY.
+- **I272 LEADERS:** the post-game shows who led in points, assists and rebounds, across both teams.
+- **I273 NEMESIS on the PLAY menu:** I13's nemesis is named on the PLAY menu with your record against them and the existing +50 SP bonus for beating them. This adds no new reward.
+- **I274 FIRST WIN OF THE DAY!:** called on the post-game. It's a callout only, with no reward.
+- **I275 CARE WITH THE BALL:** shown on the post-game when you have 4 or more turnovers.
+- **I276 Turnovers:** counted in the career, and CAREER STATS shows turnovers a game.
+- **I277 RECENT GAMES header:** opens with your record and points a game over the last 20.
+- **I278 Practice suggestion:** after a rough game, the post-game suggests a Practice Lab drill:
+  - FREE SHOOT for under 35% shooting on 6 or more shots.
+  - DRIBBLE LANE for 4 or more turnovers.
+  - LOCKDOWN for 5 or more reaches with no steal.
+- **I279 Save guard and What's New:** a save-guard test for the new total, and the card is refreshed (tour.whats_new_271).
+- **I280 Spanish and tests:** Spanish for every new line. `ImprovementsI271Tests` has 8 tests.
+  - Gate: 1,326 logic tests pass, UnityCheck 0 errors, App Store audit 73/73, strict text audit clean.

@@ -146,6 +146,7 @@ namespace CallerRetroBall.Logic
             string Per(int n) => t.games <= 0 ? "-" : (n / (double)t.games).ToString("0.0", System.Globalization.CultureInfo.InvariantCulture);
             rows.Add(("ASSISTS A GAME", Per(t.assists)));      // I262
             rows.Add(("REBOUNDS A GAME", Per(t.rebounds)));
+            rows.Add(("TURNOVERS A GAME", Per(t.turnovers)));   // I276
             rows.Add(("PLAYER OF THE GAME", t.playerOfGames.ToString())); // I246
             string fav = FavoriteCourt(d, out int favGames);
             if (fav != null) rows.Add(("FAVORITE COURT (LAST 20)", (c?.Court(fav)?.displayName ?? fav).ToUpperInvariant() + "  ·  " + favGames + " " + Loc.T("GAMES")));

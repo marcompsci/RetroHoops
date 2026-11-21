@@ -280,6 +280,8 @@ namespace CallerRetroBall.UI
         {
             var column = OpenOverlay("RECENT GAMES", out var footer);
             var lines = RecentGames.Lines(App.Career, App.Catalog);
+            string head = RecentSummary.Line(App.Career); // I277
+            if (head != null) UiKit.Size(UiKit.Label(column, head, 30f, Theme.Gold, TextAlignmentOptions.Center, true), 50f);
             if (lines.Count == 0) UiKit.Size(UiKit.Label(column, Loc.T("No games yet. Play one!"), 30f, Theme.Muted, TextAlignmentOptions.Center), 60f);
             foreach (var line in lines)
             {

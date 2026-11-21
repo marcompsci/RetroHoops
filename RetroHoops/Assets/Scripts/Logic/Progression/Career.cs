@@ -145,6 +145,7 @@ namespace CallerRetroBall.Logic
                 Habits.AddGame(t, line); // I162 + I163
                 if (GameCallouts.Tens(line) >= 2) t.doubleDoubles++; // I232
                 if (GameCallouts.Perfect(line)) t.perfectGames++;    // I233
+                t.turnovers += line.turnovers;                       // I276
                 if (data.shotChart == null) data.shotChart = new ShotChartData();
                 var before = ShotCharts.Copy(data.shotChart);
                 ShotZones.Merge(data.shotChart, line.chart);

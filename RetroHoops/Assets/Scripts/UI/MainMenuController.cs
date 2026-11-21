@@ -588,7 +588,7 @@ namespace CallerRetroBall.UI
             // I200 + I205 + I206: your login run, your last game and your win streak.
             foreach (var extra in new[] { LoginStrip.Line(career), LastGame.Line(career, App.Catalog), LastGame.StreakLine(career),
                                           Form.Line(career), Form.Week(career, App.Today),
-                                          NextMilestone.Line(career.totals), DailyTip.For(App.Today) }) // I223 + I224, I247 + I248
+                                          NextMilestone.Line(career.totals), NemesisMenu.Line(career, App.Catalog), DailyTip.For(App.Today) }) // I223 + I224, I247 + I248, I273
             {
                 if (extra == null) continue;
                 var l = UiKit.Label(column, extra, 24f, Theme.Cream, TextAlignmentOptions.Center, true);

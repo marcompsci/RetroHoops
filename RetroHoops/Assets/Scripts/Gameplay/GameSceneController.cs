@@ -591,6 +591,9 @@ namespace CallerRetroBall.Gameplay
                 var opp = _match.Setup.HumanTeam == 0 ? _match.Setup.TeamB : _match.Setup.TeamA;
                 string again = HeadToHead.TipLine(App.Career, opp?.id);
                 if (again != null) hot = hot == null ? again : again + "\n" + hot;
+                // I271: their best player.
+                string scout = Scouting.Line(_match, 1 - _match.Setup.HumanTeam);
+                if (scout != null && Callouts.Show(MatchHud.CalloutLevel, true)) hot = hot == null ? scout : hot + "\n" + scout;
             }
             return hot == null ? "CHECK BALL" : Loc.T("CHECK BALL") + "\n" + hot;
         }
@@ -3225,7 +3228,11 @@ namespace CallerRetroBall.Gameplay
                     var tonight = summary.HumanLine?.stats;
                     foreach (var extra in new[] { TonightShooting.BestSpot(tonight), TonightShooting.PerShot(tonight),
                                                   PlayerOfTheGameCount.IsHuman(summary) ? PlayerOfTheGameCount.Line(App.Career.totals.playerOfGames) : null,
-                                                  _stops.Best >= 2 ? Loc.T("BEST STOP STREAK") + ": " + _stops.Best : null })
+                                                  _stops.Best >= 2 ? Loc.T("BEST STOP STREAK") + ": " + _stops.Best : null,
+                                                  // I272 + I274 + I275 + I278
+                                                  StatLeaders.Line(summary),
+                                                  FirstWin.Today(App.Career) ? Loc.T("FIRST WIN OF THE DAY!") : null,
+                                                  BenchNotes.Turnovers(tonight), BenchNotes.DrillLine(tonight) })
                         if (extra != null) note = string.IsNullOrEmpty(note) ? extra : note + "\n" + extra;
                 }
                 string vsAvg = rewarded && VsAverage.Counts(summary.mode) ? VsAverage.Line(App.Career.totals, summary.HumanLine?.stats) : null; // I213

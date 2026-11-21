@@ -51,7 +51,7 @@ namespace CallerRetroBall.Logic
                     ["recEarly"] = d.totals.recentEarly, ["recLate"] = d.totals.recentLate, ["recJumpers"] = d.totals.recentJumpers,
                     ["recShort"] = d.totals.recentShortReaches,
                     ["chase"] = d.totals.chaseDowns, ["clutch"] = d.totals.clutchMakes, ["greenRun"] = d.totals.bestGreenRun,
-                    ["comebacks"] = d.totals.comebacks, ["dd"] = d.totals.doubleDoubles, ["perfect"] = d.totals.perfectGames, ["potg"] = d.totals.playerOfGames,
+                    ["comebacks"] = d.totals.comebacks, ["dd"] = d.totals.doubleDoubles, ["perfect"] = d.totals.perfectGames, ["potg"] = d.totals.playerOfGames, ["tov"] = d.totals.turnovers,
                     ["blowW"] = d.totals.blowoutWins, ["blowL"] = d.totals.blowoutLosses,
                 },
                 ["practice"] = new Dictionary<string, object>
@@ -535,7 +535,7 @@ namespace CallerRetroBall.Logic
                     recentJumpers = Math.Max(0, Int(t, "recJumpers", 0)), recentShortReaches = Math.Max(0, Int(t, "recShort", 0)),
                     chaseDowns = Math.Max(0, Int(t, "chase", 0)), clutchMakes = Math.Max(0, Int(t, "clutch", 0)),
                     comebacks = Math.Max(0, Int(t, "comebacks", 0)), doubleDoubles = Math.Max(0, Int(t, "dd", 0)), perfectGames = Math.Max(0, Int(t, "perfect", 0)),
-                    playerOfGames = Math.Max(0, Int(t, "potg", 0)),
+                    playerOfGames = Math.Max(0, Int(t, "potg", 0)), turnovers = Math.Max(0, Int(t, "tov", 0)),
                     bestGreenRun = Math.Max(0, Int(t, "greenRun", 0)),
                     blowoutWins = Math.Max(0, Int(t, "blowW", 0)), blowoutLosses = Math.Max(0, Int(t, "blowL", 0)),
                 };
