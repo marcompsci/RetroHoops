@@ -101,6 +101,8 @@ namespace CallerRetroBall.Logic
             ("POSTERS", new[] { 5, 10, 25, 50, 100 }),
             ("CHASE-DOWN BLOCKS", new[] { 5, 10, 25, 50 }),
             ("CLUTCH BUCKETS", new[] { 5, 10, 25, 50 }),
+            ("COMEBACK WINS", new[] { 1, 5, 10, 25 }),   // I234
+            ("DOUBLE-DOUBLES", new[] { 1, 10, 25, 50 }),
         };
 
         public static int ValueOf(CareerTotals t, string name)
@@ -117,6 +119,8 @@ namespace CallerRetroBall.Logic
                 case "POSTERS": return t.posters;
                 case "CHASE-DOWN BLOCKS": return t.chaseDowns;
                 case "CLUTCH BUCKETS": return t.clutchMakes;
+                case "COMEBACK WINS": return t.comebacks;
+                case "DOUBLE-DOUBLES": return t.doubleDoubles;
                 default: return 0;
             }
         }
@@ -175,7 +179,8 @@ namespace CallerRetroBall.Logic
             if (g.mode != GameMode.QuickCall || c.Team(g.opponentId) == null) return null;
             var mine = Secrets.PlayableTeams(c, d.secrets);
             if (mine.Count == 0) return null;
-            var home = mine.Find(t => t.id != g.opponentId);
+            var home = (!string.IsNullOrEmpty(g.teamId) && g.teamId != g.opponentId ? mine.Find(t => t.id == g.teamId) : null)
+                       ?? mine.Find(t => t.id != g.opponentId); // I237: the team you played as
             if (home == null) return null;
             return new MatchRequest
             {

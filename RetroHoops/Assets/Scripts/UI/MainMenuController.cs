@@ -443,6 +443,7 @@ namespace CallerRetroBall.UI
             int courtChoice = 0; // 0 = home court, then any unlocked hidden courts
             int oppIndex = 0;
             TextMeshProUGUI oppLabel = null; // assigned below; declared first so Refresh() can see it
+            TextMeshProUGUI h2hLabel = null;
             var opponents = new List<TeamDef>();
 
             UiKit.Size(UiKit.Label(column, "PICK YOUR TEAM", 36f, Theme.Gold, TextAlignmentOptions.Center, true), 60f);
@@ -463,6 +464,10 @@ namespace CallerRetroBall.UI
 
             oppLabel = UiKit.Label(column, "", 40f, Theme.Cream, TextAlignmentOptions.Center, true);
             UiKit.Size(oppLabel, 70f);
+            // I216: your recent record against the team you picked.
+            var h2h = UiKit.Label(column, "", 26f, Theme.Cyan, TextAlignmentOptions.Center, true);
+            UiKit.Size(h2h, 40f);
+            h2hLabel = h2h;
             UiKit.Button(column, "CHANGE OPPONENT", () => { oppIndex = (oppIndex + 1) % opponents.Count; Refresh(); }, ButtonStyle.Ghost, 100f, 36f);
 
             // Play anywhere: home court, any street court, and hidden courts once unlocked.
@@ -527,6 +532,7 @@ namespace CallerRetroBall.UI
                 foreach (var t in league) if (t.id != mine[myIndex].id) opponents.Add(t);
                 oppIndex %= opponents.Count;
                 oppLabel.text = "VS  " + opponents[oppIndex].FullName.ToUpperInvariant();
+                if (h2hLabel != null) h2hLabel.text = HeadToHead.Line(App.Career, opponents[oppIndex].id) ?? Loc.T("FIRST MEETING LATELY");
             }
             Refresh();
         }
@@ -568,7 +574,8 @@ namespace CallerRetroBall.UI
                 UiKit.Size(UiKit.Label(column, Loc.T("WEEKEND COURT") + ":  " + App.Catalog.Court(weekendCourt).displayName.ToUpperInvariant() + "  ·  " + Loc.T("free in today's DAILY CHALLENGE"),
                                        24f, Theme.Cyan, TextAlignmentOptions.Center, true), 46f);
             // I200 + I205 + I206: your login run, your last game and your win streak.
-            foreach (var extra in new[] { LoginStrip.Line(career), LastGame.Line(career, App.Catalog), LastGame.StreakLine(career) })
+            foreach (var extra in new[] { LoginStrip.Line(career), LastGame.Line(career, App.Catalog), LastGame.StreakLine(career),
+                                          Form.Line(career), Form.Week(career, App.Today) }) // I223 + I224
             {
                 if (extra == null) continue;
                 var l = UiKit.Label(column, extra, 24f, Theme.Cream, TextAlignmentOptions.Center, true);

@@ -31,6 +31,7 @@ namespace CallerRetroBall.Logic
             Check(ref r.chaseDowns, line.chaseDowns, "CHASE-DOWN BLOCKS", broken);
             Check(ref r.clutchMakes, line.clutchMakes, "CLUTCH BUCKETS", broken);
             Check(ref r.greenRun, line.bestGreenRun, "GREEN RUN", broken);
+            Check(ref r.biggestComeback, GameCallouts.Comeback(s), "BIGGEST COMEBACK", broken); // I221
             if (s.HumanWon) Check(ref r.biggestWin, s.Margin, "BIGGEST WIN", broken);
 
             r.winStreak = s.HumanWon ? r.winStreak + 1 : 0;
@@ -52,6 +53,7 @@ namespace CallerRetroBall.Logic
                 points = line.points,
                 assists = line.assists,
                 rebounds = line.rebounds,
+                teamId = s.humanTeam == 0 ? s.teamAId : s.teamBId, // I237
             });
             while (d.history.Count > HistoryLength) d.history.RemoveAt(d.history.Count - 1);
 

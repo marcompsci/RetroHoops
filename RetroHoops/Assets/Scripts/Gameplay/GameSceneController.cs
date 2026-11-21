@@ -421,6 +421,11 @@ namespace CallerRetroBall.Gameplay
             _controls.Call.UnavailableHint = "OFFENSE";
             _hud = MatchHud.Create(setup.TeamA, setup.TeamB);
             _hud.ShowMomentum(App.Career?.settings.momentumBar ?? true); // I202
+            _hud.ShotClockTick += () =>
+            {
+                // I229: the last three seconds tick when it's your ball.
+                if (_match.OffenseTeam == _match.Setup.HumanTeam && !Demo) Sfx(SfxId.Click, 0.5f, 1.4f);
+            };
             _hud.RunCalled += (team, call) =>
             {
                 // I204: the crowd swells on a run (yours gets the cheer and the call; theirs the groan).
@@ -551,6 +556,13 @@ namespace CallerRetroBall.Gameplay
         private string CheckBallLine()
         {
             string hot = _link == null ? HotSpot.Line(App.Career?.shotChart) : null;
+            // I217: a rematch says so (a revenge game, or a winning run against them).
+            if (_link == null && !Versus && _match != null)
+            {
+                var opp = _match.Setup.HumanTeam == 0 ? _match.Setup.TeamB : _match.Setup.TeamA;
+                string again = HeadToHead.TipLine(App.Career, opp?.id);
+                if (again != null) hot = hot == null ? again : again + "\n" + hot;
+            }
             return hot == null ? "CHECK BALL" : Loc.T("CHECK BALL") + "\n" + hot;
         }
 
@@ -1738,6 +1750,13 @@ namespace CallerRetroBall.Gameplay
                 }
             }
             int human = _match.Setup.HumanTeam;
+            // I222: a lead change gets a word (the first lead of the game and ties don't).
+            if (_match.LastFlowChange == ScoreFlowChange.LeadChange && _match.Flow.LeadChanges > 0 && _practice == null && _horse == null && _tutorial == null && !Demo)
+            {
+                bool oursNow = _match.Flow.Leader == human;
+                _hud.Toast(Versus ? Loc.T("LEAD CHANGE") : Loc.T(oursNow ? "YOU TAKE THE LEAD" : "THEY TAKE THE LEAD"), 1f);
+                if (oursNow && !Versus) Haptics.Light();
+            }
             float stop = 0f;
             int streetsTeam = _link != null && _link.Seat == 1 ? 1 : human; // THE STREETS: the guest phone is team B
             foreach (var e in _match.Events)
@@ -3161,6 +3180,9 @@ namespace CallerRetroBall.Gameplay
                     note = string.IsNullOrEmpty(note) ? line : note + "\n" + line;
                     Sfx(SfxId.Fanfare, 0.7f);
                 }
+                // I220 + I231 + I232: comebacks, double-doubles, perfect shooting and how the lead moved.
+                if (rewarded && VsAverage.Counts(summary.mode))
+                    foreach (var call in GameCallouts.For(summary)) note = string.IsNullOrEmpty(note) ? call : note + "\n" + call;
                 string vsAvg = rewarded && VsAverage.Counts(summary.mode) ? VsAverage.Line(App.Career.totals, summary.HumanLine?.stats) : null; // I213
                 if (vsAvg != null) note = string.IsNullOrEmpty(note) ? vsAvg : note + "\n" + vsAvg;
                 // 14 Oct 2026: the phone's FEED posts about the game (titles get the CHAMPIONS post).
@@ -4160,7 +4182,8 @@ namespace CallerRetroBall.Gameplay
             SetTouchVisible(!paused && !_padMode);
             // I212: your line so far, on the pause menu.
             if (paused && _match != null && _match.ControlledIndex >= 0 && !Versus)
-                _hud.SetPauseLine(Loc.T("YOUR GAME") + ":  " + MyLine.Text(_match.Stats[_match.ControlledIndex]));
+                _hud.SetPauseLine(Situation.Line(_match.Score[_match.Setup.HumanTeam], _match.Score[1 - _match.Setup.HumanTeam]) + "\n" // I236
+                                  + Loc.T("YOUR GAME") + ":  " + MyLine.Text(_match.Stats[_match.ControlledIndex]));
             else if (paused) _hud.SetPauseLine(null);
             _hud.ShowPause(paused);
             _coach?.SetVisible(!paused && !_finalShown);

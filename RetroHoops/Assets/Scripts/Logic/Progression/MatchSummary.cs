@@ -44,6 +44,8 @@ namespace CallerRetroBall.Logic
         public bool isFinal;
         /// <summary>Played Full Court 5-on-5 (scores 2s and 3s).</summary>
         public bool fullCourt;
+        /// <summary>I218–I220: lead changes, each side's biggest lead, and the biggest hole the human's team was in.</summary>
+        public int leadChanges, biggestLeadFor, biggestLeadAgainst, humanTrailedBy;
 
         public bool HumanWon => winner == humanTeam;
         public int HumanScore => humanTeam == 0 ? scoreA : scoreB;
@@ -118,6 +120,7 @@ namespace CallerRetroBall.Logic
                 reason = m.EndReason,
                 fullCourt = m.Setup.FullCourt,
             };
+            GameCallouts.Fill(s, m.Flow); // I218
             int potgTeam = s.winner < 0 ? s.humanTeam : s.winner;
             s.playerOfTheGame = m.Stats.PlayerOfTheGame(potgTeam, m.TeamSize);
             foreach (var p in m.Players)

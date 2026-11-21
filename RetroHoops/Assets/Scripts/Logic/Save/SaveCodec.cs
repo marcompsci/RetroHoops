@@ -51,6 +51,7 @@ namespace CallerRetroBall.Logic
                     ["recEarly"] = d.totals.recentEarly, ["recLate"] = d.totals.recentLate, ["recJumpers"] = d.totals.recentJumpers,
                     ["recShort"] = d.totals.recentShortReaches,
                     ["chase"] = d.totals.chaseDowns, ["clutch"] = d.totals.clutchMakes, ["greenRun"] = d.totals.bestGreenRun,
+                    ["comebacks"] = d.totals.comebacks, ["dd"] = d.totals.doubleDoubles, ["perfect"] = d.totals.perfectGames,
                     ["blowW"] = d.totals.blowoutWins, ["blowL"] = d.totals.blowoutLosses,
                 },
                 ["practice"] = new Dictionary<string, object>
@@ -174,7 +175,7 @@ namespace CallerRetroBall.Logic
                 ["history"] = List(d.history ?? new List<MatchHistoryEntry>(), h => new Dictionary<string, object>
                 {
                     ["day"] = h.day, ["mode"] = (int)h.mode, ["opp"] = h.opponentId, ["for"] = h.scoreFor,
-                    ["against"] = h.scoreAgainst, ["pts"] = h.points, ["ast"] = h.assists, ["reb"] = h.rebounds,
+                    ["against"] = h.scoreAgainst, ["pts"] = h.points, ["ast"] = h.assists, ["reb"] = h.rebounds, ["team"] = h.teamId,
                 }),
                 ["seasons"] = List(d.seasons ?? new List<SeasonHistoryEntry>(), e => new Dictionary<string, object>
                 {
@@ -443,7 +444,7 @@ namespace CallerRetroBall.Logic
             ["points"] = r.points, ["assists"] = r.assists, ["rebounds"] = r.rebounds, ["steals"] = r.steals,
             ["blocks"] = r.blocks, ["greens"] = r.greens, ["biggestWin"] = r.biggestWin,
             ["winStreak"] = r.winStreak, ["bestWinStreak"] = r.bestWinStreak,
-            ["posters"] = r.posters, ["chase"] = r.chaseDowns, ["clutch"] = r.clutchMakes, ["greenRun"] = r.greenRun,
+            ["posters"] = r.posters, ["chase"] = r.chaseDowns, ["clutch"] = r.clutchMakes, ["greenRun"] = r.greenRun, ["comeback"] = r.biggestComeback,
         };
 
         private static object EncodeRise(RiseSaveData r)
@@ -532,6 +533,7 @@ namespace CallerRetroBall.Logic
                     recentEarly = Math.Max(0, Int(t, "recEarly", 0)), recentLate = Math.Max(0, Int(t, "recLate", 0)),
                     recentJumpers = Math.Max(0, Int(t, "recJumpers", 0)), recentShortReaches = Math.Max(0, Int(t, "recShort", 0)),
                     chaseDowns = Math.Max(0, Int(t, "chase", 0)), clutchMakes = Math.Max(0, Int(t, "clutch", 0)),
+                    comebacks = Math.Max(0, Int(t, "comebacks", 0)), doubleDoubles = Math.Max(0, Int(t, "dd", 0)), perfectGames = Math.Max(0, Int(t, "perfect", 0)),
                     bestGreenRun = Math.Max(0, Int(t, "greenRun", 0)),
                     blowoutWins = Math.Max(0, Int(t, "blowW", 0)), blowoutLosses = Math.Max(0, Int(t, "blowL", 0)),
                 };
@@ -682,7 +684,7 @@ namespace CallerRetroBall.Logic
                     steals = Int(rc, "steals", 0), blocks = Int(rc, "blocks", 0), greens = Int(rc, "greens", 0),
                     biggestWin = Int(rc, "biggestWin", 0), winStreak = Int(rc, "winStreak", 0), bestWinStreak = Int(rc, "bestWinStreak", 0),
                     posters = Math.Max(0, Int(rc, "posters", 0)), chaseDowns = Math.Max(0, Int(rc, "chase", 0)),
-                    clutchMakes = Math.Max(0, Int(rc, "clutch", 0)), greenRun = Math.Max(0, Int(rc, "greenRun", 0)),
+                    clutchMakes = Math.Max(0, Int(rc, "clutch", 0)), greenRun = Math.Max(0, Int(rc, "greenRun", 0)), biggestComeback = Math.Max(0, Int(rc, "comeback", 0)),
                 };
                 foreach (var item in Arr(o, "history"))
                 {
@@ -693,6 +695,7 @@ namespace CallerRetroBall.Logic
                         day = Int(h, "day", 0), mode = Enum.IsDefined(typeof(GameMode), mode) ? (GameMode)mode : GameMode.QuickCall, // I6: every mode survives a reload
                         opponentId = Str(h, "opp", null), scoreFor = Int(h, "for", 0), scoreAgainst = Int(h, "against", 0),
                         points = Int(h, "pts", 0), assists = Int(h, "ast", 0), rebounds = Int(h, "reb", 0),
+                        teamId = Str(h, "team", null),
                     });
                     if (d.history.Count >= Records.HistoryLength) break;
                 }

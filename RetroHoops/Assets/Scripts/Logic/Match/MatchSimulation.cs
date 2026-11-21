@@ -490,6 +490,7 @@ namespace CallerRetroBall.Logic
             Score[0] = Math.Max(0, setup.StartScoreA);
             if (setup.StyleMeter) StyleMeter[0] = setup.StartMeterA;
             Score[1] = Math.Max(0, setup.StartScoreB);
+            Flow = new ScoreFlow(Score[0], Score[1]); // I218
             ShotClock = setup.Rules.shotClockSeconds;
             ControlledIndex = Index(setup.HumanTeam, 0);
             SecondControlledIndex = setup.SecondHuman ? Index(1 - setup.HumanTeam, 0) : -1;
@@ -713,6 +714,11 @@ namespace CallerRetroBall.Logic
         private PlayerInput _input2;
 
         /// <summary>Advances the match by <paramref name="dt"/> seconds using the human's input.</summary>
+        /// <summary>I218: how the score has moved this game (lead changes, ties, biggest leads).</summary>
+        public ScoreFlow Flow { get; private set; } = new ScoreFlow();
+        /// <summary>I222: what the last step changed (a new leader or a tie), for the callouts.</summary>
+        public ScoreFlowChange LastFlowChange { get; private set; }
+
         public void Step(float dt, PlayerInput input) => Step(dt, input, default);
 
         /// <summary>Two-player step: <paramref name="input2"/> drives player 2 (ignored unless SecondHuman).</summary>
@@ -720,6 +726,7 @@ namespace CallerRetroBall.Logic
         {
             StepCore(dt, input, input2);
             ProcessStreetEvents();
+            LastFlowChange = Flow.Observe(Score[0], Score[1]); // I218
         }
 
         private void StepCore(float dt, PlayerInput input, PlayerInput input2)

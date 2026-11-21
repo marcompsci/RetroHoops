@@ -106,6 +106,9 @@ namespace CallerRetroBall.UI
             string price = ShopStore.Price(p.Id);
             UiKit.Size(UiKit.Label(column, Loc.T(p.Name), 38f, owned ? Theme.Cyan : Theme.Cream, TextAlignmentOptions.Left, true), 56f);
             UiKit.Size(UiKit.Label(column, Loc.T(p.Blurb), 26f, Theme.Muted), 70f);
+            // I230: what's in it, in numbers.
+            string count = ShopCounts.Line(p);
+            if (count != null) UiKit.Size(UiKit.Label(column, count, 24f, Theme.Gold, TextAlignmentOptions.Left, true), 36f);
 
             if (p.Kind == ShopKind.CourtPack)
             {
@@ -264,6 +267,7 @@ namespace CallerRetroBall.UI
         {
             var column = OpenOverlay("CAREER STATS", out var footer);
             foreach (var row in CareerStats.Rows(App.Career)) UiControls.Stat(column, row.label, row.value);
+            foreach (var row in CareerStatsMore.Rows(App.Career, App.Catalog)) UiControls.Stat(column, row.label, row.value); // I225–I227
             UiKit.Button(footer, "BACK", ShowPlayMenu, ButtonStyle.Ghost, 130f, 44f);
         }
 

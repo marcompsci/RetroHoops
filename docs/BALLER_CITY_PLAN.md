@@ -855,3 +855,32 @@ Logic lives in `Logic/Progression/Shop.cs`. The App Store bridge is `Core/ShopSt
 - **I215 Wrap-up:** Spanish for every new line. `ImprovementsI196Tests` has 14 tests.
   - Gate: 1,291 logic tests pass, UnityCheck shows 0 errors, App Store audit 73/73, strict text audit clean.
   - Not tested on a device yet.
+
+### Improvements I216–I240: how the score moved, comebacks, rematches, form and more career stats (21 Nov 2026)
+
+- **I216 Head to head:** Quick Call shows your record against the opponent you picked, from your last 20 games (or FIRST MEETING LATELY).
+- **I217 Rematch at tip-off:** CHECK BALL says "REMATCH: THEY GOT YOU LAST TIME" after a loss to that team, or "N STRAIGHT WINS vs THEM" once you've beaten them 3 times in a row.
+- **I218 Score flow:** the simulation tracks lead changes, ties and each side's biggest lead (`ScoreFlow`), and the match summary keeps them.
+- **I219 Biggest leads:** shown on the post-game.
+- **I220 COMEBACK WIN:** a win after trailing by 6 or more gets its own post-game callout.
+- **I221 Comebacks in the career:** the count goes into the totals, and the BIGGEST COMEBACK game record is kept.
+- **I222 Lead changes:** "YOU TAKE THE LEAD" (with a light buzz) or "THEY TAKE THE LEAD". The first lead of the game and ties aren't called.
+- **I223 FORM:** the PLAY menu shows your last 5 results (W/L), once you've played 3 games.
+- **I224 THIS WEEK:** the PLAY menu shows games, record and points over the last 7 days.
+- **I225 CAREER STATS: best games.** Points, assists, rebounds, steals, blocks, posters, biggest win, biggest comeback and best win streak.
+- **I226 CAREER STATS: hot and cold spots.** Each needs 8+ shots from that spot.
+- **I227 CAREER STATS: most-played opponent.** Your most-played opponent in the last 20 games, with your record against them.
+- **I228 GAME POINT:** called once each time a team gets within one bucket of the target. It handles win-by-two and the bust rule.
+- **I229 Shot clock:** the last three seconds turn red, bump and tick (the tick plays only on your possession).
+- **I230 Shop cards:** say how many courts or gear items are in each pack.
+- **I231 PERFECT FROM THE FIELD:** called on the post-game when you shoot 5 or more times without a miss.
+- **I232 DOUBLE-DOUBLE and TRIPLE-DOUBLE:** called on the post-game, with double-doubles counted in the career.
+- **I233 Perfect shooting games:** counted in the career.
+- **I234 Milestones:** new milestone tracks for comeback wins and double-doubles.
+- **I235 Momentum flip:** the momentum bar flashes when it swings to the other side. It's off with Reduce Motion.
+- **I236 Pause situation:** the pause menu shows the score situation (UP BY / DOWN BY / TIED) above your line.
+- **I237 RUN IT BACK:** keeps the team you played as (match history now saves it).
+- **I238 Save guard:** a test with every new field maxed checks that negative values never decode.
+- **I239 What's New:** the card is refreshed (tour.whats_new_216).
+- **I240 Wrap-up:** Spanish for every new line. `ImprovementsI216Tests` has 12 tests.
+  - Gate: 1,303 logic tests pass, UnityCheck shows 0 errors, App Store audit 73/73, strict text audit clean.

@@ -121,6 +121,7 @@ namespace CallerRetroBall.Logic
             if (summary.HumanWon) t.wins++;
             else t.losses++;
             DifficultyNudge.AddGame(t, summary); // I182
+            if (GameCallouts.Comeback(summary) > 0) t.comebacks++; // I221
             var line = summary.HumanLine?.stats;
             if (line != null)
             {
@@ -141,6 +142,8 @@ namespace CallerRetroBall.Logic
                 t.clutchMakes += line.clutchMakes;
                 t.bestGreenRun = Math.Max(t.bestGreenRun, line.bestGreenRun);
                 Habits.AddGame(t, line); // I162 + I163
+                if (GameCallouts.Tens(line) >= 2) t.doubleDoubles++; // I232
+                if (GameCallouts.Perfect(line)) t.perfectGames++;    // I233
                 if (data.shotChart == null) data.shotChart = new ShotChartData();
                 var before = ShotCharts.Copy(data.shotChart);
                 ShotZones.Merge(data.shotChart, line.chart);

@@ -117,6 +117,8 @@ namespace CallerRetroBall.Logic
         public int bestWinStreak;
         /// <summary>I198: single-game bests for posters, chase-down blocks, clutch buckets and the longest GREEN run.</summary>
         public int posters, chaseDowns, clutchMakes, greenRun;
+        /// <summary>I221: the biggest deficit you came back from to win.</summary>
+        public int biggestComeback;
     }
 
     [Serializable]
@@ -130,6 +132,8 @@ namespace CallerRetroBall.Logic
         public int points;
         public int assists;
         public int rebounds;
+        /// <summary>I237: the team you played as (RUN IT BACK uses it); null in saves from before it.</summary>
+        public string teamId;
         public bool Won => scoreFor > scoreAgainst;
     }
 
@@ -185,6 +189,8 @@ namespace CallerRetroBall.Logic
         public int chaseDowns, clutchMakes, bestGreenRun;
         /// <summary>I182: Quick Call games in a row won (or lost) by 8 or more, for the difficulty nudge.</summary>
         public int blowoutWins, blowoutLosses;
+        /// <summary>I221 comeback wins (down 6+), I232 double-doubles (or better), I233 perfect shooting games (5+ shots, no misses).</summary>
+        public int comebacks, doubleDoubles, perfectGames;
     }
 
     [Serializable]

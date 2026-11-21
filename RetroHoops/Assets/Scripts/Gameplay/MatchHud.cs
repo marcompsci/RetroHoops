@@ -195,7 +195,7 @@ namespace CallerRetroBall.Gameplay
             UiKit.Size(UiKit.ShadowLabel(column, "PAUSED", 90f, Theme.Cream, Theme.Pink, 8f).transform.parent.GetComponent<RectTransform>(), 140f);
             // I212: your line so far.
             _pauseLine = UiKit.Label(column, "", 30f, Theme.Cyan, TextAlignmentOptions.Center, true, "PauseLine");
-            UiKit.Size(_pauseLine.rectTransform, 44f);
+            UiKit.Size(_pauseLine.rectTransform, 84f);
             _pauseLine.gameObject.SetActive(false);
             UiKit.Button(column, "RESUME", () => ResumeRequested?.Invoke(), ButtonStyle.Primary, 150f);
             UiKit.Button(column, "PHOTO MODE", () => PhotoRequested?.Invoke(), ButtonStyle.Secondary, 130f, 48f);
@@ -866,6 +866,8 @@ namespace CallerRetroBall.Gameplay
         private readonly Momentum _momentum = new Momentum();
         private UnityEngine.UI.Image _momA, _momB;
         private float _momShown;
+        private int _momSide = -1;
+        private float _momFlash = -10f;
 
         /// <summary>A thin strip along the bottom of the score bar: it fills from the middle toward the side that's on a run.</summary>
         private void BuildMomentum(RectTransform bar)
@@ -905,10 +907,33 @@ namespace CallerRetroBall.Gameplay
         {
             if (_momA == null || !_momA.transform.parent.gameObject.activeSelf) return;
             float target = _momentum.Value(m.Time);
+            // I235: when the bar crosses the middle, the new side's fill flashes white for a moment.
+            int side = target > 0.15f ? 0 : target < -0.15f ? 1 : _momSide;
+            if (side != _momSide) { if (_momSide >= 0) _momFlash = Time.unscaledTime; _momSide = side; }
+            float flash = ReduceMotion ? 0f : Mathf.Clamp01(1f - (Time.unscaledTime - _momFlash) / 0.5f);
+            _momA.color = Color.Lerp(Theme.Cyan, Color.white, _momSide == 0 ? flash : 0f);
+            _momB.color = Color.Lerp(Theme.Pink, Color.white, _momSide == 1 ? flash : 0f);
             _momShown = ReduceMotion ? target : Mathf.MoveTowards(_momShown, target, Time.unscaledDeltaTime * 1.5f);
             float half = ((RectTransform)_momA.rectTransform.parent).rect.width * 0.5f;
             _momA.rectTransform.sizeDelta = new Vector2(Mathf.Max(0f, _momShown) * half, 0f);
             _momB.rectTransform.sizeDelta = new Vector2(Mathf.Max(0f, -_momShown) * half, 0f);
+        }
+
+        /// <summary>I229: a second ticked off in the shot clock's last three.</summary>
+        public event Action ShotClockTick;
+        private float _punchShot = -10f;
+
+        // I228: GAME POINT, said once each time a team gets within one bucket of winning.
+        private readonly bool[] _gamePoint = new bool[2];
+
+        private void SyncGamePoint(MatchSimulation m)
+        {
+            for (int t = 0; t < 2; t++)
+            {
+                bool at = m.Phase != MatchPhase.Final && GamePoint.At(m.Setup.Rules, m.Score[t], m.Score[1 - t]);
+                if (at && !_gamePoint[t]) Toast(Loc.T("GAME POINT") + "  ·  " + (t == 0 ? _teamA.text : _teamB.text), 1.2f);
+                _gamePoint[t] = at;
+            }
         }
 
         private readonly RunTracker _run = new RunTracker();
@@ -950,8 +975,15 @@ namespace CallerRetroBall.Gameplay
             if (shot != _lastShot)
             {
                 _lastShot = shot;
-                _shotClock.text = m.Setup.Rules.shotClockSeconds >= 99f ? "" : shot.ToString();
+                bool noClock = m.Setup.Rules.shotClockSeconds >= 99f;
+                _shotClock.text = noClock ? "" : shot.ToString();
+                // I229: the last three seconds go red and tick.
+                bool late = !noClock && shot <= 3 && shot > 0 && m.Phase == MatchPhase.Live;
+                _shotClock.color = late ? new Color32(0xFF, 0x4D, 0x4D, 255) : Theme.Gold;
+                if (late) { _punchShot = Time.unscaledTime; ShotClockTick?.Invoke(); }
             }
+            Punch(_shotClock, _punchShot);
+            SyncGamePoint(m);
 
             if (m.OffenseTeam != _lastOffense)
             {
