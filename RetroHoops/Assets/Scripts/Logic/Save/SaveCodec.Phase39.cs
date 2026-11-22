@@ -82,7 +82,7 @@ namespace CallerRetroBall.Logic
             return new Dictionary<string, object> { ["stick"] = s.stickSize, ["dead"] = s.stickDeadZone, ["haptic"] = s.hapticStrength, ["smart"] = s.smartDifficulty,
                 ["opacity"] = s.controlsOpacity, ["fill"] = s.fillScreen, ["preset"] = s.controlPreset, ["greenBuzz"] = s.greenBuzz,
                 ["iconsOnly"] = s.iconsOnly, ["momentum"] = s.momentumBar,
-                ["callouts"] = s.callouts, ["qTeam"] = s.lastQuickTeam, ["qOpp"] = s.lastQuickOpp };
+                ["callouts"] = s.callouts, ["qTeam"] = s.lastQuickTeam, ["qOpp"] = s.lastQuickOpp, ["tick"] = s.shotClockTick };
         }
 
         private static void DecodeFeel(SettingsData s, Dictionary<string, object> o)
@@ -98,6 +98,7 @@ namespace CallerRetroBall.Logic
             s.callouts = Callouts.Clamp(Int(o, "callouts", 0));
             s.lastQuickTeam = Str(o, "qTeam", null);
             s.lastQuickOpp = Str(o, "qOpp", null);
+            s.shotClockTick = Bool(o, "tick", true);
             s.stickSize = ControlFeel.Clamp(Int(o, "stick", 1));
             s.stickDeadZone = ControlFeel.Clamp(Int(o, "dead", 1));
             s.hapticStrength = ControlFeel.Clamp(Int(o, "haptic", 1));

@@ -425,7 +425,7 @@ namespace CallerRetroBall.Gameplay
             _hud.ShotClockTick += () =>
             {
                 // I229: the last three seconds tick when it's your ball.
-                if (_match.OffenseTeam == _match.Setup.HumanTeam && !Demo) Sfx(SfxId.Click, 0.5f, 1.4f);
+                if (_match.OffenseTeam == _match.Setup.HumanTeam && !Demo && (App.Career?.settings.shotClockTick ?? true)) Sfx(SfxId.Click, 0.5f, 1.4f); // I289
             };
             _hud.RunCalled += (team, call) =>
             {
@@ -592,6 +592,10 @@ namespace CallerRetroBall.Gameplay
                 string again = HeadToHead.TipLine(App.Career, opp?.id);
                 if (again != null) hot = hot == null ? again : again + "\n" + hot;
                 // I271: their best player.
+                // I287 + I296: your win streak, and a court you haven't played on lately.
+                string streak = StreakLines.WinStreak(App.Career);
+                if (streak != null) hot = hot == null ? streak : hot + "\n" + streak;
+                if (StreakLines.NewCourt(App.Career, _match.Setup.CourtId)) hot = hot == null ? Loc.T("FIRST GAME HERE LATELY") : hot + "\n" + Loc.T("FIRST GAME HERE LATELY");
                 string scout = Scouting.Line(_match, 1 - _match.Setup.HumanTeam);
                 if (scout != null && Callouts.Show(MatchHud.CalloutLevel, true)) hot = hot == null ? scout : hot + "\n" + scout;
             }
@@ -1967,6 +1971,9 @@ namespace CallerRetroBall.Gameplay
                         break;
                     case MatchEventType.ShotMade:
                         NotePersonalRun(e); // I242
+                        // I281: HOT HAND, your makes in a row.
+                        if (e.PlayerIndex == _match.ControlledIndex && !Demo && _practice == null && HotHand.Called(_match.Stats[e.PlayerIndex]))
+                            _hud.Toast(HotHand.Line(_match.Stats[e.PlayerIndex].makeRun), 1f, true);
                         _lastMadeTeam = e.Team;
                         _lastMadePlayer = e.PlayerIndex;
                         _lastMadeAt = Time.unscaledTime;
@@ -3232,7 +3239,13 @@ namespace CallerRetroBall.Gameplay
                                                   // I272 + I274 + I275 + I278
                                                   StatLeaders.Line(summary),
                                                   FirstWin.Today(App.Career) ? Loc.T("FIRST WIN OF THE DAY!") : null,
-                                                  BenchNotes.Turnovers(tonight), BenchNotes.DrillLine(tonight) })
+                                                  BenchNotes.Turnovers(tonight), BenchNotes.DrillLine(tonight),
+                                                  // I282 + I284 + I286 + I288 + I290 + I293
+                                                  tonight != null && tonight.bestMakeRun >= 3 ? Loc.T("LONGEST MAKE STREAK") + ": " + tonight.bestMakeRun : null,
+                                                  ShotRanges.Line(tonight?.chart), ShotRanges.TheirDamage(summary),
+                                                  StreakLines.BounceBack(App.Career) ? Loc.T("BOUNCE BACK!") : null,
+                                                  StreakLines.CloseOne(summary) ? Loc.T("CLOSE ONE!") : null,
+                                                  Goals.DailyJustDone(App.Career, App.Today) ? Loc.T("TODAY'S GOAL") + ": " + Loc.T("DONE!") : null })
                         if (extra != null) note = string.IsNullOrEmpty(note) ? extra : note + "\n" + extra;
                 }
                 string vsAvg = rewarded && VsAverage.Counts(summary.mode) ? VsAverage.Line(App.Career.totals, summary.HumanLine?.stats) : null; // I213
@@ -4236,7 +4249,8 @@ namespace CallerRetroBall.Gameplay
             if (paused && _match != null && _match.ControlledIndex >= 0 && !Versus)
                 _hud.SetPauseLine(Situation.Line(_match.Score[_match.Setup.HumanTeam], _match.Score[1 - _match.Setup.HumanTeam])
                                   + (GameLength.Line(_match.Setup.Rules, _match.GameClock) is string len ? "  ·  " + len : "") + "\n" // I236 + I264
-                                  + Loc.T("YOUR GAME") + ":  " + MyLine.Text(_match.Stats[_match.ControlledIndex]));
+                                  + Loc.T("YOUR GAME") + ":  " + MyLine.Text(_match.Stats[_match.ControlledIndex])
+                                  + (ShotRanges.Line(_match.Stats[_match.ControlledIndex].chart) is string ranges ? "\n" + ranges : "")); // I285
             else if (paused) _hud.SetPauseLine(null);
             _hud.ShowPause(paused);
             _coach?.SetVisible(!paused && !_finalShown);

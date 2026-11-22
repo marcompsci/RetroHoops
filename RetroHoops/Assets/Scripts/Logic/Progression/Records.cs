@@ -31,6 +31,7 @@ namespace CallerRetroBall.Logic
             Check(ref r.chaseDowns, line.chaseDowns, "CHASE-DOWN BLOCKS", broken);
             Check(ref r.clutchMakes, line.clutchMakes, "CLUTCH BUCKETS", broken);
             Check(ref r.greenRun, line.bestGreenRun, "GREEN RUN", broken);
+            Check(ref r.makeStreak, line.bestMakeRun, "MAKES IN A ROW", broken); // I283
             Check(ref r.biggestComeback, GameCallouts.Comeback(s), "BIGGEST COMEBACK", broken); // I221
             if (s.HumanWon) Check(ref r.biggestWin, s.Margin, "BIGGEST WIN", broken);
 

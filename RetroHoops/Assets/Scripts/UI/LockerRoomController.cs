@@ -452,6 +452,8 @@ namespace CallerRetroBall.UI
 
         // ------------------------------------------------------------------ style
 
+        private string[] _lookBefore;
+
         private void BuildStyle()
         {
             var c = App.Catalog;
@@ -461,6 +463,25 @@ namespace CallerRetroBall.UI
             if (career.kits.designed)
                 UiKit.Size(UiKit.Label(_content, "Your KIT tab design is what your team wears. Jerseys and shoes you own here show up there as presets.",
                                        28f, Theme.Cyan), 80f);
+            // I294 + I295: RANDOM OUTFIT from what you own, and PUT IT BACK.
+            var lookRow = UiKit.Row(_content, 16f, "LookButtons");
+            UiKit.Size(lookRow, 80f);
+            UiKit.Button(lookRow, "RANDOM OUTFIT", () =>
+            {
+                var before = RandomLook.Snapshot(App.Career);
+                if (!RandomLook.Shuffle(App.Career, App.Catalog, (uint)System.Environment.TickCount)) return;
+                _lookBefore = before;
+                App.SaveCareer();
+                Refresh();
+            }, ButtonStyle.Secondary, 80f, 30f);
+            if (_lookBefore != null)
+                UiKit.Button(lookRow, "PUT IT BACK", () =>
+                {
+                    RandomLook.Restore(App.Career, _lookBefore);
+                    _lookBefore = null;
+                    App.SaveCareer();
+                    Refresh();
+                }, ButtonStyle.Ghost, 80f, 30f);
             // I207: wearing a whole gear pack.
             var set = PackSets.FullSet(career);
             if (set != null)

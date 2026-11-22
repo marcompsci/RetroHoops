@@ -41,6 +41,8 @@ namespace CallerRetroBall.Logic
         public int callouts;
         /// <summary>I255: the last Quick Call matchup (team ids), picked again next time.</summary>
         public string lastQuickTeam, lastQuickOpp;
+        /// <summary>I289: the tick in the shot clock's last three seconds (on by default).</summary>
+        public bool shotClockTick = true;
         /// <summary>Play every mode in landscape, not only Full Court (2 Player and the demo stay portrait).</summary>
         public bool landscapeAll;
         /// <summary>Mic Tally's text commentary during games.</summary>
@@ -123,6 +125,8 @@ namespace CallerRetroBall.Logic
         public int posters, chaseDowns, clutchMakes, greenRun;
         /// <summary>I221: the biggest deficit you came back from to win.</summary>
         public int biggestComeback;
+        /// <summary>I283: the most makes in a row in one game.</summary>
+        public int makeStreak;
     }
 
     [Serializable]
@@ -202,6 +206,8 @@ namespace CallerRetroBall.Logic
         public int playerOfGames;
         /// <summary>I276: turnovers you've committed.</summary>
         public int turnovers;
+        /// <summary>I292: games decided by 2 or less.</summary>
+        public int closeWins, closeLosses;
     }
 
     [Serializable]

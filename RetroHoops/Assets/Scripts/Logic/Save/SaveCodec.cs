@@ -51,7 +51,7 @@ namespace CallerRetroBall.Logic
                     ["recEarly"] = d.totals.recentEarly, ["recLate"] = d.totals.recentLate, ["recJumpers"] = d.totals.recentJumpers,
                     ["recShort"] = d.totals.recentShortReaches,
                     ["chase"] = d.totals.chaseDowns, ["clutch"] = d.totals.clutchMakes, ["greenRun"] = d.totals.bestGreenRun,
-                    ["comebacks"] = d.totals.comebacks, ["dd"] = d.totals.doubleDoubles, ["perfect"] = d.totals.perfectGames, ["potg"] = d.totals.playerOfGames, ["tov"] = d.totals.turnovers,
+                    ["comebacks"] = d.totals.comebacks, ["dd"] = d.totals.doubleDoubles, ["perfect"] = d.totals.perfectGames, ["potg"] = d.totals.playerOfGames, ["tov"] = d.totals.turnovers, ["closeW"] = d.totals.closeWins, ["closeL"] = d.totals.closeLosses,
                     ["blowW"] = d.totals.blowoutWins, ["blowL"] = d.totals.blowoutLosses,
                 },
                 ["practice"] = new Dictionary<string, object>
@@ -445,7 +445,7 @@ namespace CallerRetroBall.Logic
             ["points"] = r.points, ["assists"] = r.assists, ["rebounds"] = r.rebounds, ["steals"] = r.steals,
             ["blocks"] = r.blocks, ["greens"] = r.greens, ["biggestWin"] = r.biggestWin,
             ["winStreak"] = r.winStreak, ["bestWinStreak"] = r.bestWinStreak,
-            ["posters"] = r.posters, ["chase"] = r.chaseDowns, ["clutch"] = r.clutchMakes, ["greenRun"] = r.greenRun, ["comeback"] = r.biggestComeback,
+            ["posters"] = r.posters, ["chase"] = r.chaseDowns, ["clutch"] = r.clutchMakes, ["greenRun"] = r.greenRun, ["comeback"] = r.biggestComeback, ["makes"] = r.makeStreak,
         };
 
         private static object EncodeRise(RiseSaveData r)
@@ -536,6 +536,7 @@ namespace CallerRetroBall.Logic
                     chaseDowns = Math.Max(0, Int(t, "chase", 0)), clutchMakes = Math.Max(0, Int(t, "clutch", 0)),
                     comebacks = Math.Max(0, Int(t, "comebacks", 0)), doubleDoubles = Math.Max(0, Int(t, "dd", 0)), perfectGames = Math.Max(0, Int(t, "perfect", 0)),
                     playerOfGames = Math.Max(0, Int(t, "potg", 0)), turnovers = Math.Max(0, Int(t, "tov", 0)),
+                    closeWins = Math.Max(0, Int(t, "closeW", 0)), closeLosses = Math.Max(0, Int(t, "closeL", 0)),
                     bestGreenRun = Math.Max(0, Int(t, "greenRun", 0)),
                     blowoutWins = Math.Max(0, Int(t, "blowW", 0)), blowoutLosses = Math.Max(0, Int(t, "blowL", 0)),
                 };
@@ -686,7 +687,7 @@ namespace CallerRetroBall.Logic
                     steals = Int(rc, "steals", 0), blocks = Int(rc, "blocks", 0), greens = Int(rc, "greens", 0),
                     biggestWin = Int(rc, "biggestWin", 0), winStreak = Int(rc, "winStreak", 0), bestWinStreak = Int(rc, "bestWinStreak", 0),
                     posters = Math.Max(0, Int(rc, "posters", 0)), chaseDowns = Math.Max(0, Int(rc, "chase", 0)),
-                    clutchMakes = Math.Max(0, Int(rc, "clutch", 0)), greenRun = Math.Max(0, Int(rc, "greenRun", 0)), biggestComeback = Math.Max(0, Int(rc, "comeback", 0)),
+                    clutchMakes = Math.Max(0, Int(rc, "clutch", 0)), greenRun = Math.Max(0, Int(rc, "greenRun", 0)), biggestComeback = Math.Max(0, Int(rc, "comeback", 0)), makeStreak = Math.Max(0, Int(rc, "makes", 0)),
                 };
                 foreach (var item in Arr(o, "history"))
                 {

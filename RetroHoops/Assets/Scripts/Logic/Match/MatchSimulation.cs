@@ -1168,6 +1168,8 @@ namespace CallerRetroBall.Logic
                 }
                 line.points += Ball.ShotPoints;
                 line.fieldGoalsMade++;
+                line.makeRun++;                                              // I281
+                line.bestMakeRun = Math.Max(line.bestMakeRun, line.makeRun);
                 if (Ball.ShotPoints >= Setup.Rules.beyondArcPoints) line.arcMade++;
                 var chartSpot = line.chart.spots[(int)ShotZones.SpotOf(Ball.FlightFrom, court)];
                 if (chartSpot.made < chartSpot.attempted) chartSpot.made++;
@@ -1220,6 +1222,7 @@ namespace CallerRetroBall.Logic
             // Miss: carom off the rim, away from the hoop, toward the shooter's side.
             CoolOff(p);
             _lastShotWasMiss = true;
+            Stats[shooter].makeRun = 0; // I281
             Events.Add(new MatchEvent(MatchEventType.ShotMissed, shooter, p.Team, (int)Ball.ShotGrade));
             var away = (Ball.FlightFrom - court.Hoop).Normalized;
             if (away.SqrMagnitude < 0.01f) away = Vec2.Up;

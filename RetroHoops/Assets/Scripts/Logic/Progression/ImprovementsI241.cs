@@ -147,6 +147,9 @@ namespace CallerRetroBall.Logic
             rows.Add(("ASSISTS A GAME", Per(t.assists)));      // I262
             rows.Add(("REBOUNDS A GAME", Per(t.rebounds)));
             rows.Add(("TURNOVERS A GAME", Per(t.turnovers)));   // I276
+            rows.Add(("CLOSE GAMES (2 OR LESS)", t.closeWins + "-" + t.closeLosses)); // I292
+            if (d.records != null) rows.Add(("BEST GAME: MAKES IN A ROW", d.records.makeStreak.ToString())); // I283
+            rows.Add(("COURTS PLAYED (LAST 20)", StreakLines.CourtsPlayed(d).ToString())); // I297
             rows.Add(("PLAYER OF THE GAME", t.playerOfGames.ToString())); // I246
             string fav = FavoriteCourt(d, out int favGames);
             if (fav != null) rows.Add(("FAVORITE COURT (LAST 20)", (c?.Court(fav)?.displayName ?? fav).ToUpperInvariant() + "  ·  " + favGames + " " + Loc.T("GAMES")));

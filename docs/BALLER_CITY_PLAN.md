@@ -940,3 +940,37 @@ Logic lives in `Logic/Progression/Shop.cs`. The App Store bridge is `Core/ShopSt
 - **I279 Save guard and What's New:** a save-guard test for the new total, and the card is refreshed (tour.whats_new_271).
 - **I280 Spanish and tests:** Spanish for every new line. `ImprovementsI271Tests` has 8 tests.
   - Gate: 1,326 logic tests pass, UnityCheck 0 errors, App Store audit 73/73, strict text audit clean.
+
+### Improvements I281–I300: hot hand, shooting by range, goals, close games and random outfits (21 Nov 2026)
+
+**Shooting**
+- **I281 HOT HAND:** your makes in a row, called at 3 and then every 2. The simulation keeps `makeRun` and `bestMakeRun` on each line, and a miss resets the run.
+- **I282 Longest make streak:** shown on the post-game.
+- **I283 Make-streak record:** the BEST GAME: MAKES IN A ROW game record.
+- **I284 Shooting by range:** the post-game splits your shooting into INSIDE, MID and DEEP.
+- **I285 Pause by range:** the pause menu shows the same split for the game so far.
+- **I286 Their damage:** the post-game says where the other team scored most.
+
+**Tip-off and post-game**
+- **I287 Win streak:** CHECK BALL mentions a win streak of 3 or more.
+- **I288 BOUNCE BACK!:** called when you win after 2 or more losses.
+- **I292 Close games:** the career keeps a close-game record (decided by 2 or less), shown in CAREER STATS.
+- **I293 CLOSE ONE!:** called when you win by 2 or less.
+- **I296 New court:** CHECK BALL says FIRST GAME HERE LATELY on a court that isn't in your last 20 games.
+- **I297 Courts played:** CAREER STATS shows how many courts you've played in your last 20 games.
+
+**Goals**
+- **I290 Today's goal:** a goal on the PLAY menu that rotates through 6 (score 15 or 20, 5 assists, 6 rebounds, a win, a win by 5). The post-game says when you've done it.
+- **I291 Weekly goal:** WIN 5 GAMES.
+- Both goals are for fun only: there's no reward, nothing to grind and nothing to buy.
+
+**Locker and settings**
+- **I294 RANDOM OUTFIT:** the Locker puts on a random owned item in each slot (jersey, shoes, gear, banner).
+- **I295 PUT IT BACK:** undoes the random outfit.
+- **I289 SHOT CLOCK TICK:** a setting (on by default).
+
+**Wrap-up**
+- **I298 Save guard:** a test for the new fields.
+- **I299 What's New:** the card is refreshed (tour.whats_new_281).
+- **I300 Spanish and tests:** Spanish for every new line. `ImprovementsI281Tests` has 7 tests.
+- **Gate:** 1,333 logic tests pass, UnityCheck 0 errors, App Store audit 73/73, strict text audit clean.

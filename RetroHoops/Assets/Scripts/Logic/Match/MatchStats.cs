@@ -40,6 +40,8 @@ namespace CallerRetroBall.Logic
         public int shortReaches;
         /// <summary>I176: blocks from behind. I177: clutch buckets. I178: the longest GREEN run (3 or more).</summary>
         public int chaseDowns, clutchMakes, bestGreenRun;
+        /// <summary>I281: makes in a row right now, and the longest run this game.</summary>
+        public int makeRun, bestMakeRun;
         /// <summary>Phase 35: where every shot came from (made / attempted per spot).</summary>
         public ShotChartData chart = new ShotChartData();
 
